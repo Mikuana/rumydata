@@ -1,8 +1,8 @@
 import pytest
 
-from typereader import *
-from typereader.exception import *
-from typereader.component import DataDefinition
+from rumydata import *
+from rumydata.exception import *
+from rumydata.component import DataDefinition
 
 
 @pytest.fixture()

@@ -4,8 +4,8 @@ import typing as t
 from datetime import datetime
 from pathlib import Path
 
-from typereader import exception
-from typereader.component import BaseValidator, Check, DataDefinition
+from rumydata import exception
+from rumydata.component import BaseValidator, Check, DataDefinition
 
 
 class Text(BaseValidator):

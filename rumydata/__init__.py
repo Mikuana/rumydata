@@ -1,5 +1,5 @@
-from typereader.component import DataDefinition
-from typereader.validator import (
+from rumydata.component import DataDefinition
+from rumydata.validator import (
     BaseValidator, Check, Text, Choice, File, Date, Currency, Integer, Header
 )
 
