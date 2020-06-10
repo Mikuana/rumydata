@@ -1,11 +1,18 @@
 from collections import namedtuple
 
+from rumydata.exception import NullValueError
+
 Check = namedtuple('Check', ['func', 'err', 'msg'])
 DataDefinition = namedtuple('DataDefinition', ['pattern', 'definition'])
 
 
 class BaseValidator:
-    checks = []
+    def __init__(self, **kwargs):
+        self.checks = []
+        if not kwargs.get('nullable', False):
+            self.checks.append(
+                Check(lambda x: x != '', NullValueError, 'Value is empty/blank')
+            )
 
     def check_errors(self, value):
         errors = []

@@ -67,6 +67,13 @@ def test_choice():
     assert includes_error(Choice(['x']).check_errors('z'), InvalidChoiceError)
 
 
+def test_row(basic):
+    assert not Row(basic).check_errors([1, 2, 3])
+
+    assert includes_error(Row(basic).check_errors([1, 2, 3, 4]), TooManyFieldsError)
+    assert includes_error(Row(basic).check_errors([1, 2]), NotEnoughFieldsError)
+
+
 def test_header(basic):
     assert not Header(basic).check_errors(['col1', 'col2', 'col3'])
 

@@ -1,42 +1,62 @@
-class FileError(Exception):
+class ValidationError(Exception):
     pass
 
 
-class InvalidFileNameError(FileError):
+class FileError(ValidationError):
     pass
 
 
-class DataError(Exception):
+class InvalidFileNameError(ValidationError):
     pass
 
 
-class DateFormatError(Exception):
+class DataError(ValidationError):
     pass
 
 
-class CurrencyPatternError(Exception):
+class DateFormatError(ValidationError):
     pass
 
 
-class DataLengthError(Exception):
+class CurrencyPatternError(ValidationError):
     pass
 
 
-class LeadingZeroError(Exception):
+class DataLengthError(ValidationError):
     pass
 
 
-class InvalidChoiceError(Exception):
+class LeadingZeroError(ValidationError):
     pass
 
 
-class MissingColumnError(Exception):
+class InvalidChoiceError(ValidationError):
     pass
 
 
-class UnexpectedColumnError(Exception):
+class MissingColumnError(ValidationError):
     pass
 
 
-class DuplicateColumnError(Exception):
+class UnexpectedColumnError(ValidationError):
+    pass
+
+
+class DuplicateColumnError(ValidationError):
+    pass
+
+
+class RowLengthError(ValidationError):
+    pass
+
+
+class NotEnoughFieldsError(ValidationError):
+    pass
+
+
+class TooManyFieldsError(ValidationError):
+    pass
+
+
+class NullValueError(ValidationError):
     pass

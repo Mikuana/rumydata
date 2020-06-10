@@ -9,8 +9,8 @@ from rumydata.component import BaseValidator, Check, DataDefinition
 
 
 class Text(BaseValidator):
-    def __init__(self, max_length, min_length=None):
-        self.checks = []
+    def __init__(self, max_length, min_length=None, **kwargs):
+        super().__init__(**kwargs)
         self.checks.append(Check(
             lambda x: len(x) <= max_length, exception.DataLengthError,
             f'Text value exceeds max length {str(max_length)}'
@@ -24,9 +24,8 @@ class Text(BaseValidator):
 
 
 class Date(BaseValidator):
-    def __init__(self, min_year=2020, max_year=2050):
-        self.checks = []
-
+    def __init__(self, min_year=2020, max_year=2050, **kwargs):
+        super().__init__(**kwargs)
         self.checks.append(Check(
             lambda x: re.fullmatch(r'\d{8}', x), exception.DateFormatError,
             'Date value does not look like YYYYMMDD format'
@@ -49,8 +48,8 @@ class Date(BaseValidator):
 
 
 class Currency(BaseValidator):
-    def __init__(self, significant_digits: int):
-        self.checks = []
+    def __init__(self, significant_digits: int, **kwargs):
+        super().__init__(**kwargs)
         self.checks.append(Check(
             lambda x: float(x) <= int('9' * significant_digits), exception.DataError,
             f'Currency value is too large'
@@ -66,8 +65,8 @@ class Currency(BaseValidator):
 
 
 class Integer(BaseValidator):
-    def __init__(self, max_length, min_length=None):
-        self.checks = []
+    def __init__(self, max_length, min_length=None, **kwargs):
+        super().__init__(**kwargs)
         self.checks.append(Check(
             lambda x: isinstance(int(x), int), exception.DataError,
             'Integer value cannot be coerced into an integer'
@@ -90,20 +89,40 @@ class Integer(BaseValidator):
 
 
 class Choice(BaseValidator):
-    def __init__(self, valid_values: list):
-        self.checks = []
+    def __init__(self, valid_values: list, **kwargs):
+        super().__init__(**kwargs)
         self.checks.append(Check(
             lambda x: x in valid_values, exception.InvalidChoiceError,
             f'Choice value is not one of: {valid_values}'
         ))
 
 
-class Header(BaseValidator):
-    def __init__(self, definition):
-        self.checks = []
+class Row(BaseValidator):
+    def __init__(self, definition, **kwargs):
+        super().__init__(**kwargs)
 
         self.checks.append(Check(
-            lambda x: len(x) == len(list(definition.keys())), exception.DataError,
+            lambda x: len(x) == len(list(definition.keys())), exception.RowLengthError,
+            f'Row length not equal to {str(len(list(definition.keys())))}'
+        ))
+
+        self.checks.append(Check(
+            lambda x: len(x) >= len(list(definition.keys())), exception.NotEnoughFieldsError,
+            f'Row length is less than {str(len(list(definition.keys())))}'
+        ))
+
+        self.checks.append(Check(
+            lambda x: len(x) <= len(list(definition.keys())), exception.TooManyFieldsError,
+            f'Row length is greater than {str(len(list(definition.keys())))}'
+        ))
+
+
+class Header(BaseValidator):
+    def __init__(self, definition, **kwargs):
+        super().__init__(**kwargs)
+
+        self.checks.append(Check(
+            lambda x: len(x) == len(list(definition.keys())), exception.RowLengthError,
             f'Header row count not equal to {str(len(list(definition.keys())))}'
         ))
 
@@ -131,7 +150,7 @@ class Header(BaseValidator):
 class File:
     errors = []
     data_definitions: t.List[DataDefinition] = None
-    file_definition: DataDefinition = None
+    file_definition: dict = None
 
     def __init__(self, csv_file: t.Union[str, Path], data_definitions: t.List[DataDefinition]):
         self.data_definitions = data_definitions
@@ -150,7 +169,7 @@ class File:
     def validate_file(self):
         no_match = True
         for d in self.data_definitions:
-            if d.pattern.fullmatch(self.csv_file.name):
+            if re.fullmatch(d.pattern, self.csv_file.name):
                 self.file_definition = d.definition
                 no_match = False
 
@@ -164,13 +183,28 @@ class File:
             names = list(self.file_definition.keys())
             types = list(self.file_definition.values())
             for rix, row in enumerate(csv.reader(f)):
-                if rix == 0:  # header check. If any errors occur, immediately fail file
-                    self.errors.extend(Header(self.file_definition).check_errors(row))
+                if rix == 0:  # if there are errors in header, skip data checks
+                    self.errors.extend(
+                        Header(self.file_definition).check_errors(row))
                     if self.errors:
                         break
                 else:
+                    row_check = Row(self.file_definition).check_errors(row)
+                    if row_check:
+                        self.errors.extend([
+                            f'row {str(rix + 1)}: {x}' for x in row_check
+                        ])
+                        continue  # if there are errors in row, skip cell checks in row
                     for cix, cell in enumerate(row):
                         self.errors.extend([
                             f'row {str(rix + 1)} col {str(cix + 1)} ({names[cix]}): {x}'
                             for x in types[cix].check_errors(cell)
                         ])
+
+    def summary(self):
+        if self.errors:
+            return f'Validation Failed for: {self.csv_file}\n' + (
+                '\n'.join([f' - {x}' for x in self.errors])
+            )
+        else:
+            return f'Validation Successful for: {self.csv_file} '
