@@ -1,3 +1,4 @@
+import codecs
 import csv
 import re
 import typing as t
@@ -59,9 +60,29 @@ class Currency(BaseValidator):
             f'Currency value is not less than {str(significant_digits)} significant digits'
         ))
         self.checks.append(Check(
-            lambda x: re.fullmatch(r'\d+(\.\d{1,2})?', x), exception.CurrencyPatternError,
+            lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x), exception.CurrencyPatternError,
             f'Currency pattern is not a whole number with a maximum of two digits past decimal'
         ))
+
+
+class Digit(BaseValidator):
+    def __init__(self, max_length, min_length=None, **kwargs):
+        super().__init__(**kwargs)
+        self.checks.append(Check(
+            lambda x: re.fullmatch(r'\d+', x), exception.DataError,
+            'Digit value is not made exclusively of numbers'
+        ))
+
+        self.checks.append(Check(
+            lambda x: len(x) <= max_length, exception.DataLengthError,
+            f'Digit value exceeds max length {str(max_length)}'
+        ))
+
+        if min_length:
+            self.checks.append(Check(
+                lambda x: len(x) >= min_length, exception.DataLengthError,
+                f'Digit value does not meet minimum length {str(min_length)}'
+            ))
 
 
 class Integer(BaseValidator):
@@ -72,18 +93,19 @@ class Integer(BaseValidator):
             'Integer value cannot be coerced into an integer'
         ))
         self.checks.append(Check(
-            lambda x: re.fullmatch(r'0|([1-9]\d*)', x), exception.LeadingZeroError,
+            lambda x: re.fullmatch(r'-?(0|([1-9]\d*))', x), exception.LeadingZeroError,
             'Integer value does not start with non-zero digit'
         ))
 
         self.checks.append(Check(
-            lambda x: len(x) <= max_length, exception.DataLengthError,
-            f'Integer value exceeds max length {str(max_length)}'
+            lambda x: len(x[1:] if x.startswith('-') else x) <= max_length,
+            exception.DataLengthError, f'Integer value exceeds max length {str(max_length)}'
         ))
 
         if min_length:
             self.checks.append(Check(
-                lambda x: len(x) >= min_length, exception.DataLengthError,
+                lambda x: len(x[1:] if x.startswith('-') else x) >= min_length,
+                exception.DataLengthError,
                 f'Integer value does not meet minimum length {str(min_length)}'
             ))
 
@@ -147,6 +169,22 @@ class Header(BaseValidator):
         ))
 
 
+class Encoding(BaseValidator):
+    def __init__(self, encoding='utf-8'):
+        super().__init__()
+
+        def try_encoding(x):
+            try:
+                with codecs.open(x, encoding=encoding, errors='strict'):
+                    return True
+            except UnicodeEncodeError:
+                return False
+
+        self.checks = [Check(
+            try_encoding, exception.FileEncodingError, f'File is not encoded using {encoding}'
+        )]
+
+
 class File:
     errors = []
     data_definitions: t.List[DataDefinition] = None
@@ -175,8 +213,13 @@ class File:
 
         if no_match:
             self.errors.append(
-                exception.InvalidFileNameError(f'No pattern in definitions matches file name: {self.csv_file.name}')
+                exception.InvalidFileNameError(
+                    f'No expected pattern matches file name. Valid patterns are:\n' +
+                    '\n'.join([f'   - {x.pattern}' for x in self.data_definitions])
+                )
             )
+
+        self.errors.extend(Encoding().check_errors(self.csv_file))
 
     def validate_data(self):
         with open(self.csv_file) as f:

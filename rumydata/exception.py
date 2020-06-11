@@ -6,6 +6,10 @@ class FileError(ValidationError):
     pass
 
 
+class FileEncodingError(ValidationError):
+    pass
+
+
 class InvalidFileNameError(ValidationError):
     pass
 
@@ -59,4 +63,8 @@ class TooManyFieldsError(ValidationError):
 
 
 class NullValueError(ValidationError):
+    pass
+
+
+class ValueComparisonError(ValidationError):
     pass
