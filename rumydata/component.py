@@ -8,6 +8,7 @@ DataDefinition = namedtuple('DataDefinition', ['pattern', 'definition'])
 
 class BaseValidator:
     def __init__(self, **kwargs):
+        self.attributes = {}
         self.nullable = kwargs.get('nullable', False)
         self.checks = []
         if not self.nullable:
@@ -37,14 +38,30 @@ class BaseValidator:
                 errors.append(e(f'Error while attempting check if {check.msg}'))
         return errors
 
+    def attribute_digest(self):
+        attributes = self.attributes
+
+        if self.nullable:
+            attributes['Nullable'] = None
+        if self.compare:
+            attributes['Rule'] = self.compare.description()
+
+        return [f'{k}: {v}' if v else k for k, v in attributes.items()]
+
 
 class Comparison:
+    language = 'N/A'
+
     def __init__(self, compared_to):
         self.compared_to = compared_to
+
+    def description(self):
+        return f'{self.language} {str(self.compared_to)}'
 
 
 class GT(Comparison):
     """ Greater Than comparison """
+    language = 'greater than'
 
     def compare(self):
         return lambda x: float(x) > self.compared_to
@@ -52,6 +69,7 @@ class GT(Comparison):
 
 class GTE(Comparison):
     """ Greater Than or Equal comparison """
+    language = 'greater than or equal to'
 
     def compare(self):
         return lambda x: float(x) >= self.compared_to
@@ -59,6 +77,7 @@ class GTE(Comparison):
 
 class ET(Comparison):
     """ Equal To comparison """
+    language = 'equal to'
 
     def compare(self):
         return lambda x: float(x) == self.compared_to
@@ -66,6 +85,7 @@ class ET(Comparison):
 
 class LOE(Comparison):
     """ Less Than or Equal comparison """
+    language = 'less than or equal to'
 
     def compare(self):
         return lambda x: float(x) <= self.compared_to
@@ -73,6 +93,7 @@ class LOE(Comparison):
 
 class LT(Comparison):
     """ Less Than comparison """
+    language = 'less than'
 
     def compare(self):
         return lambda x: float(x) < self.compared_to

@@ -31,13 +31,13 @@ def test_text():
 
 
 def test_date():
-    assert not Date().check_errors('20200101')
+    assert not Date().check_errors('2020-01-01')
     assert not Date(nullable=True).check_errors('')
 
     assert includes_error(Date().check_errors(''), NullValueError)
     assert includes_error(Date().check_errors('2020'), DateFormatError)
-    assert includes_error(Date().check_errors('20200101 '), DateFormatError)
-    assert includes_error(Date().check_errors('2020-01-01'), DateFormatError)
+    assert includes_error(Date().check_errors('2020-01-01 '), DateFormatError)
+    assert includes_error(Date().check_errors('20200101'), DateFormatError)
     assert includes_error(Date().check_errors('99999999'), ValueError)
 
 

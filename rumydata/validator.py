@@ -12,12 +12,18 @@ from rumydata.component import BaseValidator, Check, DataDefinition
 class Text(BaseValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.attributes['Type'] = 'String'
+        self.attributes['Max Length'] = f'{str(max_length)} characters'
+
         self.checks.append(Check(
             lambda x: len(x) <= max_length, exception.DataLengthError,
             f'Text value exceeds max length {str(max_length)}'
         ))
 
         if min_length:
+            self.attributes['Min Length'] = f'{str(min_length)} characters'
+
             self.checks.append(Check(
                 lambda x: len(x) >= min_length, exception.DataLengthError,
                 f'Text value does not meet minimum length {str(min_length)}'
@@ -25,25 +31,31 @@ class Text(BaseValidator):
 
 
 class Date(BaseValidator):
-    def __init__(self, min_year=2020, max_year=2050, **kwargs):
+    def __init__(self, min_year=1900, max_year=2100, **kwargs):
         super().__init__(**kwargs)
+
+        self.attributes['Type'] = 'Date'
+        self.attributes['Format'] = 'YYYY-MM-DD'
+        self.attributes['Min Year'] = f'{str(min_year)}'
+        self.attributes['Max Year'] = f'{str(max_year)}'
+
         self.checks.append(Check(
-            lambda x: re.fullmatch(r'\d{8}', x), exception.DateFormatError,
-            'Date value does not look like YYYYMMDD format'
+            lambda x: re.fullmatch(r'\d{4}-\d{2}-\d{2}', x), exception.DateFormatError,
+            'Date value does not look like YYYY-MM-DD format'
         ))
 
         self.checks.append(Check(
-            lambda x: datetime.strptime(x, '%Y%m%d'), exception.DataError,
+            lambda x: datetime.strptime(x, '%Y-%m-%d'), exception.DataError,
             'Date value is not a valid date'
         ))
 
         self.checks.append(Check(
-            lambda x: datetime.strptime(x, '%Y%m%d').year >= min_year, exception.DataError,
+            lambda x: datetime.strptime(x, '%Y-%m-%d').year >= min_year, exception.DataError,
             f'Date value is before minimum year {str(min_year)}'
         ))
 
         self.checks.append(Check(
-            lambda x: datetime.strptime(x, '%Y%m%d').year <= max_year, exception.DataError,
+            lambda x: datetime.strptime(x, '%Y-%m-%d').year <= max_year, exception.DataError,
             f'Date value is after maximum year {str(max_year)}'
         ))
 
@@ -51,6 +63,11 @@ class Date(BaseValidator):
 class Currency(BaseValidator):
     def __init__(self, significant_digits: int, **kwargs):
         super().__init__(**kwargs)
+
+        self.attributes['Type'] = 'Numeric'
+        self.attributes['Format'] = f'{"9" * (significant_digits - 2)}.99'
+        self.attributes['Max Length'] = f'{str(significant_digits)} digits'
+
         self.checks.append(Check(
             lambda x: float(x) <= int('9' * significant_digits), exception.DataError,
             f'Currency value is too large'
@@ -68,6 +85,11 @@ class Currency(BaseValidator):
 class Digit(BaseValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.attributes['Type'] = 'Numeric'
+        self.attributes['Format'] = f'{"0" * max_length}'
+        self.attributes['Max Length'] = f'{str(max_length)} digits'
+
         self.checks.append(Check(
             lambda x: re.fullmatch(r'\d+', x), exception.DataError,
             'Digit value is not made exclusively of numbers'
@@ -79,6 +101,7 @@ class Digit(BaseValidator):
         ))
 
         if min_length:
+            self.attributes['Min Length'] = f'{str(min_length)} digits'
             self.checks.append(Check(
                 lambda x: len(x) >= min_length, exception.DataLengthError,
                 f'Digit value does not meet minimum length {str(min_length)}'
@@ -88,6 +111,11 @@ class Digit(BaseValidator):
 class Integer(BaseValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
+
+        self.attributes['Type'] = 'Numeric'
+        self.attributes['Format'] = f'{"9" * max_length}'
+        self.attributes['Max Length'] = f'{str(max_length)} digits'
+
         self.checks.append(Check(
             lambda x: isinstance(int(x), int), exception.DataError,
             'Integer value cannot be coerced into an integer'
@@ -103,6 +131,7 @@ class Integer(BaseValidator):
         ))
 
         if min_length:
+            self.attributes['Min Length'] = f'{str(max_length)} digits'
             self.checks.append(Check(
                 lambda x: len(x[1:] if x.startswith('-') else x) >= min_length,
                 exception.DataLengthError,
@@ -113,6 +142,10 @@ class Integer(BaseValidator):
 class Choice(BaseValidator):
     def __init__(self, valid_values: list, **kwargs):
         super().__init__(**kwargs)
+
+        self.attributes['Type'] = 'Choice'
+        self.attributes['Choices'] = ','.join(valid_values)
+
         self.checks.append(Check(
             lambda x: x in valid_values, exception.InvalidChoiceError,
             f'Choice value is not one of: {valid_values}'
