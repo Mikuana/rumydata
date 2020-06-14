@@ -1,4 +1,6 @@
-# R-U-My-Data?
+#Are You My Data?
+
+![img](are-you-my-data.jpg)
 
 This is a pure python package which takes on the task of validating the formatting and
 contents of data contained in text files (e.g. csv).
