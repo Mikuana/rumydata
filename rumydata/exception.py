@@ -22,6 +22,10 @@ class DateFormatError(ValidationError):
     pass
 
 
+class ConversionError(ValidationError):
+    pass
+
+
 class CurrencyPatternError(ValidationError):
     pass
 

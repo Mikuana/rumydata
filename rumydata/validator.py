@@ -2,10 +2,10 @@ import codecs
 import csv
 import re
 import typing as t
-from datetime import datetime
 from pathlib import Path
 
 from rumydata import exception
+from rumydata import rule
 from rumydata.component import BaseValidator, Check, DataDefinition
 
 
@@ -13,193 +13,110 @@ class Text(BaseValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.attributes['Type'] = 'String'
-        self.attributes['Max Length'] = f'{str(max_length)} characters'
+        self.descriptors['Type'] = 'String'
+        self.descriptors['Max Length'] = f'{str(max_length)} characters'
 
-        self.checks.append(Check(
-            lambda x: len(x) <= max_length, exception.DataLengthError,
-            f'Text value exceeds max length {str(max_length)}'
-        ))
+        self.rules.append(rule.MaxChar(max_length))
 
         if min_length:
-            self.attributes['Min Length'] = f'{str(min_length)} characters'
-
-            self.checks.append(Check(
-                lambda x: len(x) >= min_length, exception.DataLengthError,
-                f'Text value does not meet minimum length {str(min_length)}'
-            ))
+            self.descriptors['Min Length'] = f'{str(min_length)} characters'
+            self.rules.append(rule.MinChar(min_length))
 
 
 class Date(BaseValidator):
-    def __init__(self, min_year=1900, max_year=2100, **kwargs):
+    def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
         super().__init__(**kwargs)
 
-        self.attributes['Type'] = 'Date'
-        self.attributes['Format'] = 'YYYY-MM-DD'
-        self.attributes['Min Year'] = f'{str(min_year)}'
-        self.attributes['Max Year'] = f'{str(max_year)}'
+        self.descriptors['Type'] = 'Date'
+        self.descriptors['Format'] = 'YYYY-MM-DD'
 
-        self.checks.append(Check(
-            lambda x: re.fullmatch(r'\d{4}-\d{2}-\d{2}', x), exception.DateFormatError,
-            'Date value does not look like YYYY-MM-DD format'
-        ))
+        self.rules.append(rule.CanBeDateIso())
 
-        self.checks.append(Check(
-            lambda x: datetime.strptime(x, '%Y-%m-%d'), exception.DataError,
-            'Date value is not a valid date'
-        ))
+        if max_date:
+            self.descriptors['Max Date'] = f'{max_date}'
+            self.rules.append(rule.DateLTE(max_date))
 
-        self.checks.append(Check(
-            lambda x: datetime.strptime(x, '%Y-%m-%d').year >= min_year, exception.DataError,
-            f'Date value is before minimum year {str(min_year)}'
-        ))
-
-        self.checks.append(Check(
-            lambda x: datetime.strptime(x, '%Y-%m-%d').year <= max_year, exception.DataError,
-            f'Date value is after maximum year {str(max_year)}'
-        ))
+        if min_date:
+            self.descriptors['Min Date'] = f'{min_date}'
+            self.rules.append(rule.DateGTE(max_date))
 
 
 class Currency(BaseValidator):
     def __init__(self, significant_digits: int, **kwargs):
         super().__init__(**kwargs)
 
-        self.attributes['Type'] = 'Numeric'
-        self.attributes['Format'] = f'{"9" * (significant_digits - 2)}.99'
-        self.attributes['Max Length'] = f'{str(significant_digits)} digits'
+        self.descriptors['Type'] = 'Numeric'
+        self.descriptors['Format'] = f'{"9" * (significant_digits - 2)}.99'
+        self.descriptors['Max Length'] = f'{str(significant_digits)} digits'
 
-        self.checks.append(Check(
-            lambda x: float(x) <= int('9' * significant_digits), exception.DataError,
-            f'Currency value is too large'
-        ))
-        self.checks.append(Check(
-            lambda x: len(x) <= significant_digits + 1, exception.DataLengthError,
-            f'Currency value is not less than {str(significant_digits)} significant digits'
-        ))
-        self.checks.append(Check(
-            lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x), exception.CurrencyPatternError,
-            f'Currency pattern is not a whole number with a maximum of two digits past decimal'
-        ))
+        self.rules.append(rule.MaxDigit(significant_digits))
+        self.rules.append(rule.NumericDecimals())
 
 
 class Digit(BaseValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.attributes['Type'] = 'Numeric'
-        self.attributes['Format'] = f'{"0" * max_length}'
-        self.attributes['Max Length'] = f'{str(max_length)} digits'
+        self.descriptors['Type'] = 'Numeric'
+        self.descriptors['Format'] = f'{"0" * max_length}'
+        self.descriptors['Max Length'] = f'{str(max_length)} digits'
 
-        self.checks.append(Check(
-            lambda x: re.fullmatch(r'\d+', x), exception.DataError,
-            'Digit value is not made exclusively of numbers'
-        ))
-
-        self.checks.append(Check(
-            lambda x: len(x) <= max_length, exception.DataLengthError,
-            f'Digit value exceeds max length {str(max_length)}'
-        ))
+        self.rules.append(rule.OnlyNumbers())
+        self.rules.append(rule.MaxChar(max_length))
 
         if min_length:
-            self.attributes['Min Length'] = f'{str(min_length)} digits'
-            self.checks.append(Check(
-                lambda x: len(x) >= min_length, exception.DataLengthError,
-                f'Digit value does not meet minimum length {str(min_length)}'
-            ))
+            self.descriptors['Min Length'] = f'{str(min_length)} digits'
+            self.rules.append(rule.MinChar(min_length))
 
 
 class Integer(BaseValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.attributes['Type'] = 'Numeric'
-        self.attributes['Format'] = f'{"9" * max_length}'
-        self.attributes['Max Length'] = f'{str(max_length)} digits'
+        self.descriptors['Type'] = 'Numeric'
+        self.descriptors['Format'] = f'{"9" * max_length}'
+        self.descriptors['Max Length'] = f'{str(max_length)} digits'
 
-        self.checks.append(Check(
-            lambda x: isinstance(int(x), int), exception.DataError,
-            'Integer value cannot be coerced into an integer'
-        ))
-        self.checks.append(Check(
-            lambda x: re.fullmatch(r'-?(0|([1-9]\d*))', x), exception.LeadingZeroError,
-            'Integer value does not start with non-zero digit'
-        ))
-
-        self.checks.append(Check(
-            lambda x: len(x[1:] if x.startswith('-') else x) <= max_length,
-            exception.DataLengthError, f'Integer value exceeds max length {str(max_length)}'
-        ))
+        self.rules.append(rule.CanBeInteger())
+        self.rules.append(rule.NoLeadingZero())
+        self.rules.append(rule.MaxDigit(max_length))
 
         if min_length:
-            self.attributes['Min Length'] = f'{str(max_length)} digits'
-            self.checks.append(Check(
-                lambda x: len(x[1:] if x.startswith('-') else x) >= min_length,
-                exception.DataLengthError,
-                f'Integer value does not meet minimum length {str(min_length)}'
-            ))
+            self.descriptors['Min Length'] = f'{str(max_length)} digits'
+            self.rules.append(rule.MinDigit(min_length))
 
 
 class Choice(BaseValidator):
     def __init__(self, valid_values: list, **kwargs):
         super().__init__(**kwargs)
 
-        self.attributes['Type'] = 'Choice'
-        self.attributes['Choices'] = ','.join(valid_values)
-
-        self.checks.append(Check(
-            lambda x: x in valid_values, exception.InvalidChoiceError,
-            f'Choice value is not one of: {valid_values}'
-        ))
+        self.descriptors['Type'] = 'Choice'
+        self.descriptors['Choices'] = ','.join(valid_values)
+        self.rules.append(rule.Choice(valid_values))
 
 
 class Row(BaseValidator):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
+        expected_length = len(list(definition.keys()))
 
-        self.checks.append(Check(
-            lambda x: len(x) == len(list(definition.keys())), exception.RowLengthError,
-            f'Row length not equal to {str(len(list(definition.keys())))}'
-        ))
-
-        self.checks.append(Check(
-            lambda x: len(x) >= len(list(definition.keys())), exception.NotEnoughFieldsError,
-            f'Row length is less than {str(len(list(definition.keys())))}'
-        ))
-
-        self.checks.append(Check(
-            lambda x: len(x) <= len(list(definition.keys())), exception.TooManyFieldsError,
-            f'Row length is greater than {str(len(list(definition.keys())))}'
-        ))
+        self.rules.extend([
+            rule.LengthLTE(expected_length),
+            rule.LengthET(expected_length),
+            rule.LengthGTE(expected_length)
+        ])
 
 
 class Header(BaseValidator):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
 
-        self.checks.append(Check(
-            lambda x: len(x) == len(list(definition.keys())), exception.RowLengthError,
-            f'Header row count not equal to {str(len(list(definition.keys())))}'
-        ))
-
-        self.checks.append(Check(
-            lambda x: all([y in definition for y in x]),
-            exception.UnexpectedColumnError, 'Header row includes an unexpected column'
-        ))
-
-        self.checks.append(Check(
-            lambda x: all([y in x for y in definition]),
-            exception.MissingColumnError, 'Header row missing an expected column'
-        ))
-
-        self.checks.append(Check(
-            lambda x: x == list(definition),
-            exception.DataError, 'Header row may be out of expected order'
-        ))
-
-        self.checks.append(Check(
-            lambda x: len(x) == len(set(x)),
-            exception.DuplicateColumnError, 'Header row contains duplicate value'
-        ))
+        self.rules.extend([
+            rule.HeaderColumnOrder(definition),
+            rule.HeaderNoExtra(definition),
+            rule.HeaderNoDuplicate(definition),
+            rule.HeaderNoMissing(definition)
+        ])
 
 
 class Encoding(BaseValidator):
@@ -252,7 +169,7 @@ class File:
                 )
             )
 
-        self.errors.extend(Encoding().check_errors(self.csv_file))
+        self.errors.extend(Encoding().check_rules(self.csv_file))
 
     def validate_data(self):
         with open(self.csv_file) as f:
@@ -261,11 +178,11 @@ class File:
             for rix, row in enumerate(csv.reader(f)):
                 if rix == 0:  # if there are errors in header, skip data checks
                     self.errors.extend(
-                        Header(self.file_definition).check_errors(row))
+                        Header(self.file_definition).check_rules(row))
                     if self.errors:
                         break
                 else:
-                    row_check = Row(self.file_definition).check_errors(row)
+                    row_check = Row(self.file_definition).check_rules(row)
                     if row_check:
                         self.errors.extend([
                             f'row {str(rix + 1)}: {x}' for x in row_check
@@ -274,7 +191,7 @@ class File:
                     for cix, cell in enumerate(row):
                         self.errors.extend([
                             f'row {str(rix + 1)} col {str(cix + 1)} ({names[cix]}): {x}'
-                            for x in types[cix].check_errors(cell)
+                            for x in types[cix].check_rules(cell)
                         ])
 
     def summary(self):
