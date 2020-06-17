@@ -72,3 +72,7 @@ class NullValueError(ValidationError):
 
 class ValueComparisonError(ValidationError):
     pass
+
+
+class FileValidationError(ValidationError):
+    pass

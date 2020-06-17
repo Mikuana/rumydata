@@ -196,8 +196,10 @@ class File:
 
     def summary(self):
         if self.errors:
-            return f'Validation Failed for: {self.csv_file}\n' + (
-                '\n'.join([f' - {x}' for x in self.errors])
+            raise exception.FileValidationError(
+                f'Validation Failed for: {self.csv_file}\n' + (
+                    '\n'.join([f' - {x}' for x in self.errors])
+                )
             )
         else:
-            return f'Validation Successful for: {self.csv_file} '
+            return None

@@ -1,3 +1,7 @@
+import csv
+import tempfile
+from pathlib import Path
+
 import pytest
 
 from rumydata import *
@@ -9,6 +13,22 @@ from rumydata.exception import *
 @pytest.fixture()
 def basic() -> dict:
     return {'col1': Text(1), 'col2': Integer(1), 'col3': Date()}
+
+
+@pytest.fixture()
+def basic_definition(basic):
+    return DataDefinition(r'good\.csv', basic)
+
+
+@pytest.fixture()
+def basic_good():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d, 'good.csv')
+        with p.open('w') as o:
+            writer = csv.writer(o)
+            writer.writerow(['col1', 'col2', 'col3'])
+            writer.writerow(['A', 1, '2020-01-01'])
+        yield p.as_posix()
 
 
 def includes_error(error_list, expected_error):
@@ -180,3 +200,7 @@ def test_header_good(basic):
 ])
 def test_header_bad(basic, value, err):
     assert includes_error(Header(basic).check_rules(value), err)
+
+
+def test_file_good(basic_good, basic_definition):
+    assert not File(basic_good, [basic_definition]).summary()
