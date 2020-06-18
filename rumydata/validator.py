@@ -118,8 +118,8 @@ class Header(DataValidator):
 
 
 class File(DataValidator):
-    def __init__(self, layouts: Union[Layout, List[Layout]]):
-        super().__init__()
+    def __init__(self, layouts: Union[Layout, List[Layout]], **kwargs):
+        super().__init__(**kwargs)
         self.layouts = [layouts] if isinstance(layouts, Layout) else layouts
         patterns = [x.pattern for x in self.layouts]
 
@@ -130,21 +130,26 @@ class File(DataValidator):
         ])
 
     def check_rules(self, file: Union[str, Path]):
+        # first check file rules before attempting to read data
         p = Path(file) if isinstance(file, str) else file
         errors = super().check_rules(p)
-        if errors:
+        if errors:  # abort checks if there are any file errors
             return errors
 
         for layout in self.layouts:
             if re.fullmatch(layout.pattern, p.name):
                 definition = layout.definition
 
+        # noinspection PyUnboundLocalVariable
+        if not definition:
+            raise Exception("Something went terribly wrong")
+
         with open(p) as f:
             # noinspection PyUnboundLocalVariable
             names = list(definition.keys())
             types = list(definition.values())
             for rix, row in enumerate(csv.reader(f)):
-                if rix == 0:  # if there are errors in header, skip data checks
+                if rix == 0:  # abort checks if there are any header errors
                     errors.extend(Header(definition).check_rules(row))
                     if errors:
                         return errors

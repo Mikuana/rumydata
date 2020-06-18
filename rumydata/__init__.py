@@ -9,6 +9,5 @@ from rumydata.validator import (
 
 __all__ = [
     'DataValidator', 'Text', 'Choice', 'File', 'Date', 'Currency', 'Integer', 'Digit',
-    'Row', 'Header',
-    'Layout'
+    'Row', 'Header', 'Layout'
 ]
