@@ -1,5 +1,6 @@
 import re
 from datetime import datetime
+from pathlib import Path
 
 from rumydata import exception as ex
 
@@ -394,3 +395,39 @@ class HeaderNoDuplicate(HeaderRule):
 
     def exception(self):
         return ex.DuplicateColumnError('Header row contains duplicate value')
+
+
+class FileRule(Rule):
+    pass
+
+
+class FileExists(FileRule):
+    def evaluator(self):
+        return lambda x: Path(x).exists()
+
+    def exception(self):
+        return FileNotFoundError()
+
+
+class FileNameMatchesPattern(FileRule):
+    def __init__(self, patterns: list):
+        self.patterns = patterns
+
+    def evaluator(self):
+        return lambda x: any([re.fullmatch(p, Path(x).name) for p in self.patterns])
+
+    def exception(self):
+        return ex.FilePatternError('file name does not match a layout pattern')
+
+
+class FileNameMatchesOnePattern(FileRule):
+    def __init__(self, patterns: list):
+        self.patterns = patterns
+
+    def evaluator(self):
+        return lambda x: sum([
+            True if re.fullmatch(p, Path(x).name) else False for p in self.patterns
+        ]) <= 1
+
+    def exception(self):
+        return ex.FilePatternError('file name matches more than one layout pattern')

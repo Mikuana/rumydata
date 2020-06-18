@@ -1,15 +1,13 @@
-import codecs
 import csv
 import re
-import typing as t
 from pathlib import Path
+from typing import Union, List
 
-from rumydata import exception
 from rumydata import rule
-from rumydata.component import BaseValidator, Check, DataDefinition
+from rumydata.component import DataValidator, Layout
 
 
-class Text(BaseValidator):
+class Text(DataValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -23,7 +21,7 @@ class Text(BaseValidator):
             self.rules.append(rule.MinChar(min_length))
 
 
-class Date(BaseValidator):
+class Date(DataValidator):
     def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
         super().__init__(**kwargs)
 
@@ -41,7 +39,7 @@ class Date(BaseValidator):
             self.rules.append(rule.DateGTE(max_date))
 
 
-class Currency(BaseValidator):
+class Currency(DataValidator):
     def __init__(self, significant_digits: int, **kwargs):
         super().__init__(**kwargs)
 
@@ -53,7 +51,7 @@ class Currency(BaseValidator):
         self.rules.append(rule.NumericDecimals())
 
 
-class Digit(BaseValidator):
+class Digit(DataValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -69,7 +67,7 @@ class Digit(BaseValidator):
             self.rules.append(rule.MinChar(min_length))
 
 
-class Integer(BaseValidator):
+class Integer(DataValidator):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -86,7 +84,7 @@ class Integer(BaseValidator):
             self.rules.append(rule.MinDigit(min_length))
 
 
-class Choice(BaseValidator):
+class Choice(DataValidator):
     def __init__(self, valid_values: list, **kwargs):
         super().__init__(**kwargs)
 
@@ -95,7 +93,7 @@ class Choice(BaseValidator):
         self.rules.append(rule.Choice(valid_values))
 
 
-class Row(BaseValidator):
+class Row(DataValidator):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
         expected_length = len(list(definition.keys()))
@@ -107,7 +105,7 @@ class Row(BaseValidator):
         ])
 
 
-class Header(BaseValidator):
+class Header(DataValidator):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
 
@@ -119,85 +117,51 @@ class Header(BaseValidator):
         ])
 
 
-class Encoding(BaseValidator):
-    def __init__(self, encoding='utf-8'):
-        super().__init__()
+class File(DataValidator):
+    def __init__(self, layouts: Union[Layout, List[Layout]], **kwargs):
+        super().__init__(**kwargs)
+        self.layouts = [layouts] if isinstance(layouts, Layout) else layouts
+        patterns = [x.pattern for x in self.layouts]
 
-        def try_encoding(x):
-            try:
-                with codecs.open(x, encoding=encoding, errors='strict'):
-                    return True
-            except UnicodeEncodeError:
-                return False
+        self.rules.extend([
+            rule.FileExists(),
+            rule.FileNameMatchesPattern(patterns),
+            rule.FileNameMatchesOnePattern(patterns)
+        ])
 
-        self.checks = [Check(
-            try_encoding, exception.FileEncodingError, f'File is not encoded using {encoding}'
-        )]
+    def check_rules(self, file: Union[str, Path]):
+        # first check file rules before attempting to read data
+        p = Path(file) if isinstance(file, str) else file
+        errors = super().check_rules(p)
+        if errors:  # abort checks if there are any file errors
+            return errors
 
+        for layout in self.layouts:
+            if re.fullmatch(layout.pattern, p.name):
+                definition = layout.definition
 
-class File:
-    errors = []
-    data_definitions: t.List[DataDefinition] = None
-    file_definition: dict = None
+        # noinspection PyUnboundLocalVariable
+        if not definition:
+            raise Exception("Something went terribly wrong")
 
-    def __init__(self, csv_file: t.Union[str, Path], data_definitions: t.List[DataDefinition]):
-        self.data_definitions = data_definitions
-
-        if isinstance(csv_file, str):
-            csv_file = Path(csv_file)
-        self.csv_file = Path(csv_file)
-
-        if not self.csv_file.exists():
-            raise FileNotFoundError(self.csv_file)
-        self.validate_file()
-
-        if not self.errors:  # if no errors found during file validation, move to validate data
-            self.validate_data()
-
-    def validate_file(self):
-        no_match = True
-        for d in self.data_definitions:
-            if re.fullmatch(d.pattern, self.csv_file.name):
-                self.file_definition = d.definition
-                no_match = False
-
-        if no_match:
-            self.errors.append(
-                exception.InvalidFileNameError(
-                    f'No expected pattern matches file name. Valid patterns are:\n' +
-                    '\n'.join([f'   - {x.pattern}' for x in self.data_definitions])
-                )
-            )
-
-        self.errors.extend(Encoding().check_rules(self.csv_file))
-
-    def validate_data(self):
-        with open(self.csv_file) as f:
-            names = list(self.file_definition.keys())
-            types = list(self.file_definition.values())
+        with open(p) as f:
+            # noinspection PyUnboundLocalVariable
+            names = list(definition.keys())
+            types = list(definition.values())
             for rix, row in enumerate(csv.reader(f)):
-                if rix == 0:  # if there are errors in header, skip data checks
-                    self.errors.extend(
-                        Header(self.file_definition).check_rules(row))
-                    if self.errors:
-                        break
+                if rix == 0:  # abort checks if there are any header errors
+                    errors.extend(Header(definition).check_rules(row))
+                    if errors:
+                        return errors
                 else:
-                    row_check = Row(self.file_definition).check_rules(row)
+                    row_check = Row(definition).check_rules(row)
                     if row_check:
-                        self.errors.extend([
+                        errors.extend([
                             f'row {str(rix + 1)}: {x}' for x in row_check
                         ])
                         continue  # if there are errors in row, skip cell checks in row
                     for cix, cell in enumerate(row):
-                        self.errors.extend([
+                        errors.extend([
                             f'row {str(rix + 1)} col {str(cix + 1)} ({names[cix]}): {x}'
                             for x in types[cix].check_rules(cell)
                         ])
-
-    def summary(self):
-        if self.errors:
-            return f'Validation Failed for: {self.csv_file}\n' + (
-                '\n'.join([f' - {x}' for x in self.errors])
-            )
-        else:
-            return f'Validation Successful for: {self.csv_file} '
