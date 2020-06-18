@@ -6,7 +6,7 @@ import pytest
 
 from rumydata import *
 from rumydata import rule
-from rumydata.component import DataDefinition
+from rumydata.component import Layout
 from rumydata.exception import *
 
 
@@ -17,7 +17,7 @@ def basic() -> dict:
 
 @pytest.fixture()
 def basic_definition(basic):
-    return DataDefinition(r'good\.csv', basic)
+    return Layout(r'good\.csv', basic)
 
 
 @pytest.fixture()
@@ -36,8 +36,10 @@ def includes_error(error_list, expected_error):
 
 
 def test_file_not_exists(basic):
-    with pytest.raises(FileNotFoundError):
-        File('abc123.csv', DataDefinition('abc123.csv', basic))
+    assert includes_error(
+        File(Layout('abc123.csv', basic)).check_rules('abc123.csv'),
+        FileNotFoundError
+    )
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -203,4 +205,4 @@ def test_header_bad(basic, value, err):
 
 
 def test_file_good(basic_good, basic_definition):
-    assert not File(basic_good, [basic_definition]).summary()
+    assert not File(basic_definition).check_rules(basic_good)

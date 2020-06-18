@@ -76,3 +76,7 @@ class ValueComparisonError(ValidationError):
 
 class FileValidationError(ValidationError):
     pass
+
+
+class FilePatternError(ValidationError):
+    pass

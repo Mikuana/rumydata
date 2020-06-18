@@ -17,7 +17,7 @@ and a mapping of columns to certain data types which are defined within this pac
 from rumydata import *
 
 definitions = [
-    DataDefinition(
+    Layout(
         r"my_file_\d{8}.csv",
         {
             "ID Number": Text(8),
