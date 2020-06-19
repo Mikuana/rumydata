@@ -1,8 +1,13 @@
-from collections import namedtuple
-
 from rumydata.rule import NotNull
 
-Layout = namedtuple('Layout', ['pattern', 'definition'])
+
+class Layout:
+    def __init__(self, pattern: str, definition: dict):
+        self.pattern = pattern
+        self.definition = definition
+
+    def digest(self):
+        return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
 
 
 class BaseValidator:
@@ -25,7 +30,9 @@ class BaseValidator:
         return errors
 
     def digest(self):
-        return [f'{k}: {v}' if v else k for k, v in self.descriptors.items()]
+        x = [f'{k}: {v}' if v else k for k, v in self.descriptors.items()]
+        y = [x.explain() for x in self.rules]
+        return x + y
 
 
 class DataValidator(BaseValidator):
