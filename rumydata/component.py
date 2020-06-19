@@ -1,8 +1,22 @@
-from collections import namedtuple
+from rumydata.rule import NotNull
 
-from rumydata.rule import Nullable
 
-Layout = namedtuple('Layout', ['pattern', 'definition'])
+class Layout:
+    def __init__(self, pattern: str, definition: dict, **kwargs):
+        self.pattern = pattern
+        self.definition = definition
+        self.title = kwargs.get('title')
+
+    def digest(self):
+        return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
+
+    def markdown_digest(self):
+        fields = f'# {self.title}' + '\n\n' if self.title else ''
+        fields += '\n'.join([
+            f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
+            for k, v in self.definition.items()
+        ])
+        return fields
 
 
 class BaseValidator:
@@ -25,7 +39,9 @@ class BaseValidator:
         return errors
 
     def digest(self):
-        return [f'{k}: {v}' if v else k for k, v in self.descriptors.items()]
+        x = [f'{k}: {v}' if v else k for k, v in self.descriptors.items()]
+        y = [x.explain() for x in self.rules]
+        return x + y
 
 
 class DataValidator(BaseValidator):
@@ -34,7 +50,7 @@ class DataValidator(BaseValidator):
         self.nullable = nullable
 
         if not self.nullable:
-            self.rules.append(Nullable)
+            self.rules.append(NotNull)
 
     def check_rules(self, value):
         # if data is nullable and value is empty, skip all checks

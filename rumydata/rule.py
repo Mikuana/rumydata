@@ -7,6 +7,7 @@ from rumydata import exception as ex
 
 class Rule:
     """ Base class for defining data type rules """
+    exception_class = ex.ValidationError
 
     def evaluator(self):
         """
@@ -20,69 +21,81 @@ class Rule:
         :return: a sanitized error message which is specific to the function,
         contains no direct link to the value that was checked.
         """
+        return self.exception_class(self.explain())
+
+    def explain(self) -> str:
+        """
+        :return: an explanation of the rule that is applied
+        """
         pass
 
 
-class Nullable(Rule):
+class NotNull(Rule):
+    exception_class = ex.NullValueError
+
     @classmethod
     def evaluator(cls):
         return lambda x: x != ''
 
     @classmethod
     def exception(cls):
-        return ex.NullValueError('value is empty/blank')
+        return cls.exception_class(cls.explain())
+
+    @classmethod
+    def explain(cls):
+        return 'cannot be empty/blank'
 
 
 class ExactChar(Rule):
+    exception_class = ex.DataLengthError
+
     def __init__(self, exact_length):
         self.exact_length = exact_length
 
     def evaluator(self):
         return lambda x: len(x) == self.exact_length
 
-    def exception(self):
-        return ex.DataLengthError(
-            f'value is not exactly {str(self.exact_length)} characters'
-        )
+    def explain(self):
+        return f'must be exactly {str(self.exact_length)} characters'
 
 
 class MinChar(Rule):
+    exception_class = ex.DataLengthError
+
     def __init__(self, min_length):
         self.min_length = min_length
 
     def evaluator(self):
         return lambda x: len(x) >= self.min_length
 
-    def exception(self):
-        return ex.DataLengthError(
-            f'value exceeds max characters ({str(self.min_length)})'
-        )
+    def explain(self):
+        return f'must be at least {str(self.min_length)} characters'
 
 
 class MaxChar(Rule):
+    exception_class = ex.DataLengthError
+
     def __init__(self, max_length):
         self.max_length = max_length
 
     def evaluator(self):
         return lambda x: len(x) <= self.max_length
 
-    def exception(self):
-        return ex.DataLengthError(
-            f'value exceeds max characters ({str(self.max_length)})'
-        )
+    def explain(self):
+        return f'must be no more than {str(self.max_length)} characters'
 
 
 class Choice(Rule):
+    exception_class = ex.InvalidChoiceError
+
     def __init__(self, choices: list):
         self.choices = choices
 
     def evaluator(self):
         return lambda x: x in self.choices
 
-    def exception(self):
-        return ex.InvalidChoiceError(
-            f'value not one of choices{self.choices})'
-        )
+    def explain(self):
+        return f'must be one of {self.choices}'
 
 
 class MinDigit(Rule):
@@ -91,6 +104,7 @@ class MinDigit(Rule):
     exceeds the specified minimum. Used to evaluate length of significant digits
     in numeric strings that might contain formatting.
     """
+    exception_class = ex.DataLengthError
 
     def __init__(self, min_length):
         self.min_length = min_length
@@ -98,10 +112,8 @@ class MinDigit(Rule):
     def evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
 
-    def exception(self):
-        return ex.DataLengthError(
-            f'value exceeds max characters ({str(self.min_length)})'
-        )
+    def explain(self):
+        return f'must have at least {str(self.min_length)} digits after removing other characters'
 
 
 class MaxDigit(Rule):
@@ -110,6 +122,7 @@ class MaxDigit(Rule):
     or equal to the specified minimum. Used to evaluate length of significant
     digits in numeric strings that might contain formatting.
     """
+    exception_class = ex.DataLengthError
 
     def __init__(self, max_length):
         self.max_length = max_length
@@ -117,18 +130,18 @@ class MaxDigit(Rule):
     def evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
 
-    def exception(self):
-        return ex.DataLengthError(
-            f'value exceeds max characters ({str(self.max_length)})'
-        )
+    def explain(self):
+        return f'must have no more than {self.max_length} digits after removing other characters'
 
 
 class OnlyNumbers(Rule):
+    exception_class = ex.DataError
+
     def evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)
 
-    def exception(self):
-        return ex.DataError('value is not made exclusively of numbers')
+    def explain(self):
+        return 'must only contain characters 0-9'
 
 
 class NoLeadingZero(Rule):
@@ -136,49 +149,56 @@ class NoLeadingZero(Rule):
     Ensure that there is no leading zero after removing all non-digit characters.
     A lone zero (0) will not raise an error.
     """
+    exception_class = ex.LeadingZeroError
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x))
 
-    def exception(self):
-        return ex.LeadingZeroError('value does not start with non-zero digit')
+    def explain(self):
+        return 'cannot have a leading zero digit'
 
 
 class CanBeFloat(Rule):
+    exception_class = ex.ConversionError
+
     def evaluator(self):
         return lambda x: isinstance(float(x), float)
 
-    def exception(self):
-        return ex.ConversionError('value cannot be coerced into a float type')
+    def explain(self):
+        return 'can be coerced into a float value'
 
 
 class CanBeInteger(Rule):
+    exception_class = ex.ConversionError
+
     def evaluator(self):
         return lambda x: isinstance(int(x), int)
 
-    def exception(self):
-        return ex.ConversionError('value cannot be coerced into a integer type')
+    def explain(self):
+        return 'can be coerced into an integer value'
 
 
 class CanBeDateIso(Rule):
+    exception_class = ex.ConversionError
+
     def evaluator(self):
         return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
 
-    def exception(self):
-        return ex.ConversionError('value cannot be coerced into a date type')
+    def explain(self):
+        return 'can be coerced into a ISO-8601 date'
 
 
 class NumericDecimals(Rule):
+    exception_class = ex.CurrencyPatternError
+
     def __init__(self, decimals=2):
         self.decimals = decimals
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x)
 
-    def exception(self):
-        return ex.CurrencyPatternError(
-            f'value exceeds the decimal limit of {str(self.decimals)}'
-        )
+    def explain(self):
+        return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
 class LengthComparison(Rule):
@@ -186,18 +206,14 @@ class LengthComparison(Rule):
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
     """
+    exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
     def __init__(self, comparison_value):
         self.comparison_value = comparison_value
 
-    def description(self):
+    def explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
-
-    def exception(self):
-        return ex.ValueComparisonError(
-            f'length is not {self.comparison_language} {self.comparison_value}'
-        )
 
 
 class LengthGT(LengthComparison):
@@ -245,18 +261,14 @@ class NumericComparison(Rule):
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
     """
+    exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
     def __init__(self, comparison_value):
         self.comparison_value = comparison_value
 
-    def description(self):
+    def explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
-
-    def exception(self):
-        return ex.ValueComparisonError(
-            f'value is not {self.comparison_language} {self.comparison_value}'
-        )
 
 
 class NumericGT(NumericComparison):
@@ -304,19 +316,15 @@ class DateComparison(Rule):
     Base date value comparison class. Requires that the value can be coerced
     to a date using the specified format for the field.
     """
+    exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
     def __init__(self, comparison_value, date_format='%Y%m%d'):
         self.date_format = date_format
         self.comparison_value = datetime.strptime(comparison_value, date_format)
 
-    def description(self):
+    def explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
-
-    def exception(self):
-        return ex.ValueComparisonError(
-            f'date is not {self.comparison_language} {self.comparison_value}'
-        )
 
 
 class DateGT(DateComparison):
@@ -365,36 +373,43 @@ class HeaderRule(Rule):
 
 
 class HeaderColumnOrder(HeaderRule):
+    exception_class = ex.DataError
 
     def evaluator(self):
         return lambda x: x == list(self.definition)
 
-    def exception(self):
-        return ex.DataError('Header row may be out of expected order')
+    def explain(self):
+        return 'Header row must explicitly match order of definition'
 
 
 class HeaderNoExtra(HeaderRule):
+    exception_class = ex.UnexpectedColumnError
+
     def evaluator(self):
         return lambda x: all([y in self.definition for y in x])
 
-    def exception(self):
-        return ex.UnexpectedColumnError('Header row includes an unexpected column')
+    def explain(self):
+        return 'Header row must not have unexpected columns'
 
 
 class HeaderNoMissing(HeaderRule):
+    exception_class = ex.MissingColumnError
+
     def evaluator(self):
         return lambda x: all([y in x for y in self.definition])
 
-    def exception(self):
-        return ex.MissingColumnError('Header row missing an expected column')
+    def explain(self) -> str:
+        return 'Header row must not be missing any expected columns'
 
 
 class HeaderNoDuplicate(HeaderRule):
+    exception_class = ex.DuplicateColumnError
+
     def evaluator(self):
         return lambda x: len(x) == len(set(x))
 
-    def exception(self):
-        return ex.DuplicateColumnError('Header row contains duplicate value')
+    def explain(self):
+        return 'Header row must not contain duplicate values'
 
 
 class FileRule(Rule):
@@ -402,25 +417,31 @@ class FileRule(Rule):
 
 
 class FileExists(FileRule):
+    exception_class = FileNotFoundError
+
     def evaluator(self):
         return lambda x: Path(x).exists()
 
-    def exception(self):
-        return FileNotFoundError()
+    def explain(self) -> str:
+        return 'file must exist'
 
 
 class FileNameMatchesPattern(FileRule):
+    exception_class = ex.FilePatternError
+
     def __init__(self, patterns: list):
         self.patterns = patterns
 
     def evaluator(self):
         return lambda x: any([re.fullmatch(p, Path(x).name) for p in self.patterns])
 
-    def exception(self):
-        return ex.FilePatternError('file name does not match a layout pattern')
+    def explain(self) -> str:
+        return 'file name must match a pattern provided in the layout'
 
 
 class FileNameMatchesOnePattern(FileRule):
+    exception_class = ex.FileValidationError
+
     def __init__(self, patterns: list):
         self.patterns = patterns
 
@@ -429,5 +450,5 @@ class FileNameMatchesOnePattern(FileRule):
             True if re.fullmatch(p, Path(x).name) else False for p in self.patterns
         ]) <= 1
 
-    def exception(self):
-        return ex.FilePatternError('file name matches more than one layout pattern')
+    def explain(self) -> str:
+        return 'file cannot match multiple patterns provided in the layout'
