@@ -2,12 +2,21 @@ from rumydata.rule import NotNull
 
 
 class Layout:
-    def __init__(self, pattern: str, definition: dict):
+    def __init__(self, pattern: str, definition: dict, **kwargs):
         self.pattern = pattern
         self.definition = definition
+        self.title = kwargs.get('title')
 
     def digest(self):
         return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
+
+    def markdown_digest(self):
+        fields = f'# {self.title}' + '\n\n' if self.title else ''
+        fields += '\n'.join([
+            f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
+            for k, v in self.definition.items()
+        ])
+        return fields
 
 
 class BaseValidator:
