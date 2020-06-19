@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from rumydata.rule import Nullable
+from rumydata.rule import NotNull
 
 Layout = namedtuple('Layout', ['pattern', 'definition'])
 
@@ -34,7 +34,7 @@ class DataValidator(BaseValidator):
         self.nullable = nullable
 
         if not self.nullable:
-            self.rules.append(Nullable)
+            self.rules.append(NotNull)
 
     def check_rules(self, value):
         # if data is nullable and value is empty, skip all checks
