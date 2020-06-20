@@ -1,10 +1,18 @@
+from re import compile, Pattern
+from typing import Union
+
 from rumydata.rule import NotNull
 
 
 class Layout:
-    def __init__(self, pattern: str, definition: dict, **kwargs):
-        self.pattern = pattern
+    def __init__(self, definition: dict, pattern: Union[str, Pattern] = None, **kwargs):
+        if isinstance(pattern, str):
+            self.pattern = compile(pattern)
+        else:
+            self.pattern = pattern
+
         self.definition = definition
+
         self.title = kwargs.get('title')
 
     def digest(self):

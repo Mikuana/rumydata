@@ -17,7 +17,7 @@ def basic() -> dict:
 
 @pytest.fixture()
 def basic_definition(basic):
-    return Layout(r'good\.csv', basic)
+    return Layout(basic, pattern=r'good\.csv')
 
 
 @pytest.fixture()
@@ -37,7 +37,7 @@ def includes_error(error_list, expected_error):
 
 def test_file_not_exists(basic):
     assert includes_error(
-        File(Layout('abc123.csv', basic)).check_rules('abc123.csv'),
+        File(Layout(basic, pattern='abc123.csv')).check_rules('abc123.csv'),
         FileNotFoundError
     )
 

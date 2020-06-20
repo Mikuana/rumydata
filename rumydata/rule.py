@@ -433,7 +433,7 @@ class FileNameMatchesPattern(FileRule):
         self.patterns = patterns
 
     def evaluator(self):
-        return lambda x: any([re.fullmatch(p, Path(x).name) for p in self.patterns])
+        return lambda x: any([p.fullmatch(Path(x).name) for p in self.patterns])
 
     def explain(self) -> str:
         return 'file name must match a pattern provided in the layout'
@@ -447,7 +447,7 @@ class FileNameMatchesOnePattern(FileRule):
 
     def evaluator(self):
         return lambda x: sum([
-            True if re.fullmatch(p, Path(x).name) else False for p in self.patterns
+            True if p.fullmatch(Path(x).name) else False for p in self.patterns
         ]) <= 1
 
     def explain(self) -> str:

@@ -1,5 +1,4 @@
 import csv
-import re
 from pathlib import Path
 from typing import Union, List
 
@@ -137,7 +136,7 @@ class File(DataValidator):
             return errors
 
         for layout in self.layouts:
-            if re.fullmatch(layout.pattern, p.name):
+            if layout.pattern.fullmatch(p.name):
                 definition = layout.definition
 
         # noinspection PyUnboundLocalVariable
