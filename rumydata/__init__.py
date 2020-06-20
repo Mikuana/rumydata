@@ -3,11 +3,11 @@ from rumydata.component import (
 )
 from rumydata.rule import NumericGT, NumericGTE, NumericET, NumericLTE, NumericLT
 from rumydata.validator import (
-    DataValidator, Text, Choice, File, Date, Currency, Integer, Digit,
+    DataType, Text, Choice, File, Date, Currency, Integer, Digit,
     Row, Header
 )
 
 __all__ = [
-    'DataValidator', 'Text', 'Choice', 'File', 'Date', 'Currency', 'Integer', 'Digit',
+    'DataType', 'Text', 'Choice', 'File', 'Date', 'Currency', 'Integer', 'Digit',
     'Row', 'Header', 'Layout'
 ]

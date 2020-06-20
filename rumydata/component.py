@@ -6,10 +6,22 @@ from rumydata.rule import NotNull
 
 class Layout:
     def __init__(self, definition: dict, pattern: Union[str, Pattern] = None, **kwargs):
+        """
+        Defines the layout of a tabular file.
+
+        :param definition: dictionary of column names with DataType definitions
+        :param pattern: an optional regex pattern - provided as either a string or
+        a re.Pattern class - which will be used to determine if a file matches an
+        expected naming schema. This is necessary when your data set includes multiple,
+        as it allows the package to determine which definition should be used to
+        validate file.
+        """
         if isinstance(pattern, str):
             self.pattern = compile(pattern)
-        else:
+        elif isinstance(pattern, Pattern):
             self.pattern = pattern
+        elif not pattern:
+            self.pattern = compile(r'.+')
 
         self.definition = definition
 
@@ -52,7 +64,7 @@ class BaseValidator:
         return x + y
 
 
-class DataValidator(BaseValidator):
+class DataType(BaseValidator):
     def __init__(self, nullable=False, rules: list = None):
         super().__init__(rules)
         self.nullable = nullable

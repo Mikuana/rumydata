@@ -3,10 +3,10 @@ from pathlib import Path
 from typing import Union, List
 
 from rumydata import rule
-from rumydata.component import DataValidator, Layout
+from rumydata.component import DataType, Layout
 
 
-class Text(DataValidator):
+class Text(DataType):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -20,7 +20,7 @@ class Text(DataValidator):
             self.rules.append(rule.MinChar(min_length))
 
 
-class Date(DataValidator):
+class Date(DataType):
     def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
         super().__init__(**kwargs)
 
@@ -38,7 +38,7 @@ class Date(DataValidator):
             self.rules.append(rule.DateGTE(max_date))
 
 
-class Currency(DataValidator):
+class Currency(DataType):
     def __init__(self, significant_digits: int, **kwargs):
         super().__init__(**kwargs)
 
@@ -50,7 +50,7 @@ class Currency(DataValidator):
         self.rules.append(rule.NumericDecimals())
 
 
-class Digit(DataValidator):
+class Digit(DataType):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -66,7 +66,7 @@ class Digit(DataValidator):
             self.rules.append(rule.MinChar(min_length))
 
 
-class Integer(DataValidator):
+class Integer(DataType):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -83,7 +83,7 @@ class Integer(DataValidator):
             self.rules.append(rule.MinDigit(min_length))
 
 
-class Choice(DataValidator):
+class Choice(DataType):
     def __init__(self, valid_values: list, **kwargs):
         super().__init__(**kwargs)
 
@@ -92,7 +92,7 @@ class Choice(DataValidator):
         self.rules.append(rule.Choice(valid_values))
 
 
-class Row(DataValidator):
+class Row(DataType):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
         expected_length = len(list(definition.keys()))
@@ -104,7 +104,7 @@ class Row(DataValidator):
         ])
 
 
-class Header(DataValidator):
+class Header(DataType):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
 
@@ -116,7 +116,7 @@ class Header(DataValidator):
         ])
 
 
-class File(DataValidator):
+class File(DataType):
     def __init__(self, layouts: Union[Layout, List[Layout]], **kwargs):
         super().__init__(**kwargs)
         self.layouts = [layouts] if isinstance(layouts, Layout) else layouts
@@ -164,3 +164,4 @@ class File(DataValidator):
                             f'row {str(rix + 1)} col {str(cix + 1)} ({names[cix]}): {x}'
                             for x in types[cix].check_rules(cell)
                         ])
+        return errors
