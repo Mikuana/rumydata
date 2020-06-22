@@ -1,6 +1,7 @@
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Union, List
 
 from rumydata import exception as ex
 
@@ -429,8 +430,8 @@ class FileExists(FileRule):
 class FileNameMatchesPattern(FileRule):
     exception_class = ex.FilePatternError
 
-    def __init__(self, patterns: list):
-        self.patterns = patterns
+    def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
+        self.patterns = [pattern] if isinstance(pattern, re.Pattern) else pattern
 
     def evaluator(self):
         return lambda x: any([p.fullmatch(Path(x).name) for p in self.patterns])

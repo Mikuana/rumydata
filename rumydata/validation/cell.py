@@ -1,9 +1,5 @@
-import csv
-from pathlib import Path
-from typing import Union, List
-
 from rumydata import rule
-from rumydata.component import DataType, Layout
+from rumydata.validation import DataType
 
 
 class Text(DataType):
@@ -90,78 +86,3 @@ class Choice(DataType):
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
         self.rules.append(rule.Choice(valid_values))
-
-
-class Row(DataType):
-    def __init__(self, definition, **kwargs):
-        super().__init__(**kwargs)
-        expected_length = len(list(definition.keys()))
-
-        self.rules.extend([
-            rule.LengthLTE(expected_length),
-            rule.LengthET(expected_length),
-            rule.LengthGTE(expected_length)
-        ])
-
-
-class Header(DataType):
-    def __init__(self, definition, **kwargs):
-        super().__init__(**kwargs)
-
-        self.rules.extend([
-            rule.HeaderColumnOrder(definition),
-            rule.HeaderNoExtra(definition),
-            rule.HeaderNoDuplicate(definition),
-            rule.HeaderNoMissing(definition)
-        ])
-
-
-class File(DataType):
-    def __init__(self, layouts: Union[Layout, List[Layout]], **kwargs):
-        super().__init__(**kwargs)
-        self.layouts = [layouts] if isinstance(layouts, Layout) else layouts
-        patterns = [x.pattern for x in self.layouts]
-
-        self.rules.extend([
-            rule.FileExists(),
-            rule.FileNameMatchesPattern(patterns),
-            rule.FileNameMatchesOnePattern(patterns)
-        ])
-
-    def check_rules(self, file: Union[str, Path]):
-        # first check file rules before attempting to read data
-        p = Path(file) if isinstance(file, str) else file
-        errors = super().check_rules(p)
-        if errors:  # abort checks if there are any file errors
-            return errors
-
-        for layout in self.layouts:
-            if layout.pattern.fullmatch(p.name):
-                definition = layout.definition
-
-        # noinspection PyUnboundLocalVariable
-        if not definition:
-            raise Exception("Something went terribly wrong")
-
-        with open(p) as f:
-            # noinspection PyUnboundLocalVariable
-            names = list(definition.keys())
-            types = list(definition.values())
-            for rix, row in enumerate(csv.reader(f)):
-                if rix == 0:  # abort checks if there are any header errors
-                    errors.extend(Header(definition).check_rules(row))
-                    if errors:
-                        return errors
-                else:
-                    row_check = Row(definition).check_rules(row)
-                    if row_check:
-                        errors.extend([
-                            f'row {str(rix + 1)}: {x}' for x in row_check
-                        ])
-                        continue  # if there are errors in row, skip cell checks in row
-                    for cix, cell in enumerate(row):
-                        errors.extend([
-                            f'row {str(rix + 1)} col {str(cix + 1)} ({names[cix]}): {x}'
-                            for x in types[cix].check_rules(cell)
-                        ])
-        return errors

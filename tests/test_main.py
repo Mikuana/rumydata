@@ -1,13 +1,10 @@
-import csv
 import tempfile
-from pathlib import Path
 
 import pytest
 
-from rumydata import *
-from rumydata import rule
-from rumydata.component import Layout
 from rumydata.exception import *
+from rumydata.validation.cell import *
+from rumydata.validation.file import *
 
 
 @pytest.fixture()
@@ -206,3 +203,7 @@ def test_header_bad(basic, value, err):
 
 def test_file_good(basic_good, basic_definition):
     assert not File(basic_definition).check_rules(basic_good)
+
+
+def test_layout_good(basic, basic_good):
+    assert not Layout(basic).check_file(basic_good)
