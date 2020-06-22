@@ -10,6 +10,12 @@ This python package takes on the challenges of of transmitting data in text form
     without exposing any information about the actual data in the file
 
 
+This package provides all of this with the don't repeat yourself (DRY) principle
+at its core.
+
+ - the code that defines the data, documents the data
+ - the code that defines the data, validates the data
+
 ## Example
 
 For this example, we'll pretend that Alice needs Bob to send her data.
@@ -80,7 +86,7 @@ layout.check_file('bobs_data.csv')
 
 When Alice checks the file for validity, she receives the following message:
 
-> row 4 col 2 (col2): must be one of ['x', 'y', 'z']
+> InvalidChoiceError("row 4 col 2 (col2): must be one of ['x', 'y', 'z']")
 
 The layout has detected that the second value of the fourth row does not meet the
 defined expectations, and it has provided a detailed message explaining what was
@@ -91,4 +97,6 @@ as it lets Alice freely communicate with Bob about the issues in the data, with
 little risk of exposing the data itself.
 
 Alice sends the message to Bob, and with it he's able to easily see that the value
-her provided was not one of the valid choices.
+her provided was not one of the valid choices. He can also refer back to the definition
+digest, and see that `col2` is nullable, and that he can send a blank value instead
+of the invalid value that he sent.
