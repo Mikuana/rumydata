@@ -28,6 +28,28 @@ def basic_good():
         yield p.as_posix()
 
 
+@pytest.fixture()
+def readme_layout():
+    return {
+        'col1': Text(8),
+        'col2': Choice(['x', 'y', 'z'], nullable=True),
+        'col3': Integer(1)
+    }
+
+
+@pytest.fixture()
+def readme_data():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d, 'bobs_data.csv')
+        p.write_text('\n'.join([
+            "col1,col2,col3",
+            "abc,x,-1",
+            "def,,0",
+            "ghi,a,1"
+        ]))
+        yield p.as_posix()
+
+
 def includes_error(error_list, expected_error):
     return any([isinstance(x, expected_error) for x in error_list])
 
@@ -207,3 +229,9 @@ def test_file_good(basic_good, basic_definition):
 
 def test_layout_good(basic, basic_good):
     assert not Layout(basic).check_file(basic_good)
+
+
+def test_readme_example(readme_layout, readme_data):
+    assert includes_error(
+        Layout(readme_layout).check_file(readme_data), InvalidChoiceError
+    )

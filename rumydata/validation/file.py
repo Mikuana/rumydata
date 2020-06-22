@@ -81,7 +81,10 @@ class File(BaseValidator):
                         continue  # if there are errors in row, skip cell checks
                     for cix, cell in enumerate(row):
                         errors.extend([
-                            f'row {str(rix + 1)} col {str(cix + 1)} ({names[cix]}): {x}'
+                            type(x)(
+                                f'row {str(rix + 1)} col {str(cix + 1)} '
+                                f'({names[cix]}): {x}'
+                            )
                             for x in types[cix].check_rules(cell)
                         ])
         return errors
