@@ -1,22 +1,4 @@
-from rumydata.rule import NotNull
-
-
-class Layout:
-    def __init__(self, pattern: str, definition: dict, **kwargs):
-        self.pattern = pattern
-        self.definition = definition
-        self.title = kwargs.get('title')
-
-    def digest(self):
-        return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
-
-    def markdown_digest(self):
-        fields = f'# {self.title}' + '\n\n' if self.title else ''
-        fields += '\n'.join([
-            f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
-            for k, v in self.definition.items()
-        ])
-        return fields
+from rumydata import rule
 
 
 class BaseValidator:
@@ -26,15 +8,15 @@ class BaseValidator:
 
     def check_rules(self, value):
         errors = []
-        for rule in self.rules:
+        for r in self.rules:
             # noinspection PyBroadException
             try:
-                if not rule.evaluator()(value):
-                    errors.append(rule.exception())
+                if not r.evaluator()(value):
+                    errors.append(r.exception())
             except Exception as e:  # get type, and rewrite safe message
                 e = type(e)
                 errors.append(e(
-                    f'Error while attempting check if {str(rule.exception())}')
+                    f'Error while attempting check if {str(r.exception())}')
                 )
         return errors
 
@@ -44,13 +26,13 @@ class BaseValidator:
         return x + y
 
 
-class DataValidator(BaseValidator):
+class DataType(BaseValidator):
     def __init__(self, nullable=False, rules: list = None):
         super().__init__(rules)
         self.nullable = nullable
 
         if not self.nullable:
-            self.rules.append(NotNull)
+            self.rules.append(rule.NotNull)
 
     def check_rules(self, value):
         # if data is nullable and value is empty, skip all checks

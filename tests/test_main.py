@@ -1,13 +1,10 @@
-import csv
 import tempfile
-from pathlib import Path
 
 import pytest
 
-from rumydata import *
-from rumydata import rule
-from rumydata.component import Layout
 from rumydata.exception import *
+from rumydata.validation.cell import *
+from rumydata.validation.file import *
 
 
 @pytest.fixture()
@@ -17,7 +14,7 @@ def basic() -> dict:
 
 @pytest.fixture()
 def basic_definition(basic):
-    return Layout(r'good\.csv', basic)
+    return Layout(basic, pattern=r'good\.csv')
 
 
 @pytest.fixture()
@@ -31,13 +28,35 @@ def basic_good():
         yield p.as_posix()
 
 
+@pytest.fixture()
+def readme_layout():
+    return {
+        'col1': Text(8),
+        'col2': Choice(['x', 'y', 'z'], nullable=True),
+        'col3': Integer(1)
+    }
+
+
+@pytest.fixture()
+def readme_data():
+    with tempfile.TemporaryDirectory() as d:
+        p = Path(d, 'bobs_data.csv')
+        p.write_text('\n'.join([
+            "col1,col2,col3",
+            "abc,x,-1",
+            "def,,0",
+            "ghi,a,1"
+        ]))
+        yield p.as_posix()
+
+
 def includes_error(error_list, expected_error):
     return any([isinstance(x, expected_error) for x in error_list])
 
 
 def test_file_not_exists(basic):
     assert includes_error(
-        File(Layout('abc123.csv', basic)).check_rules('abc123.csv'),
+        File(Layout(basic, pattern='abc123.csv')).check_rules('abc123.csv'),
         FileNotFoundError
     )
 
@@ -206,3 +225,13 @@ def test_header_bad(basic, value, err):
 
 def test_file_good(basic_good, basic_definition):
     assert not File(basic_definition).check_rules(basic_good)
+
+
+def test_layout_good(basic, basic_good):
+    assert not Layout(basic).check_file(basic_good)
+
+
+def test_readme_example(readme_layout, readme_data):
+    assert includes_error(
+        Layout(readme_layout).check_file(readme_data), InvalidChoiceError
+    )

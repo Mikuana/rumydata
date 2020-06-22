@@ -2,34 +2,101 @@
 
 ![img](are-you-my-data.jpg)
 
-This is a pure python package which takes on the task of validating the formatting and
-contents of data contained in text files (e.g. csv).
+This python package takes on the challenges of of transmitting data in text format. 
 
- 1. examine files completely before raising errors about individual cells
- 2. provide ample detail to identify cells, and the kinds of violations that they trigger
- 3. protect the privacy of the data in reported error messages
+ 1. Provides a simple, and expressive framework to define a data set
+ 2. Generates explicit documentation on the dataset for communication with others
+ 3. Validates files against definition, providing detailed messages about violations
+    without exposing any information about the actual data in the file
 
 
-The package allows for the definition of expected file name patterns (using regex),
-and a mapping of columns to certain data types which are defined within this package.
+This package provides all of this with the don't repeat yourself (DRY) principle
+at its core.
+
+ - the code that defines the data, documents the data
+ - the code that defines the data, validates the data
+
+## Example
+
+For this example, we'll pretend that Alice needs Bob to send her data.
+
+Alice will start by defining a layout. In the dataset, she wants a Text column,
+a Choice column, and an Integer. She'll define that below, then generate a digest
+of the layout so that she can share it with Bob. She accomplishes that with the
+code below.
 
 ```python
-from rumydata import *
-
-definitions = [
-    Layout(
-        r"my_file_\d{8}.csv",
-        {
-            "ID Number": Text(8),
-            "This Name": Text(80),
-            "This Choice": Choice(['S', 'N', 'I']),
-            "Unit": Choice(['feet', 'inches']),
-            "Dollars": Currency(15),
-            "Effective Date": Date(),
-            "Big Number": Integer(9)
-        }
-    )
-]
-
-File('my_file_20200101.csv', definitions)
+from rumydata import Layout, Text, Integer, Choice
+layout = Layout(definition={
+    'col1': Text(8),
+    'col2': Choice(['x', 'y', 'z'], nullable=True),
+    'col3': Integer(1)
+})
+print(layout.markdown_digest())
 ```
+
+As you can see in the digest output below, there is a great deal of explicit detail.
+This is to the benefit of Bob, who needs to extract data from his source systems
+and conform it to Alice's expectations.
+
+This demonstrates a key concept of this package; _the code that defines the data, documents
+the data_. This makes Alice's job easier, but also helps to prevent miscommunication
+and misunderstanding that occurs when Alice documents the expectation separately
+from the actual code.
+
+```markdown
+- **col1**
+   - Type: String
+   - Max Length: 8 characters
+   - cannot be empty/blank
+   - must be no more than 8 characters
+ - **col2**
+   - Type: Choice
+   - Choices: x,y,z
+   - must be one of ['x', 'y', 'z']
+   - Nullable
+ - **col3**
+   - Type: Numeric
+   - Format: 9
+   - Max Length: 1 digits
+   - cannot be empty/blank
+   - can be coerced into an integer value
+   - cannot have a leading zero digit
+   - must have no more than 1 digits after removing other characters
+```
+
+In our example, Alice sends the documentation to Bob, who then performs an extract
+of the data from his system. Bob thinks he's followed the documentation exactly
+as described, but he's actually made a mistake.
+
+| col1 | col2 | col3 |
+|------|------|------|
+| abc  | x    | -1   |
+| def  |      | 0    |
+| ghi  | a    | 1    |
+
+Bob sends the data to Alice, who then validates it using her layout. Another key
+concept of this package is demonstrated in this step; _the code that defines the
+data, validates the data_.
+
+```python
+from rumydata import File
+layout.check_file('bobs_data.csv')
+```
+
+When Alice checks the file for validity, she receives the following message:
+
+> InvalidChoiceError("row 4 col 2 (col2): must be one of ['x', 'y', 'z']")
+
+The layout has detected that the second value of the fourth row does not meet the
+defined expectations, and it has provided a detailed message explaining what was
+expected. It is important to note: this error message does **not** describe the
+value that was provided, it only describes what was expected, and where in the
+data that expectation was violated. This is an intentional design of this package,
+as it lets Alice freely communicate with Bob about the issues in the data, with
+little risk of exposing the data itself.
+
+Alice sends the message to Bob, and with it he's able to easily see that the value
+her provided was not one of the valid choices. He can also refer back to the definition
+digest, and see that `col2` is nullable, and that he can send a blank value instead
+of the invalid value that he sent.
