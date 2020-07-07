@@ -100,3 +100,7 @@ Alice sends the message to Bob, and with it he's able to easily see that the val
 her provided was not one of the valid choices. He can also refer back to the definition
 digest, and see that `col2` is nullable, and that he can send a blank value instead
 of the invalid value that he sent.
+
+# Errors
+
+Add error raising content.
