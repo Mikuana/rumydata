@@ -95,7 +95,29 @@ class UrNotMyDataError(Exception):
         self.errors = errors or []
 
     def __str__(self):
-        return f' - {self.__class__.__name__}: {self.message}' + ('\n'.join(str(x) for x in self.errors) if self.errors else '')
+        if self.errors:
+            return self.nested_exception_md()
+        else:
+            return self.exception_md()
+
+    def nested_exception_md(self):
+        return '\n'.join(
+            [self.exception_md()] +
+            ['  ' * y + x for x, y in self.flatten_exceptions(self.errors)]
+        )
+
+    def exception_md(self):
+        return f' - {self.__class__.__name__}: {self.message}'
+
+    @classmethod
+    def flatten_exceptions(cls, errors, depth=0):
+        """ Return error message fragment for markdown formatted output """
+        depth += 1
+        for el in errors:
+            if isinstance(el, list) and not isinstance(el, (str, bytes)):
+                yield from cls.flatten_exceptions(el, depth)
+            else:
+                yield str(el), depth
 
 
 class FileError(UrNotMyDataError):
@@ -115,11 +137,6 @@ class NullValueError(CellError):
 
 
 if __name__ == '__main__':
-    print(RowError('row 5'))
-    print(CellError('col 6 (MyColumn)'))
-    print(NullValueError())
-    print()
-
     print(
-        CellError('col6', [NullValueError()])
+        CellError('col6', [NullValueError(), NullValueError()])
     )
