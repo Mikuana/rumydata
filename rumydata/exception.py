@@ -1,6 +1,3 @@
-from typing import List
-
-
 class ValidationError(Exception):
     pass
 
@@ -95,29 +92,25 @@ class UrNotMyDataError(Exception):
         self.errors = errors or []
 
     def __str__(self):
+        return self.md()
+
+    def md(self, depth=0):
+        txt = f'{"  " * depth} - {self.__class__.__name__}: {self.message}'
         if self.errors:
-            return self.nested_exception_md()
-        else:
-            return self.exception_md()
-
-    def nested_exception_md(self):
-        return '\n'.join(
-            [self.exception_md()] +
-            ['  ' * y + x for x, y in self.flatten_exceptions(self.errors)]
-        )
-
-    def exception_md(self):
-        return f' - {self.__class__.__name__}: {self.message}'
+            txt = '\n'.join([txt] + [x for x in self.flatten_exceptions(self.errors, depth)])
+        return txt
 
     @classmethod
     def flatten_exceptions(cls, errors, depth=0):
-        """ Return error message fragment for markdown formatted output """
+        """ Generate error message at appropriate indent for their nested depth """
         depth += 1
         for el in errors:
             if isinstance(el, list) and not isinstance(el, (str, bytes)):
-                yield from cls.flatten_exceptions(el, depth)
+                yield cls.flatten_exceptions(el, depth)
+            elif isinstance(el, UrNotMyDataError):
+                yield el.md(depth)
             else:
-                yield str(el), depth
+                raise Exception("You shouldn't be able to get here")
 
 
 class FileError(UrNotMyDataError):
@@ -136,7 +129,13 @@ class NullValueError(CellError):
     message = 'value is blank/null'
 
 
+class NegativeValueError(CellError):
+    message = "You're too negative"
+
+
 if __name__ == '__main__':
     print(
-        CellError('col6', [NullValueError(), NullValueError()])
+        RowError('row 3', [CellError('col6', [
+            NullValueError(errors=[NegativeValueError(errors=[NullValueError()])]), NullValueError()
+        ])])
     )
