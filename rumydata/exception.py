@@ -92,7 +92,7 @@ class UrNotMyDataError(Exception):
         self.errors = errors or []
 
     def __str__(self):
-        return self.md()
+        return '\n' + self.md()
 
     def md(self, depth=0):
         txt = f'{"  " * depth} - {self.__class__.__name__}: {self.message}'
@@ -118,7 +118,9 @@ class FileError(UrNotMyDataError):
 
 
 class RowError(UrNotMyDataError):
-    pass
+    def __init__(self, row: int, msg: str = None, errors: list = None):
+        msg = f'row {str(row)}' + (f', {msg}' if msg else '')
+        super().__init__(msg, errors)
 
 
 class CellError(UrNotMyDataError):
@@ -134,8 +136,8 @@ class NegativeValueError(CellError):
 
 
 if __name__ == '__main__':
-    print(
-        RowError('row 3', [CellError('col6', [
+    raise FileError(errors=[
+        RowError(6, msg='bad row', errors=[CellError('col6', [
             NullValueError(errors=[NegativeValueError(errors=[NullValueError()])]), NullValueError()
         ])])
-    )
+    ])
