@@ -95,7 +95,7 @@ class UrNotMyDataError(Exception):
         return '\n' + self.md()
 
     def md(self, depth=0):
-        txt = f'{"  " * depth} - {self.__class__.__name__}: {self.message}'
+        txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self.message}'
         if self.errors:
             txt = '\n'.join([txt] + [x for x in self.flatten_exceptions(self.errors, depth)])
         return txt
