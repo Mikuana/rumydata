@@ -17,7 +17,7 @@ class Rule:
         """
         pass
 
-    def exception(self):
+    def exception_msg(self):
         """
         :return: a sanitized error message which is specific to the function,
         contains no direct link to the value that was checked.
@@ -39,7 +39,7 @@ class NotNull(Rule):
         return lambda x: x != ''
 
     @classmethod
-    def exception(cls):
+    def exception_msg(cls):
         return cls.exception_class(cls.explain())
 
     @classmethod

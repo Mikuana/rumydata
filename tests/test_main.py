@@ -1,5 +1,3 @@
-import tempfile
-
 import pytest
 
 from rumydata.exception import *
@@ -56,7 +54,7 @@ def includes_error(error_list, expected_error):
 
 def test_file_not_exists(basic):
     assert includes_error(
-        File(Layout(basic, pattern='abc123.csv')).check('abc123.csv'),
+        File(Layout(basic, pattern='abc123.csv')).__check__('abc123.csv'),
         FileNotFoundError
     )
 
@@ -68,7 +66,7 @@ def test_file_not_exists(basic):
     ('', dict(max_length=1, min_length=1, nullable=True))
 ])
 def test_text_good(value, kwargs):
-    assert not Text(**kwargs).check(value)
+    assert not Text(**kwargs).__check__(value)
 
 
 @pytest.mark.parametrize('value,kwargs,err', [
@@ -77,7 +75,7 @@ def test_text_good(value, kwargs):
     ('x', dict(max_length=80, min_length=2), DataLengthError),
 ])
 def test_text_bad(value, kwargs, err):
-    assert includes_error(Text(**kwargs).check(value), err)
+    assert includes_error(Text(**kwargs).__check__(value), err)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -85,7 +83,7 @@ def test_text_bad(value, kwargs, err):
     ('', dict(nullable=True))
 ])
 def test_date_good(value, kwargs):
-    assert not Date(**kwargs).check(value)
+    assert not Date(**kwargs).__check__(value)
 
 
 @pytest.mark.parametrize('value,err', [
@@ -94,7 +92,7 @@ def test_date_good(value, kwargs):
     ('9999-99-99', ValueError)
 ])
 def test_date_bad(value, err):
-    assert includes_error(Date().check(value), err)
+    assert includes_error(Date().__check__(value), err)
 
 
 @pytest.mark.parametrize('value,sig_dig,kwargs', [
@@ -110,7 +108,7 @@ def test_date_bad(value, err):
     ('0.01', 3, dict(rules=[rule.NumericGT(0)])),
 ])
 def test_currency_good(value, sig_dig, kwargs):
-    assert not Currency(sig_dig, **kwargs).check(value)
+    assert not Currency(sig_dig, **kwargs).__check__(value)
 
 
 @pytest.mark.parametrize('value,sig_dig,rules,err', [
@@ -125,7 +123,7 @@ def test_currency_good(value, sig_dig, kwargs):
     ('123.456', 4, [], CurrencyPatternError)
 ])
 def test_currency_bad(value, sig_dig, rules, err):
-    assert includes_error(Currency(sig_dig, rules=rules).check(value), err)
+    assert includes_error(Currency(sig_dig, rules=rules).__check__(value), err)
 
 
 @pytest.mark.parametrize('value,max_length', [
@@ -134,7 +132,7 @@ def test_currency_bad(value, sig_dig, rules, err):
     ('123', 3)
 ])
 def test_digit_good(value, max_length):
-    assert not Digit(max_length).check(value)
+    assert not Digit(max_length).__check__(value)
 
 
 @pytest.mark.parametrize('value,max_length,err', [
@@ -142,7 +140,7 @@ def test_digit_good(value, max_length):
     ('-123', 3, DataLengthError)
 ])
 def test_digit_bad(value, max_length, err):
-    assert includes_error(Digit(max_length).check(value), err)
+    assert includes_error(Digit(max_length).__check__(value), err)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs', [
@@ -161,7 +159,7 @@ def test_digit_bad(value, max_length, err):
     ('1', 1, dict(rules=[rule.NumericGT(0)]))
 ])
 def test_integer_good(value, max_length, kwargs):
-    assert not Integer(max_length, **kwargs).check(value)
+    assert not Integer(max_length, **kwargs).__check__(value)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs,err', [
@@ -177,7 +175,7 @@ def test_integer_good(value, max_length, kwargs):
     ('01', 2, {}, LeadingZeroError)
 ])
 def test_integer_bad(value, max_length, kwargs, err):
-    assert includes_error(Integer(max_length, **kwargs).check(value), err)
+    assert includes_error(Integer(max_length, **kwargs).__check__(value), err)
 
 
 @pytest.mark.parametrize('value,choices,kwargs', [
@@ -187,7 +185,7 @@ def test_integer_bad(value, max_length, kwargs, err):
     ('', ['x'], dict(nullable=True))
 ])
 def test_choice_good(value, choices, kwargs):
-    assert not Choice(choices, **kwargs).check(value)
+    assert not Choice(choices, **kwargs).__check__(value)
 
 
 @pytest.mark.parametrize('value,choices,kwargs,err', [
@@ -195,11 +193,11 @@ def test_choice_good(value, choices, kwargs):
     ('x', ['z'], {}, InvalidChoiceError)
 ])
 def test_choice_bad(value, choices, kwargs, err):
-    assert includes_error(Choice(choices, **kwargs).check(value), err)
+    assert includes_error(Choice(choices, **kwargs).__check__(value), err)
 
 
 def test_row_good(basic):
-    assert not Row(basic).check([1, 2, 3])
+    assert not Row(basic).__check__([1, 2, 3])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -207,11 +205,11 @@ def test_row_good(basic):
     ([1, 2], ValueComparisonError)
 ])
 def test_row_bad(basic, value, err):
-    assert includes_error(Row(basic).check(value), err)
+    assert includes_error(Row(basic).__check__(value), err)
 
 
 def test_header_good(basic):
-    assert not Header(basic).check(['col1', 'col2', 'col3'])
+    assert not Header(basic).__check__(['col1', 'col2', 'col3'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -220,18 +218,18 @@ def test_header_good(basic):
     (['col1', 'col2', 'col4'], UnexpectedColumnError)
 ])
 def test_header_bad(basic, value, err):
-    assert includes_error(Header(basic).check(value), err)
+    assert includes_error(Header(basic).__check__(value), err)
 
 
 def test_file_good(basic_good, basic_definition):
-    assert not File(basic_definition).check(basic_good)
+    assert not File(basic_definition).__check__(basic_good)
 
 
 def test_layout_good(basic, basic_good):
-    assert not Layout(basic).check_file(basic_good)
+    assert not Layout(basic).check(basic_good)
 
 
 def test_readme_example(readme_layout, readme_data):
     assert includes_error(
-        Layout(readme_layout).check_file(readme_data), InvalidChoiceError
+        Layout(readme_layout).check(readme_data), InvalidChoiceError
     )

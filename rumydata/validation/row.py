@@ -1,20 +1,8 @@
 from rumydata import rule
-from rumydata.validation import DataType
+from rumydata.validation import Cell
 
 
-class Row(DataType):
-    def __init__(self, definition, **kwargs):
-        super().__init__(**kwargs)
-        expected_length = len(list(definition.keys()))
-
-        self.rules.extend([
-            rule.LengthLTE(expected_length),
-            rule.LengthET(expected_length),
-            rule.LengthGTE(expected_length)
-        ])
-
-
-class Header(DataType):
+class Header(Cell):
     def __init__(self, definition, **kwargs):
         super().__init__(**kwargs)
 

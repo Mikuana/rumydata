@@ -25,11 +25,7 @@ class UrNotMyDataError(Exception):
             elif issubclass(el.__class__, UrNotMyDataError):
                 yield el.md(depth)
             else:
-                raise Exception(
-                    f"Error element {el} is neither a list, str, "
-                    f"or UrNotMyDateError"
-                )
-
+                yield UrNotMyDataError(el).md(depth)
 
 class FileEncodingError(UrNotMyDataError):
     pass
