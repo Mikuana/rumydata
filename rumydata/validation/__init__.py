@@ -2,13 +2,10 @@ import csv
 from pathlib import Path
 from typing import Union
 
-from rumydata import rule
 from rumydata import exception
+from rumydata import rule
 from rumydata.exception import FileError
 from rumydata.validation.file import Layout
-
-
-# from rumydata.validation.row import Header
 
 
 class BaseValidator:
@@ -107,34 +104,22 @@ class File(BaseValidator):
 
     def __check__(self, file: Union[str, Path]):
         p = Path(file) if isinstance(file, str) else file
-        e = FileError(errors=list())
-        e.errors.extend(super().__check__(p))  # check file-based rules first
-        if e.errors:
-            return e
+        e = super().__check__(p)  # check file-based rules first
+        if e:
+            return FileError(errors=e)
 
-        d = self.layout.definition
         with open(p) as f:
-            names = list(d.keys())
-            types = list(d.values())
+            r = Row(self.layout)
             for rix, row in enumerate(csv.reader(f)):
                 if rix == 0:  # abort checks if there are any header errors
-                    errors.extend(Header(d).__check__(row))
-                    if errors:
-                        return errors
+                    pass  # TODO: implement header check
                 else:
-                    row_check = Row(d).__check__(row)
-                    if row_check:
-                        e.errors.extend([
-                            f'row {str(rix + 1)}: {x}' for x in row_check
-                        ])
-                        continue  # if there are errors in row, skip cell checks
-                    for cix, cell in enumerate(row):
-                        e.errors.extend([
-                            type(x)(
-                                f'row {str(rix + 1)} col {str(cix + 1)} '
-                                f'({names[cix]}): {x}'
-                            )
-                            for x in types[cix].__check__(cell)
-                        ])
-        if e.errors:
-            return e
+                    re = r.__check__(row, rix)
+                    if re:
+                        e.append(re)
+        if e:
+            return FileError(errors=e)
+
+    def check(self, file_path):
+        errors = self.__check__(file_path)
+        assert not errors, str(errors)

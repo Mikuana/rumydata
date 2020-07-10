@@ -27,6 +27,7 @@ class UrNotMyDataError(Exception):
             else:
                 yield UrNotMyDataError(el).md(depth)
 
+
 class FileEncodingError(UrNotMyDataError):
     pass
 
@@ -124,11 +125,3 @@ class NullValueError(CellError):
 
 class NegativeValueError(CellError):
     message = "You're too negative"
-
-
-if __name__ == '__main__':
-    raise FileError(errors=[
-        RowError(6, msg='bad row', errors=[CellError('col6', [
-            NullValueError(errors=[NegativeValueError(errors=[NullValueError()])]), NullValueError()
-        ])])
-    ])
