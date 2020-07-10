@@ -1,4 +1,5 @@
 from rumydata import rule
+from rumydata import exception
 
 
 class BaseValidator:
@@ -6,7 +7,7 @@ class BaseValidator:
         self.rules = rules or []
         self.descriptors = {}
 
-    def check_rules(self, value):
+    def check(self, value):
         errors = []
         for r in self.rules:
             # noinspection PyBroadException
@@ -34,12 +35,14 @@ class DataType(BaseValidator):
         if not self.nullable:
             self.rules.append(rule.NotNull)
 
-    def check_rules(self, value):
+    def check(self, value):
         # if data is nullable and value is empty, skip all checks
         if self.nullable and value == '':
-            return []
+            pass
         else:
-            return super().check_rules(value)
+            e = super().check(value)
+            if e:
+                return exception.CellError(errors=e)
 
     def digest(self):
         dig = super().digest()

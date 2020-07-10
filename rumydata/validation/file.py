@@ -5,6 +5,7 @@ from typing import Union, Pattern
 
 from rumydata.validation import BaseValidator
 from rumydata.validation.row import rule, Header, Row
+from rumydata.exception import FileError, RowError, CellError
 
 
 class Layout:
@@ -44,7 +45,8 @@ class Layout:
     def check_file(self, file: Union[str, Path], **kwargs):
         p = Path(file) if isinstance(file, str) else file
         f = File(self, **kwargs)
-        return f.check_rules(p)
+        errors = f.check(p)
+        assert not errors, str(errors)
 
 
 class File(BaseValidator):
@@ -57,11 +59,12 @@ class File(BaseValidator):
             rule.FileNameMatchesPattern(self.layout.pattern),
         ])
 
-    def check_rules(self, file: Union[str, Path]):
+    def check(self, file: Union[str, Path]):
         p = Path(file) if isinstance(file, str) else file
-        errors = super().check_rules(p)  # check file-based rules first
-        if errors:
-            return errors
+        e = FileError(errors=list())
+        e.errors.extend(super().check(p))  # check file-based rules first
+        if e.errors:
+            return e
 
         d = self.layout.definition
         with open(p) as f:
@@ -69,22 +72,23 @@ class File(BaseValidator):
             types = list(d.values())
             for rix, row in enumerate(csv.reader(f)):
                 if rix == 0:  # abort checks if there are any header errors
-                    errors.extend(Header(d).check_rules(row))
+                    errors.extend(Header(d).check(row))
                     if errors:
                         return errors
                 else:
-                    row_check = Row(d).check_rules(row)
+                    row_check = Row(d).check(row)
                     if row_check:
-                        errors.extend([
+                        e.errors.extend([
                             f'row {str(rix + 1)}: {x}' for x in row_check
                         ])
                         continue  # if there are errors in row, skip cell checks
                     for cix, cell in enumerate(row):
-                        errors.extend([
+                        e.errors.extend([
                             type(x)(
                                 f'row {str(rix + 1)} col {str(cix + 1)} '
                                 f'({names[cix]}): {x}'
                             )
-                            for x in types[cix].check_rules(cell)
+                            for x in types[cix].check(cell)
                         ])
-        return errors
+        if e.errors:
+            return e

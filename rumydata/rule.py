@@ -8,7 +8,7 @@ from rumydata import exception as ex
 
 class Rule:
     """ Base class for defining data type rules """
-    exception_class = ex.ValidationError
+    exception_class = ex.UrNotMyDataError
 
     def evaluator(self):
         """
@@ -441,7 +441,7 @@ class FileNameMatchesPattern(FileRule):
 
 
 class FileNameMatchesOnePattern(FileRule):
-    exception_class = ex.FileValidationError
+    exception_class = ex.UrNotMyDataError
 
     def __init__(self, patterns: list):
         self.patterns = patterns

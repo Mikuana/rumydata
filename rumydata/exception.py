@@ -1,88 +1,3 @@
-class ValidationError(Exception):
-    pass
-
-
-# class FileError(ValidationError):
-#     pass
-#
-
-class FileEncodingError(ValidationError):
-    pass
-
-
-class InvalidFileNameError(ValidationError):
-    pass
-
-
-class DataError(ValidationError):
-    pass
-
-
-class DateFormatError(ValidationError):
-    pass
-
-
-class ConversionError(ValidationError):
-    pass
-
-
-class CurrencyPatternError(ValidationError):
-    pass
-
-
-class DataLengthError(ValidationError):
-    pass
-
-
-class LeadingZeroError(ValidationError):
-    pass
-
-
-class InvalidChoiceError(ValidationError):
-    pass
-
-
-class MissingColumnError(ValidationError):
-    pass
-
-
-class UnexpectedColumnError(ValidationError):
-    pass
-
-
-class DuplicateColumnError(ValidationError):
-    pass
-
-
-class RowLengthError(ValidationError):
-    pass
-
-
-class NotEnoughFieldsError(ValidationError):
-    pass
-
-
-class TooManyFieldsError(ValidationError):
-    pass
-
-
-#
-# class NullValueError(ValidationError):
-#     pass
-
-
-class ValueComparisonError(ValidationError):
-    pass
-
-
-class FileValidationError(ValidationError):
-    pass
-
-
-class FilePatternError(ValidationError):
-    pass
-
-
 class UrNotMyDataError(Exception):
     message: str = None
 
@@ -107,10 +22,90 @@ class UrNotMyDataError(Exception):
         for el in errors:
             if isinstance(el, list) and not isinstance(el, (str, bytes)):
                 yield cls.flatten_exceptions(el, depth)
-            elif isinstance(el, UrNotMyDataError):
+            elif issubclass(el.__class__, UrNotMyDataError):
                 yield el.md(depth)
             else:
-                raise Exception("You shouldn't be able to get here")
+                raise Exception(
+                    f"Error element {el} is neither a list, str, "
+                    f"or UrNotMyDateError"
+                )
+
+
+class FileEncodingError(UrNotMyDataError):
+    pass
+
+
+class InvalidFileNameError(UrNotMyDataError):
+    pass
+
+
+class DataError(UrNotMyDataError):
+    pass
+
+
+class DateFormatError(UrNotMyDataError):
+    pass
+
+
+class ConversionError(UrNotMyDataError):
+    pass
+
+
+class CurrencyPatternError(UrNotMyDataError):
+    pass
+
+
+class DataLengthError(UrNotMyDataError):
+    pass
+
+
+class LeadingZeroError(UrNotMyDataError):
+    pass
+
+
+class InvalidChoiceError(UrNotMyDataError):
+    pass
+
+
+class MissingColumnError(UrNotMyDataError):
+    pass
+
+
+class UnexpectedColumnError(UrNotMyDataError):
+    pass
+
+
+class DuplicateColumnError(UrNotMyDataError):
+    pass
+
+
+class RowLengthError(UrNotMyDataError):
+    pass
+
+
+class NotEnoughFieldsError(UrNotMyDataError):
+    pass
+
+
+class TooManyFieldsError(UrNotMyDataError):
+    pass
+
+
+#
+# class NullValueError(UrNotMyDataError):
+#     pass
+
+
+class ValueComparisonError(UrNotMyDataError):
+    pass
+
+
+class FileUrNotMyDataError(UrNotMyDataError):
+    pass
+
+
+class FilePatternError(UrNotMyDataError):
+    pass
 
 
 class FileError(UrNotMyDataError):
