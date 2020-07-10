@@ -81,7 +81,7 @@ data, validates the data_.
 
 ```python
 from rumydata import File
-layout.check('bobs_data.csv')
+layout.check_file('bobs_data.csv')
 ```
 
 When Alice checks the file for validity, she receives the following message:

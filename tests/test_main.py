@@ -1,8 +1,8 @@
 import pytest
 
 from rumydata.exception import *
+from rumydata.validation import Layout
 from rumydata.validation.cell import *
-from rumydata.validation.file import *
 
 
 @pytest.fixture()
@@ -226,10 +226,10 @@ def test_file_good(basic_good, basic_definition):
 
 
 def test_layout_good(basic, basic_good):
-    assert not Layout(basic).check(basic_good)
+    assert not Layout(basic).check_file(basic_good)
 
 
 def test_readme_example(readme_layout, readme_data):
     assert includes_error(
-        Layout(readme_layout).check(readme_data), InvalidChoiceError
+        Layout(readme_layout).check_file(readme_data), InvalidChoiceError
     )
