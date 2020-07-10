@@ -2,7 +2,7 @@ import pytest
 
 from rumydata.exception import *
 from rumydata.validation import Layout
-from rumydata.validation.cell import *
+from rumydata.cell import *
 
 
 @pytest.fixture()

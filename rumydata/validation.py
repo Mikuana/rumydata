@@ -4,7 +4,6 @@ from re import compile
 from typing import Union, Pattern
 
 from rumydata import exception, rule
-from rumydata import rule
 from rumydata.exception import FileError
 
 
