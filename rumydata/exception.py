@@ -12,21 +12,26 @@ class UrNotMyDataError(Exception):
     def md(self, depth=0):
         txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self.message}'
         if self.errors:
-            txt = '\n'.join([txt] + [x for x in self.flatten_exceptions(self.errors, depth)])
+            txt = '\n'.join([txt] + [x for x in self.flatten_md(self.errors, depth)])
         return txt
 
     @classmethod
-    def flatten_exceptions(cls, errors, depth=0):
+    def flatten_md(cls, errors, depth=0):
         """ Generate error message at appropriate indent for their nested depth """
         depth += 1
         for el in errors:
             if isinstance(el, list) and not isinstance(el, (str, bytes)):
-                yield cls.flatten_exceptions(el, depth)
+                yield cls.flatten_md(el, depth)
             elif issubclass(el.__class__, UrNotMyDataError):
                 yield el.md(depth)
             else:
                 yield UrNotMyDataError(el).md(depth)
 
+    @classmethod
+    def flatten_exceptions(cls, error):
+        yield error
+        for el in error.errors:
+            yield cls.flatten_exceptions(el)
 
 
 class InvalidFileNameError(UrNotMyDataError):
