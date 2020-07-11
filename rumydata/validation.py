@@ -68,6 +68,23 @@ class BaseValidator:
         y = [x.explain() for x in self.rules]
         return x + y
 
+    def list_errors(self, value):
+        return list(self.flatten_exceptions(self.__check__(value)))
+
+    def has_error(self, value, error):
+        return error in [x.__class__ for x in self.list_errors(value)]
+
+    @classmethod
+    def flatten_exceptions(cls, error):
+        if isinstance(error, list):
+            for el in error:
+                yield cls.flatten_exceptions(el)
+        else:
+            yield error
+            for el in error.errors:
+                for x in cls.flatten_exceptions(el):
+                    yield x
+
 
 class Cell(BaseValidator):
     def __init__(self, nullable=False, rules: list = None):

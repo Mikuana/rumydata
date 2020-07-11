@@ -27,12 +27,6 @@ class UrNotMyDataError(Exception):
             else:
                 yield UrNotMyDataError(el).md(depth)
 
-    @classmethod
-    def flatten_exceptions(cls, error):
-        yield error
-        for el in error.errors:
-            yield cls.flatten_exceptions(el)
-
 
 class InvalidFileNameError(UrNotMyDataError):
     pass
