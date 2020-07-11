@@ -136,7 +136,7 @@ class MaxDigit(Rule):
 
 
 class OnlyNumbers(Rule):
-    exception_class = ex.DataError # TODO: character error
+    exception_class = ex.DataError  # TODO: character error
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)

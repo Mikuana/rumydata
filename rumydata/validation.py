@@ -79,11 +79,13 @@ class BaseValidator:
         if isinstance(error, list):
             for el in error:
                 yield cls.flatten_exceptions(el)
-        else:
+        elif issubclass(error.__class__, exception.UrNotMyDataError):
             yield error
             for el in error.errors:
                 for x in cls.flatten_exceptions(el):
                     yield x
+        else:
+            yield error
 
 
 class Cell(BaseValidator):

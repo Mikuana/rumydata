@@ -58,10 +58,7 @@ def includes_error(error_list, expected_error):
 
 
 def test_file_not_exists(basic):
-    assert includes_error(
-        File(Layout(basic, pattern='abc123.csv')).__check__('abc123.csv'),
-        FileNotFoundError
-    )
+    assert File(Layout(basic)).has_error('abc123.csv', FileNotFoundError)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -80,7 +77,7 @@ def test_text_good(value, kwargs):
     ('x', dict(max_length=80, min_length=2), LengthError),
 ])
 def test_text_bad(value, kwargs, err):
-    assert includes_error(Text(**kwargs).__check__(value), err)
+    assert Text(**kwargs).has_error(value, err)
 
 
 @pytest.mark.parametrize('value,kwargs', [
