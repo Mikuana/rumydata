@@ -71,8 +71,8 @@ def test_text_good(value, kwargs):
 
 @pytest.mark.parametrize('value,kwargs,err', [
     ('', dict(max_length=1), NullValueError),
-    ('xxx', dict(max_length=2), DataLengthError),
-    ('x', dict(max_length=80, min_length=2), DataLengthError),
+    ('xxx', dict(max_length=2), LengthError),
+    ('x', dict(max_length=80, min_length=2), LengthError),
 ])
 def test_text_bad(value, kwargs, err):
     assert includes_error(Text(**kwargs).__check__(value), err)
@@ -118,7 +118,7 @@ def test_currency_good(value, sig_dig, kwargs):
     ('-0.01', 5, [rule.NumericGTE(0)], ValueComparisonError),
     ('-0.01', 5, [rule.NumericGT(0)], ValueComparisonError),
     ('', 5, [], NullValueError),
-    ('123.45', 4, [], DataLengthError),
+    ('123.45', 4, [], LengthError),
     ('123.', 4, [], CurrencyPatternError),
     ('123.456', 4, [], CurrencyPatternError)
 ])
@@ -137,7 +137,7 @@ def test_digit_good(value, max_length):
 
 @pytest.mark.parametrize('value,max_length,err', [
     ('-123', 3, DataError),
-    ('-123', 3, DataLengthError)
+    ('-123', 3, LengthError)
 ])
 def test_digit_bad(value, max_length, err):
     assert includes_error(Digit(max_length).__check__(value), err)
@@ -169,8 +169,8 @@ def test_integer_good(value, max_length, kwargs):
     ('-1', 1, dict(rules=[rule.NumericGTE(0)]), ValueComparisonError),
     ('0', 1, dict(rules=[rule.NumericGT(0)]), ValueComparisonError),
     ('', 1, {}, NullValueError),
-    ('1', 2, dict(min_length=2), DataLengthError),
-    ('111', 2, {}, DataLengthError),
+    ('1', 2, dict(min_length=2), LengthError),
+    ('111', 2, {}, LengthError),
     ('00', 2, {}, LeadingZeroError),
     ('01', 2, {}, LeadingZeroError)
 ])

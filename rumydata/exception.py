@@ -28,9 +28,6 @@ class UrNotMyDataError(Exception):
                 yield UrNotMyDataError(el).md(depth)
 
 
-class FileEncodingError(UrNotMyDataError):
-    pass
-
 
 class InvalidFileNameError(UrNotMyDataError):
     pass
@@ -52,7 +49,7 @@ class CurrencyPatternError(UrNotMyDataError):
     pass
 
 
-class DataLengthError(UrNotMyDataError):
+class LengthError(UrNotMyDataError):
     pass
 
 

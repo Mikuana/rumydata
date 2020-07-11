@@ -48,7 +48,7 @@ class NotNull(Rule):
 
 
 class ExactChar(Rule):
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, exact_length):
         self.exact_length = exact_length
@@ -61,7 +61,7 @@ class ExactChar(Rule):
 
 
 class MinChar(Rule):
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, min_length):
         self.min_length = min_length
@@ -74,7 +74,7 @@ class MinChar(Rule):
 
 
 class MaxChar(Rule):
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, max_length):
         self.max_length = max_length
@@ -105,7 +105,7 @@ class MinDigit(Rule):
     exceeds the specified minimum. Used to evaluate length of significant digits
     in numeric strings that might contain formatting.
     """
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, min_length):
         self.min_length = min_length
@@ -114,7 +114,7 @@ class MinDigit(Rule):
         return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
 
     def explain(self):
-        return f'must have at least {str(self.min_length)} digits after removing other characters'
+        return f'must have at least {str(self.min_length)} digit characters'
 
 
 class MaxDigit(Rule):
@@ -123,7 +123,7 @@ class MaxDigit(Rule):
     or equal to the specified minimum. Used to evaluate length of significant
     digits in numeric strings that might contain formatting.
     """
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, max_length):
         self.max_length = max_length
@@ -132,11 +132,11 @@ class MaxDigit(Rule):
         return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
 
     def explain(self):
-        return f'must have no more than {self.max_length} digits after removing other characters'
+        return f'must have no more than {self.max_length} digit characters'
 
 
 class OnlyNumbers(Rule):
-    exception_class = ex.DataError
+    exception_class = ex.DataError # TODO: character error
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)
