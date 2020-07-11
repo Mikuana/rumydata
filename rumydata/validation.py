@@ -58,9 +58,8 @@ class BaseValidator:
                 if not r.evaluator()(value):
                     errors.append(r.exception_msg())
             except Exception as e:  # get type, and rewrite safe message
-                e = type(e)
-                errors.append(e(
-                    f'Error while attempting check if {r.explain()}')
+                errors.append(r.exception_class(
+                    f'raised {e.__class__.__name__} while checking if value {r.explain()}')
                 )
         return errors
 
