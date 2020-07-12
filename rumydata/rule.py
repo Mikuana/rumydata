@@ -368,6 +368,32 @@ class DateLT(DateComparison):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
+class RowLengthLTE(Rule):
+    exception_class = ex.RowLengthError
+
+    def __init__(self, comparison_value):
+        self.comparison_value = comparison_value
+
+    def evaluator(self):
+        return lambda x: len(x) <= self.comparison_value
+
+    def explain(self) -> str:
+        return f'row length must be equal to {str(self.comparison_value)}, not greater'
+
+
+class RowLengthGTE(Rule):
+    exception_class = ex.RowLengthError
+
+    def __init__(self, comparison_value):
+        self.comparison_value = comparison_value
+
+    def evaluator(self):
+        return lambda x: len(x) >= self.comparison_value
+
+    def explain(self) -> str:
+        return f'row length must be equal to {str(self.comparison_value)}, not less'
+
+
 class HeaderRule(Rule):
     def __init__(self, definition):
         self.definition = definition

@@ -125,9 +125,8 @@ class Row(BaseValidator):
 
         expected_length = len(layout.definition)
         self.rules.extend([
-            rule.LengthLTE(expected_length),
-            rule.LengthET(expected_length),
-            rule.LengthGTE(expected_length)
+            rule.RowLengthLTE(expected_length),
+            rule.RowLengthGTE(expected_length),
         ])
 
     def __check__(self, row: list, rix=-1):
@@ -148,9 +147,10 @@ class Row(BaseValidator):
 
 
 class Header(BaseValidator):
-    def __init__(self, layout: Layout):
-        super().__init__()
+    def __init__(self, layout: Layout, **kwargs):
+        super().__init__(**kwargs)
 
+        expected_length = len(layout.definition)
         self.rules.extend([
             rule.HeaderColumnOrder(layout.definition),
             rule.HeaderNoExtra(layout.definition),
@@ -160,8 +160,12 @@ class Header(BaseValidator):
 
     def __check__(self, row: list):
         e = super().__check__(row)
-        if e:
-            return exception.RowError(0, errors=e)
+        if e:  # if row errors are found, skip cell checks
+            return exception.RowError(1, errors=e)
+
+    def check(self, row):
+        errors = self.__check__(row)
+        assert not errors, str(errors)
 
 
 class File(BaseValidator):
