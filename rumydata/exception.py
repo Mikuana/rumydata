@@ -84,11 +84,6 @@ class TooManyFieldsError(UrNotMyDataError):
     pass
 
 
-#
-# class NullValueError(UrNotMyDataError):
-#     pass
-
-
 class ValueComparisonError(UrNotMyDataError):
     pass
 
