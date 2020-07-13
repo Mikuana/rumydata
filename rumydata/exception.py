@@ -1,82 +1,146 @@
-class ValidationError(Exception):
+class UrNotMyDataError(Exception):
+    message: str = None
+
+    def __init__(self, msg: str = None, errors: list = None):
+        super().__init__(msg)
+        self.message = msg or self.message
+        self.errors = errors or []
+
+    def __str__(self):
+        return '\n' + self.md()
+
+    def md(self, depth=0):
+        txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self.message}'
+        if self.errors:
+            txt = '\n'.join([txt] + [x for x in self.flatten_md(self.errors, depth)])
+        return txt
+
+    @classmethod
+    def flatten_md(cls, errors, depth=0):
+        """ Generate error message at appropriate indent for their nested depth """
+        depth += 1
+        for el in errors:
+            if isinstance(el, list) and not isinstance(el, (str, bytes)):
+                yield cls.flatten_md(el, depth)
+            elif issubclass(el.__class__, UrNotMyDataError):
+                yield el.md(depth)
+            else:
+                yield UrNotMyDataError(el).md(depth)
+
+
+# # noinspection DuplicatedCode
+# class InvalidFileNameError(UrNotMyDataError):
+#     pass
+
+
+class DataError(UrNotMyDataError):
     pass
 
 
-class FileError(ValidationError):
+class DateFormatError(UrNotMyDataError):
     pass
 
 
-class FileEncodingError(ValidationError):
+class ConversionError(UrNotMyDataError):
     pass
 
 
-class InvalidFileNameError(ValidationError):
+class CurrencyPatternError(UrNotMyDataError):
     pass
 
 
-class DataError(ValidationError):
+class LengthError(UrNotMyDataError):
     pass
 
 
-class DateFormatError(ValidationError):
+class LeadingZeroError(UrNotMyDataError):
     pass
 
 
-class ConversionError(ValidationError):
+class InvalidChoiceError(UrNotMyDataError):
     pass
 
 
-class CurrencyPatternError(ValidationError):
+class MissingColumnError(UrNotMyDataError):
     pass
 
 
-class DataLengthError(ValidationError):
+class UnexpectedColumnError(UrNotMyDataError):
     pass
 
 
-class LeadingZeroError(ValidationError):
+class DuplicateColumnError(UrNotMyDataError):
     pass
 
 
-class InvalidChoiceError(ValidationError):
+class RowLengthError(UrNotMyDataError):
     pass
 
 
-class MissingColumnError(ValidationError):
+class NotEnoughFieldsError(UrNotMyDataError):
     pass
 
 
-class UnexpectedColumnError(ValidationError):
+class TooManyFieldsError(UrNotMyDataError):
     pass
 
 
-class DuplicateColumnError(ValidationError):
+class ValueComparisonError(UrNotMyDataError):
     pass
 
 
-class RowLengthError(ValidationError):
+class FileUrNotMyDataError(UrNotMyDataError):
     pass
 
 
-class NotEnoughFieldsError(ValidationError):
+class FilePatternError(UrNotMyDataError):
     pass
 
 
-class TooManyFieldsError(ValidationError):
+class FileError(UrNotMyDataError):
     pass
 
 
-class NullValueError(ValidationError):
-    pass
+class RowError(UrNotMyDataError):
+    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+        """
+        :param index: row number (using zero-indexing).
+        :param msg: a custom message to include when reporting errors in this row
+        :param errors: a list of errors contained in this row
+        :param zero_index: specify whether to use zero-indexing when reporting row number.
+        If True, the index is reported as provided. If False, the index increased
+        by one.
+        """
+        message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
-class ValueComparisonError(ValidationError):
-    pass
+class CellError(UrNotMyDataError):
+    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+        """
+        :param index: column number (using zero-indexing).
+        :param msg: a custom message to include when reporting errors in this cell
+        :param errors: a list of errors contained in this cell
+        :param zero_index: specify whether to use zero-indexing when reporting column number.
+        If True, the index is reported as provided. If False, the index increased
+        by one.
+        """
+        message = ''
+        offset = 0 if kwargs.get("zero_index") else 1
+        if kwargs.get('rix'):
+            message = str(kwargs.get('rix') + offset) + ','
+
+        message += f'{str(index + offset)}'
+        if kwargs.get("name"):
+            message += f' ({kwargs.get("name")})'
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
-class FileValidationError(ValidationError):
-    pass
+class NullValueError(UrNotMyDataError):
+    message = 'value is blank/null'
 
 
-class FilePatternError(ValidationError):
-    pass
+class NegativeValueError(CellError):
+    message = "You're too negative"

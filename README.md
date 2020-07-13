@@ -26,7 +26,8 @@ of the layout so that she can share it with Bob. She accomplishes that with the
 code below.
 
 ```python
-from rumydata import Layout, Text, Integer, Choice
+from rumydata import Layout
+from rumydata.cell import Text, Choice, Integer
 layout = Layout(definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z'], nullable=True),
@@ -80,8 +81,14 @@ concept of this package is demonstrated in this step; _the code that defines the
 data, validates the data_.
 
 ```python
-from rumydata import File
-layout.check_file('bobs_data.csv')
+from rumydata import Layout
+from rumydata.cell import Text, Choice, Integer
+layout = Layout(definition={
+    'col1': Text(8),
+    'col2': Choice(['x', 'y', 'z'], nullable=True),
+    'col3': Integer(1)
+})
+layout.check_file(f'bobs_data.csv')
 ```
 
 When Alice checks the file for validity, she receives the following message:
@@ -100,3 +107,7 @@ Alice sends the message to Bob, and with it he's able to easily see that the val
 her provided was not one of the valid choices. He can also refer back to the definition
 digest, and see that `col2` is nullable, and that he can send a blank value instead
 of the invalid value that he sent.
+
+# Errors
+
+Add error raising content.

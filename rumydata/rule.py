@@ -8,7 +8,7 @@ from rumydata import exception as ex
 
 class Rule:
     """ Base class for defining data type rules """
-    exception_class = ex.ValidationError
+    exception_class = ex.UrNotMyDataError
 
     def evaluator(self):
         """
@@ -17,7 +17,7 @@ class Rule:
         """
         pass
 
-    def exception(self):
+    def exception_msg(self):
         """
         :return: a sanitized error message which is specific to the function,
         contains no direct link to the value that was checked.
@@ -39,7 +39,7 @@ class NotNull(Rule):
         return lambda x: x != ''
 
     @classmethod
-    def exception(cls):
+    def exception_msg(cls):
         return cls.exception_class(cls.explain())
 
     @classmethod
@@ -48,7 +48,7 @@ class NotNull(Rule):
 
 
 class ExactChar(Rule):
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, exact_length):
         self.exact_length = exact_length
@@ -61,7 +61,7 @@ class ExactChar(Rule):
 
 
 class MinChar(Rule):
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, min_length):
         self.min_length = min_length
@@ -74,7 +74,7 @@ class MinChar(Rule):
 
 
 class MaxChar(Rule):
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, max_length):
         self.max_length = max_length
@@ -105,7 +105,7 @@ class MinDigit(Rule):
     exceeds the specified minimum. Used to evaluate length of significant digits
     in numeric strings that might contain formatting.
     """
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, min_length):
         self.min_length = min_length
@@ -114,7 +114,7 @@ class MinDigit(Rule):
         return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
 
     def explain(self):
-        return f'must have at least {str(self.min_length)} digits after removing other characters'
+        return f'must have at least {str(self.min_length)} digit characters'
 
 
 class MaxDigit(Rule):
@@ -123,7 +123,7 @@ class MaxDigit(Rule):
     or equal to the specified minimum. Used to evaluate length of significant
     digits in numeric strings that might contain formatting.
     """
-    exception_class = ex.DataLengthError
+    exception_class = ex.LengthError
 
     def __init__(self, max_length):
         self.max_length = max_length
@@ -132,11 +132,11 @@ class MaxDigit(Rule):
         return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
 
     def explain(self):
-        return f'must have no more than {self.max_length} digits after removing other characters'
+        return f'must have no more than {self.max_length} digit characters'
 
 
 class OnlyNumbers(Rule):
-    exception_class = ex.DataError
+    exception_class = ex.DataError  # TODO: character error
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)
@@ -368,6 +368,32 @@ class DateLT(DateComparison):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
+class RowLengthLTE(Rule):
+    exception_class = ex.RowLengthError
+
+    def __init__(self, comparison_value):
+        self.comparison_value = comparison_value
+
+    def evaluator(self):
+        return lambda x: len(x) <= self.comparison_value
+
+    def explain(self) -> str:
+        return f'row length must be equal to {str(self.comparison_value)}, not greater'
+
+
+class RowLengthGTE(Rule):
+    exception_class = ex.RowLengthError
+
+    def __init__(self, comparison_value):
+        self.comparison_value = comparison_value
+
+    def evaluator(self):
+        return lambda x: len(x) >= self.comparison_value
+
+    def explain(self) -> str:
+        return f'row length must be equal to {str(self.comparison_value)}, not less'
+
+
 class HeaderRule(Rule):
     def __init__(self, definition):
         self.definition = definition
@@ -441,7 +467,7 @@ class FileNameMatchesPattern(FileRule):
 
 
 class FileNameMatchesOnePattern(FileRule):
-    exception_class = ex.FileValidationError
+    exception_class = ex.UrNotMyDataError
 
     def __init__(self, patterns: list):
         self.patterns = patterns

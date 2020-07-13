@@ -1,8 +1,8 @@
 from rumydata import rule
-from rumydata.validation import DataType
+from rumydata.validation import Cell
 
 
-class Text(DataType):
+class Text(Cell):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -16,7 +16,7 @@ class Text(DataType):
             self.rules.append(rule.MinChar(min_length))
 
 
-class Date(DataType):
+class Date(Cell):
     def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
         super().__init__(**kwargs)
 
@@ -34,7 +34,7 @@ class Date(DataType):
             self.rules.append(rule.DateGTE(max_date))
 
 
-class Currency(DataType):
+class Currency(Cell):
     def __init__(self, significant_digits: int, **kwargs):
         super().__init__(**kwargs)
 
@@ -46,7 +46,7 @@ class Currency(DataType):
         self.rules.append(rule.NumericDecimals())
 
 
-class Digit(DataType):
+class Digit(Cell):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -62,7 +62,7 @@ class Digit(DataType):
             self.rules.append(rule.MinChar(min_length))
 
 
-class Integer(DataType):
+class Integer(Cell):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -79,7 +79,7 @@ class Integer(DataType):
             self.rules.append(rule.MinDigit(min_length))
 
 
-class Choice(DataType):
+class Choice(Cell):
     def __init__(self, valid_values: list, **kwargs):
         super().__init__(**kwargs)
 
