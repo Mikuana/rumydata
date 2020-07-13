@@ -102,16 +102,43 @@ class FileError(UrNotMyDataError):
 
 
 class RowError(UrNotMyDataError):
-    def __init__(self, row: int, msg: str = None, errors: list = None):
-        msg = f'row {str(row)}' + (f', {msg}' if msg else '')
-        super().__init__(msg, errors)
+    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+        """
+        :param index: row number (using zero-indexing).
+        :param msg: a custom message to include when reporting errors in this row
+        :param errors: a list of errors contained in this row
+        :param zero_index: specify whether to use zero-indexing when reporting row number.
+        If True, the index is reported as provided. If False, the index increased
+        by one.
+        """
+        message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
 class CellError(UrNotMyDataError):
-    pass
+    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+        """
+        :param index: column number (using zero-indexing).
+        :param msg: a custom message to include when reporting errors in this cell
+        :param errors: a list of errors contained in this cell
+        :param zero_index: specify whether to use zero-indexing when reporting column number.
+        If True, the index is reported as provided. If False, the index increased
+        by one.
+        """
+        message = ''
+        offset = 0 if kwargs.get("zero_index") else 1
+        if kwargs.get('rix'):
+            message = str(kwargs.get('rix') + offset) + ','
+
+        message += f'{str(index + offset)}'
+        if kwargs.get("name"):
+            message += f' ({kwargs.get("name")})'
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
-class NullValueError(CellError):
+class NullValueError(UrNotMyDataError):
     message = 'value is blank/null'
 
 

@@ -96,14 +96,14 @@ class Cell(BaseValidator):
         if not self.nullable:
             self.rules.append(rule.NotNull)
 
-    def __check__(self, value):
+    def __check__(self, value, cix=-1, **kwargs):
         # if data is nullable and value is empty, skip all checks
         if self.nullable and value == '':
             pass
         else:
             e = super().__check__(value)
             if e:
-                return exception.CellError(errors=e)
+                return exception.CellError(cix, errors=e, **kwargs)
 
     def check(self, value):
         errors = self.__check__(value)
@@ -135,7 +135,7 @@ class Row(BaseValidator):
             return exception.RowError(rix, errors=e)
 
         for cix, cell in enumerate(row):
-            ce = self.types[cix].__check__(cell)
+            ce = self.types[cix].__check__(cell, cix, rix=rix, name=self.names[cix])
             if ce:
                 e.append(ce)
         if e:
