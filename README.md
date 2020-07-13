@@ -26,7 +26,8 @@ of the layout so that she can share it with Bob. She accomplishes that with the
 code below.
 
 ```python
-from rumydata import Layout, Text, Integer, Choice
+from rumydata import Layout
+from rumydata.cell import Text, Choice, Integer
 layout = Layout(definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z'], nullable=True),
@@ -80,7 +81,6 @@ concept of this package is demonstrated in this step; _the code that defines the
 data, validates the data_.
 
 ```python
-from rumydata import File
 layout.check_file('bobs_data.csv')
 ```
 
