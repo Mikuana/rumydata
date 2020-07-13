@@ -4,7 +4,7 @@ import setuptools
 
 setuptools.setup(
     name="rumydata",
-    version="0.0.5",
+    version="0.0.6",
     author="Christopher Boyd",
     description="A python package for validating expectations of text data, and safely reporting exceptions",
     long_description_content_type="text/markdown",

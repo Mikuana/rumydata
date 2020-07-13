@@ -93,7 +93,13 @@ layout.check_file(f'bobs_data.csv')
 
 When Alice checks the file for validity, she receives the following message:
 
-> InvalidChoiceError("row 4 col 2 (col2): must be one of ['x', 'y', 'z']")
+```yaml
+AssertionError: 
+ - File: None
+   - Row: 4
+     - Cell: 4,2 (col2)
+       - InvalidChoice: must be one of ['x', 'y', 'z']
+```
 
 The layout has detected that the second value of the fourth row does not meet the
 defined expectations, and it has provided a detailed message explaining what was
