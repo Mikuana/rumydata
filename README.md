@@ -81,7 +81,14 @@ concept of this package is demonstrated in this step; _the code that defines the
 data, validates the data_.
 
 ```python
-layout.check_file('bobs_data.csv')
+from rumydata import Layout
+from rumydata.cell import Text, Choice, Integer
+layout = Layout(definition={
+    'col1': Text(8),
+    'col2': Choice(['x', 'y', 'z'], nullable=True),
+    'col3': Integer(1)
+})
+layout.check_file(f'bobs_data.csv')
 ```
 
 When Alice checks the file for validity, she receives the following message:

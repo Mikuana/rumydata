@@ -150,7 +150,6 @@ class Header(BaseValidator):
     def __init__(self, layout: Layout, **kwargs):
         super().__init__(**kwargs)
 
-        expected_length = len(layout.definition)
         self.rules.extend([
             rule.HeaderColumnOrder(layout.definition),
             rule.HeaderNoExtra(layout.definition),
