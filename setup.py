@@ -1,10 +1,21 @@
+import re
 from pathlib import Path
 
 import setuptools
 
+
+def read_version():
+    try:
+        v = [x for x in Path('rumydata/__init__.py').open() if x.startswith('__version__')][0]
+        v = re.match(r"__version__ *= *'(.*?)'\n", v)[1]
+        return v
+    except Exception as e:
+        raise RuntimeError(f"Unable to read version string: {e}")
+
+
 setuptools.setup(
     name="rumydata",
-    version="0.0.6",
+    version=read_version(),
     author="Christopher Boyd",
     description="A python package for validating expectations of text data, and safely reporting exceptions",
     long_description_content_type="text/markdown",

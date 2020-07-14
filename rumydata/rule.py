@@ -320,7 +320,7 @@ class DateComparison(Rule):
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
-    def __init__(self, comparison_value, date_format='%Y%m%d'):
+    def __init__(self, comparison_value, date_format='%Y-%m-%d'):
         self.date_format = date_format
         self.comparison_value = datetime.strptime(comparison_value, date_format)
 
