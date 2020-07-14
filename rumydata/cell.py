@@ -31,7 +31,7 @@ class Date(Cell):
 
         if min_date:
             self.descriptors['Min Date'] = f'{min_date}'
-            self.rules.append(rule.DateGTE(max_date))
+            self.rules.append(rule.DateGTE(min_date))
 
 
 class Currency(Cell):
