@@ -78,19 +78,26 @@ def test_text_bad(value, kwargs, err):
 
 @pytest.mark.parametrize('value,kwargs', [
     ('2020-01-01', {}),
-    ('', dict(nullable=True))
+    ('', dict(nullable=True)),
+    ('2020-01-01', dict(max_date='2020-01-01')),
+    ('2020-01-01', dict(max_date='2020-01-02')),
+    ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02'))
 ])
 def test_date_good(value, kwargs):
     assert not Date(**kwargs).check(value)
 
 
-@pytest.mark.parametrize('value,err', [
-    ('', NullValueError),
-    ('20200101', ConversionError),
-    ('9999-99-99', ConversionError)
+@pytest.mark.parametrize('value,err,kwargs', [
+    ('', NullValueError, {}),
+    ('20200101', ConversionError, {}),
+    ('9999-99-99', ConversionError, {}),
+    ('2020-01-01', ValueComparisonError, dict(min_date='2020-01-02')),
+    ('2020-01-02', ValueComparisonError, dict(max_date='2020-01-01')),
+    ('2020-01-01', ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
+    ('2020-01-05', ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03'))
 ])
-def test_date_bad(value, err):
-    assert Date().has_error(value, err)
+def test_date_bad(value, err, kwargs):
+    assert Date(**kwargs).has_error(value, err)
 
 
 @pytest.mark.parametrize('value,sig_dig,kwargs', [
@@ -228,5 +235,5 @@ def test_layout_good(basic, basic_good):
 
 
 def test_readme_example(readme_layout, readme_data):
-    assert File(Layout(readme_layout)).\
+    assert File(Layout(readme_layout)). \
         has_error(readme_data, InvalidChoiceError)
