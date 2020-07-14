@@ -131,21 +131,25 @@ def test_currency_bad(value, sig_dig, rules, err):
     assert Currency(sig_dig, rules=rules).has_error(value, err)
 
 
-@pytest.mark.parametrize('value,max_length', [
-    ('1', 3),
-    ('12', 3),
-    ('123', 3)
+@pytest.mark.parametrize('value,max_length, kwargs', [
+    ('1', 3, {}),
+    ('12', 3, {}),
+    ('123', 3, {}),
+    ('12', 2, dict(min_length=2)),
+    ('123', 3, dict(min_length=2))
 ])
-def test_digit_good(value, max_length):
-    assert not Digit(max_length).check(value)
+def test_digit_good(value, max_length, kwargs):
+    assert not Digit(max_length, **kwargs).check(value)
 
 
-@pytest.mark.parametrize('value,max_length,err', [
-    ('-123', 3, DataError),
-    ('-123', 3, LengthError)
+@pytest.mark.parametrize('value,max_length,err,kwargs', [
+    ('-123', 3, DataError, {}),
+    ('-123', 3, LengthError, {}),
+    ('1', 2, LengthError, dict(min_length=2)),
+    ('5', 3, LengthError, dict(min_length=2))
 ])
-def test_digit_bad(value, max_length, err):
-    assert Digit(max_length).has_error(value, err)
+def test_digit_bad(value, max_length, err, kwargs):
+    assert Digit(max_length, **kwargs).has_error(value, err)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs', [
