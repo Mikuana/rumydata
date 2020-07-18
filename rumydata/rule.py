@@ -481,7 +481,7 @@ class FileNameMatchesOnePattern(FileRule):
         return 'file cannot match multiple patterns provided in the layout'
 
 
-def make_static_rule(func, assertion, exception=ex.UrNotMyDataError):
+def make_static_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
     """
     Return a factory generated Rule class. The function used by the rule must
     directly evaluate a single positional argument (i.e. x, but not x and y).
