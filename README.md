@@ -16,6 +16,7 @@ at its core.
  - the code that defines the data, documents the data
  - the code that defines the data, validates the data
 
+
 ## Example
 
 For this example, we'll pretend that Alice needs Bob to send her data.
@@ -114,6 +115,31 @@ her provided was not one of the valid choices. He can also refer back to the def
 digest, and see that `col2` is nullable, and that he can send a blank value instead
 of the invalid value that he sent.
 
-# Errors
+## Extension
 
-Add error raising content.
+Although this package contains a number of built-in rules to ease the definition
+of a `Layout`, it is expected that users will have their own rules that need to
+be applied on a regular basis. The simplest way to do this is by generating a
+static rule and adding it to a `Cell`.
+
+As an example, let's say that Alice realized that the `col3` in her layout needs
+to be an *odd* number only. The `Cell` class provides a parameter for additional
+rules to be specified, and the `make_static_rule` method provides us with a
+simple way of generating these rules.
+
+```python
+from rumydata.cell import Integer
+from rumydata.rule import make_static_rule
+
+
+odd_rule = make_static_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
+
+layout = Layout(definition={
+    'col1': Text(8),
+    'col2': Choice(['x', 'y', 'z'], nullable=True),
+    'col3': Integer(1, rules=[odd_rule])
+})
+```
+
+If Alice were to check Bob's data now, it would determine that cell 3,3 is not
+an odd number, and raise an exception.
