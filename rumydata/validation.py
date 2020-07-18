@@ -181,7 +181,7 @@ class File(BaseValidator):
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super().__check__(p)  # check file-based rules first
         if e:
-            return FileError(errors=e)
+            return FileError(file=filepath, errors=e)
 
         with open(p) as f:
             hv, rv = Header(self.layout), Row(self.layout)
@@ -193,7 +193,7 @@ class File(BaseValidator):
                 if re:
                     e.append(re)
         if e:
-            return FileError(errors=e)
+            return FileError(file=filepath.name, errors=e)
 
     def check(self, file_path):
         errors = self.__check__(file_path)

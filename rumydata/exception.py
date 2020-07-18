@@ -98,7 +98,15 @@ class FilePatternError(UrNotMyDataError):
 
 
 class FileError(UrNotMyDataError):
-    pass
+    def __init__(self, file, msg=None, errors: list = None, **kwargs):
+        """
+        :param file: name of the file that will be reported with the error message.
+        :param msg: a custom message to include when reporting errors in this file.
+        :param errors: a list of errors contained in this file.
+        """
+        message = file
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
 class RowError(UrNotMyDataError):
