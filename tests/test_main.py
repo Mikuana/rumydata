@@ -1,5 +1,6 @@
 import csv
 import tempfile
+import uuid
 from pathlib import Path
 
 import pytest
@@ -21,14 +22,24 @@ def basic_definition(basic):
 
 
 @pytest.fixture()
-def basic_good():
+def minimal_layout():
+    return Layout(dict(x=Digit(1)))
+
+
+@pytest.fixture()
+def tmpdir():
     with tempfile.TemporaryDirectory() as d:
-        p = Path(d, 'good.csv')
-        with p.open('w') as o:
-            writer = csv.writer(o)
-            writer.writerow(['col1', 'col2', 'col3'])
-            writer.writerow(['A', 1, '2020-01-01'])
-        yield p.as_posix()
+        yield Path(d)
+
+
+@pytest.fixture()
+def basic_good(tmpdir):
+    p = Path(tmpdir, 'good.csv')
+    with p.open('w') as o:
+        writer = csv.writer(o)
+        writer.writerow(['col1', 'col2', 'col3'])
+        writer.writerow(['A', 1, '2020-01-01'])
+    yield p.as_posix()
 
 
 @pytest.fixture()
@@ -41,16 +52,25 @@ def readme_layout():
 
 
 @pytest.fixture()
-def readme_data():
-    with tempfile.TemporaryDirectory() as d:
-        p = Path(d, 'bobs_data.csv')
-        p.write_text('\n'.join([
-            "col1,col2,col3",
-            "abc,x,-1",
-            "def,,0",
-            "ghi,a,1"
-        ]))
-        yield p.as_posix()
+def readme_data(tmpdir):
+    p = Path(tmpdir, 'bobs_data.csv')
+    p.write_text('\n'.join([
+        "col1,col2,col3",
+        "abc,x,-1",
+        "def,,0",
+        "ghi,a,1"
+    ]))
+    yield p.as_posix()
+
+
+def minimal_bad(rows, directory):
+    p = Path(directory, str(uuid.uuid4()))
+    with p.open('w') as f:
+        w = csv.writer(f)
+        w.writerow(['x'])
+        for i in range(rows):
+            w.writerow(['12'])
+    return p
 
 
 def test_file_not_exists(basic):
@@ -241,3 +261,25 @@ def test_layout_good(basic, basic_good):
 def test_readme_example(readme_layout, readme_data):
     assert File(Layout(readme_layout)). \
         has_error(readme_data, InvalidChoiceError)
+
+
+@pytest.mark.parametrize('rows,max_errors', [
+    (1, 0),
+    (2, 1),
+    (101, 100),
+    (int(1e5), 100),
+])
+def test_has_max_error(minimal_layout, tmpdir, rows, max_errors):
+    assert File(minimal_layout, max_errors=max_errors). \
+        has_error(minimal_bad(rows, tmpdir), MaxExceededError)
+
+
+@pytest.mark.parametrize('rows,max_errors', [
+    (1, 1),
+    (99, 100),
+    (100, 100),
+    (100, int(1e5)),
+])
+def test_missing_max_error(minimal_layout, tmpdir, rows, max_errors):
+    assert not File(minimal_layout, max_errors=max_errors). \
+        has_error(minimal_bad(rows, tmpdir), MaxExceededError)
