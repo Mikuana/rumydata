@@ -1,14 +1,16 @@
 import csv
 import tempfile
 import uuid
+from datetime import datetime as dt
 from pathlib import Path
 
 import pytest
 
 from rumydata.cell import *
 from rumydata.exception import *
+from rumydata.rule import make_static_rule
 from rumydata.validation import File, Row, Header
-from rumydata.validation import Layout
+from rumydata.validation import Layout, Cell
 
 
 @pytest.fixture()
@@ -283,3 +285,24 @@ def test_has_max_error(minimal_layout, tmpdir, rows, max_errors):
 def test_missing_max_error(minimal_layout, tmpdir, rows, max_errors):
     assert not File(minimal_layout, max_errors=max_errors). \
         has_error(minimal_bad(rows, tmpdir), MaxExceededError)
+
+
+@pytest.mark.parametrize('value,func,assertion', [
+    ('2', lambda x: int(x) % 2 == 0, "must be an even number"),
+    ('1', lambda x: int(x) % 2 == 1, "must be an odd number"),
+    ('2020-01-01', lambda x: dt.fromisoformat(x), "must be an isodate"),
+])
+def test_static_rules_good(value, func, assertion):
+    cell = Cell(rules=[make_static_rule(func, assertion)])
+    assert not cell.check(value)
+
+
+@pytest.mark.parametrize('value,func,assertion,kwargs', [
+    ('2', lambda x: int(x) % 2 == 1, "must be an even number", {}),
+    ('1', lambda x: int(x) % 2 == 0, "must be an odd number", {}),
+    ('2020-00-01', lambda x: dt.fromisoformat(x), "must be an isodate", {}),
+    ('', lambda x: 1 / 0, "custom exception", dict(exception=ZeroDivisionError))
+])
+def test_static_rules_bad(value, func, assertion, kwargs):
+    cell = Cell(rules=[make_static_rule(func, assertion, **kwargs)])
+    assert cell.has_error(value, kwargs.get('exception', UrNotMyDataError))
