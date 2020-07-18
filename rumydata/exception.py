@@ -152,3 +152,7 @@ class NullValueError(UrNotMyDataError):
 
 class NegativeValueError(CellError):
     message = "You're too negative"
+
+
+class MaxExceededError(UrNotMyDataError):
+    pass
