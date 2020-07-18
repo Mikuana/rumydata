@@ -189,16 +189,13 @@ class File(BaseValidator):
         with open(p) as f:
             hv, rv = Header(self.layout), Row(self.layout)
             for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
-                if rix == 0:
-                    re = hv.__check__(row)
-                    if re.errors:  # abort checks if there are any header errors
-                        e.append(re)
-                        break
-                else:
-                    re = rv.__check__(row, rix)
+                re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix)
+                if re:
                     e.append(re)
+                    if rix == 0:  # if header error present, stop checking rows
+                        break
         if e:
-            return FileError(file=filepath.name, errors=e)
+            return FileError(file=p.name, errors=e)
 
     def check(self, file_path):
         errors = self.__check__(file_path)
