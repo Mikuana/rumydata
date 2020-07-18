@@ -168,12 +168,13 @@ class Header(BaseValidator):
 
 
 class File(BaseValidator):
-    def __init__(self, layout: Layout, **kwargs):
+    def __init__(self, layout: Layout, max_errors=100, **kwargs):
         # pop any csv reader kwargs for later use
         x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
         self.csv_kwargs = {k: v for k, v in x.items() if v}
         super().__init__(**kwargs)
 
+        self.max_errors = max_errors
         self.layout = layout
         self.rules.extend([
             rule.FileExists(),
@@ -193,6 +194,10 @@ class File(BaseValidator):
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
+                        break
+                    if len(e) > self.max_errors:
+                        m = f"max of {str(self.max_errors)} row errors exceeded"
+                        e.append(exception.MaxExceededError(m))
                         break
         if e:
             return FileError(file=p.name, errors=e)
