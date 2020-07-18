@@ -160,7 +160,7 @@ class Header(BaseValidator):
     def __check__(self, row: list):
         e = super().__check__(row)
         if e:  # if row errors are found, skip cell checks
-            return exception.RowError(1, errors=e)
+            return exception.RowError(0, errors=e)
 
     def check(self, row):
         errors = self.__check__(row)
@@ -169,9 +169,12 @@ class Header(BaseValidator):
 
 class File(BaseValidator):
     def __init__(self, layout: Layout, **kwargs):
+        # pop any csv reader kwargs for later use
+        x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
+        self.csv_kwargs = {k: v for k, v in x.items() if v}
         super().__init__(**kwargs)
-        self.layout = layout
 
+        self.layout = layout
         self.rules.extend([
             rule.FileExists(),
             rule.FileNameMatchesPattern(self.layout.pattern),
@@ -185,7 +188,7 @@ class File(BaseValidator):
 
         with open(p) as f:
             hv, rv = Header(self.layout), Row(self.layout)
-            for rix, row in enumerate(csv.reader(f)):
+            for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
                 if rix == 0:  # abort checks if there are any header errors
                     re = hv.__check__(row)
                 else:
