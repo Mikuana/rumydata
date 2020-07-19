@@ -44,18 +44,30 @@ class Layout:
     def check_file(self, file: Union[str, Path], **kwargs):
         File(self, **kwargs).check(file)
 
+    def comparison_columns(self):
+        compares = set()
+        for v in self.definition.values():
+            compares.update(v.comparison_columns())
+        return compares
+
 
 class BaseValidator:
     def __init__(self, rules: list = None):
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, value):
+    def __check__(self, value, **kwargs):
         errors = []
         for r in self.rules:
+
             # noinspection PyBroadException
             try:
-                if not r.evaluator()(value):
+                if issubclass(type(r), rule.ColumnCompareRule):
+                    e = r.evaluator()(value, kwargs.get('compare')[r.compare_to])
+                else:
+                    e = r.evaluator()(value)
+
+                if not e:
                     errors.append(r.exception_msg())
             except Exception as e:  # get type, and rewrite safe message
                 errors.append(r.exception_class(
@@ -101,7 +113,7 @@ class Cell(BaseValidator):
         if self.nullable and value == '':
             pass
         else:
-            e = super().__check__(value)
+            e = super().__check__(value, compare=kwargs.get('compare'))
             if e:
                 return exception.CellError(cix, errors=e, **kwargs)
 
@@ -114,6 +126,13 @@ class Cell(BaseValidator):
         if self.nullable:
             dig.append('Nullable')
         return dig
+
+    def comparison_columns(self):
+        compares = set()
+        for r in self.rules:
+            if issubclass(type(r), rule.ColumnCompareRule):
+                compares.add(r.compare_to)
+        return compares
 
 
 class Row(BaseValidator):
@@ -129,13 +148,16 @@ class Row(BaseValidator):
             rule.RowLengthGTE(expected_length),
         ])
 
-    def __check__(self, row: list, rix=-1):
+    def __check__(self, row: list, rix=-1, **kwargs):
         e = super().__check__(row)
         if e:  # if row errors are found, skip cell checks
             return exception.RowError(rix, errors=e)
 
+        compare = kwargs.get('compare')
         for cix, cell in enumerate(row):
-            ce = self.types[cix].__check__(cell, cix, rix=rix, name=self.names[cix])
+            ce = self.types[cix].__check__(
+                cell, cix, rix=rix, name=self.names[cix], compare=compare
+            )
             if ce:
                 e.append(ce)
         if e:
@@ -157,7 +179,7 @@ class Header(BaseValidator):
             rule.HeaderNoMissing(layout.definition)
         ])
 
-    def __check__(self, row: list):
+    def __check__(self, row: list, **kwargs):
         e = super().__check__(row)
         if e:  # if row errors are found, skip cell checks
             return exception.RowError(0, errors=e)
@@ -181,16 +203,19 @@ class File(BaseValidator):
             rule.FileNameMatchesPattern(self.layout.pattern),
         ])
 
-    def __check__(self, filepath: Union[str, Path]):
+    def __check__(self, filepath: Union[str, Path], **kwargs):
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super().__check__(p)  # check file-based rules first
         if e:
             return FileError(file=filepath, errors=e)
 
+        comp_col = self.layout.comparison_columns()
+        names = list(self.layout.definition.keys())
         with open(p) as f:
             hv, rv = Header(self.layout), Row(self.layout)
             for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
-                re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix)
+                comp_vals = {i: row[names.index(i)] for i in comp_col}
+                re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix, compare=comp_vals)
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
