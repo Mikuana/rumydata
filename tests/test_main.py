@@ -306,3 +306,13 @@ def test_static_rules_good(value, func, assertion):
 def test_static_rules_bad(value, func, assertion, kwargs):
     cell = Cell(rules=[make_static_rule(func, assertion, **kwargs)])
     assert cell.has_error(value, kwargs.get('exception', UrNotMyDataError))
+
+
+def test_column_compare_rule_good():
+    assert False
+
+def test_column_compare_row_good():
+    assert False
+
+def test_column_compare_file_good():
+    assert False
