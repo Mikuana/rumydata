@@ -156,3 +156,7 @@ class NegativeValueError(CellError):
 
 class MaxExceededError(UrNotMyDataError):
     pass
+
+
+class ColumnComparisonError(UrNotMyDataError):
+    pass

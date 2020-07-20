@@ -44,18 +44,30 @@ class Layout:
     def check_file(self, file: Union[str, Path], **kwargs):
         File(self, **kwargs).check(file)
 
+    def comparison_columns(self):
+        compares = set()
+        for v in self.definition.values():
+            compares.update(v.comparison_columns())
+        return compares
+
 
 class BaseValidator:
     def __init__(self, rules: list = None):
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, value):
+    def __check__(self, value, **kwargs):
         errors = []
         for r in self.rules:
+
             # noinspection PyBroadException
             try:
-                if not r.evaluator()(value):
+                if issubclass(type(r), rule.ColumnCompareRule):
+                    e = r.evaluator()(value, kwargs.get('compare')[r.compare_to])
+                else:
+                    e = r.evaluator()(value)
+
+                if not e:
                     errors.append(r.exception_msg())
             except Exception as e:  # get type, and rewrite safe message
                 errors.append(r.exception_class(
@@ -68,11 +80,11 @@ class BaseValidator:
         y = [x.explain() for x in self.rules]
         return x + y
 
-    def list_errors(self, value):
-        return list(self.flatten_exceptions(self.__check__(value)))
+    def list_errors(self, value, **kwargs):
+        return list(self.flatten_exceptions(self.__check__(value, **kwargs)))
 
-    def has_error(self, value, error):
-        return error in [x.__class__ for x in self.list_errors(value)]
+    def has_error(self, value, error, **kwargs):
+        return error in [x.__class__ for x in self.list_errors(value, **kwargs)]
 
     @classmethod
     def flatten_exceptions(cls, error):
@@ -101,12 +113,12 @@ class Cell(BaseValidator):
         if self.nullable and value == '':
             pass
         else:
-            e = super().__check__(value)
+            e = super().__check__(value, compare=kwargs.get('compare'))
             if e:
                 return exception.CellError(cix, errors=e, **kwargs)
 
-    def check(self, value):
-        errors = self.__check__(value)
+    def check(self, value, **kwargs):
+        errors = self.__check__(value, **kwargs)
         assert not errors, str(errors)
 
     def digest(self):
@@ -115,18 +127,22 @@ class Cell(BaseValidator):
             dig.append('Nullable')
         return dig
 
+    def comparison_columns(self):
+        compares = set()
+        for r in self.rules:
+            if issubclass(type(r), rule.ColumnCompareRule):
+                compares.add(r.compare_to)
+        return compares
+
 
 class Row(BaseValidator):
     def __init__(self, layout: Layout, **kwargs):
         super().__init__(**kwargs)
+        self.definition = layout.definition
 
-        self.names = list(layout.definition.keys())
-        self.types = list(layout.definition.values())
-
-        expected_length = len(layout.definition)
         self.rules.extend([
-            rule.RowLengthLTE(expected_length),
-            rule.RowLengthGTE(expected_length),
+            rule.RowLengthLTE(len(self.definition)),
+            rule.RowLengthGTE(len(self.definition))
         ])
 
     def __check__(self, row: list, rix=-1):
@@ -134,15 +150,19 @@ class Row(BaseValidator):
         if e:  # if row errors are found, skip cell checks
             return exception.RowError(rix, errors=e)
 
-        for cix, cell in enumerate(row):
-            ce = self.types[cix].__check__(cell, cix, rix=rix, name=self.names[cix])
+        row = dict(zip(self.definition.keys(), row))
+
+        for cix, (name, val) in enumerate(row.items()):
+            t = self.definition[name]
+            comp = {k: row[k] for k in t.comparison_columns()}
+            ce = t.__check__(val, cix, rix=rix, name=name, compare=comp)
             if ce:
                 e.append(ce)
         if e:
             return exception.RowError(rix, errors=e)
 
-    def check(self, row):
-        errors = self.__check__(row)
+    def check(self, row, **kwargs):
+        errors = self.__check__(row, **kwargs)
         assert not errors, str(errors)
 
 
@@ -157,7 +177,7 @@ class Header(BaseValidator):
             rule.HeaderNoMissing(layout.definition)
         ])
 
-    def __check__(self, row: list):
+    def __check__(self, row: list, **kwargs):
         e = super().__check__(row)
         if e:  # if row errors are found, skip cell checks
             return exception.RowError(0, errors=e)
@@ -181,7 +201,7 @@ class File(BaseValidator):
             rule.FileNameMatchesPattern(self.layout.pattern),
         ])
 
-    def __check__(self, filepath: Union[str, Path]):
+    def __check__(self, filepath: Union[str, Path], **kwargs):
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super().__check__(p)  # check file-based rules first
         if e:
