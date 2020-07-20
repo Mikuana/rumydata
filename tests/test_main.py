@@ -34,6 +34,15 @@ def tmpdir():
         yield Path(d)
 
 
+def write_row(directory, layout, row):
+    p = Path(directory, str(uuid.uuid4()))
+    with p.open('w') as o:
+        writer = csv.writer(o)
+        writer.writerow(list(layout.definition.keys()))
+        writer.writerow(row)
+    return p
+
+
 @pytest.fixture()
 def basic_good(tmpdir):
     p = Path(tmpdir, 'good.csv')
@@ -309,10 +318,34 @@ def test_static_rules_bad(value, func, assertion, kwargs):
 
 
 def test_column_compare_rule_good():
-    assert False
+    cell = Cell(rules=[rule.GreaterThanColumn('x')])
+    assert not cell.check('1', compare={'x': '0'})
+
+
+def test_column_compare_rule_bad():
+    cell = Cell(rules=[rule.GreaterThanColumn('x')])
+    assert cell.has_error('1', compare={'x': '1'}, error=ColumnComparisonError)
+
 
 def test_column_compare_row_good():
-    assert False
+    row = Row(Layout({
+        'a': Integer(1, rules=[rule.GreaterThanColumn('b')]),
+        'b': Integer(1)
+    }))
+    assert not row.check(['3', '2'])
 
-def test_column_compare_file_good():
-    assert False
+
+@pytest.mark.parametrize('compare_rule,row', [
+    (rule.GreaterThanColumn('x'), ['2', '3']),
+])
+def test_column_compare_file_good(tmpdir, compare_rule, row):
+    lay = Layout({'x': Cell(), 'y': Cell(rules=[compare_rule])})
+    assert not lay.check_file(write_row(tmpdir, lay, row))
+
+
+@pytest.mark.parametrize('compare_rule,row', [
+    (rule.GreaterThanColumn('x'), ['1', '1']),
+])
+def test_column_compare_file_bad(tmpdir, compare_rule, row):
+    lay = Layout({'x': Cell(), 'y': Cell(rules=[compare_rule])})
+    assert File(lay).has_error(write_row(tmpdir, lay, row), ColumnComparisonError)
