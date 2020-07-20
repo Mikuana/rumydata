@@ -32,6 +32,8 @@ class Rule:
 
 
 class ColumnCompareRule(Rule):
+    exception_class = ex.ColumnComparisonError
+
     def __init__(self, compare_to: str):
         self.compare_to = compare_to
 

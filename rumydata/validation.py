@@ -80,11 +80,11 @@ class BaseValidator:
         y = [x.explain() for x in self.rules]
         return x + y
 
-    def list_errors(self, value):
-        return list(self.flatten_exceptions(self.__check__(value)))
+    def list_errors(self, value, **kwargs):
+        return list(self.flatten_exceptions(self.__check__(value, **kwargs)))
 
-    def has_error(self, value, error):
-        return error in [x.__class__ for x in self.list_errors(value)]
+    def has_error(self, value, error, **kwargs):
+        return error in [x.__class__ for x in self.list_errors(value, **kwargs)]
 
     @classmethod
     def flatten_exceptions(cls, error):
@@ -117,8 +117,8 @@ class Cell(BaseValidator):
             if e:
                 return exception.CellError(cix, errors=e, **kwargs)
 
-    def check(self, value):
-        errors = self.__check__(value)
+    def check(self, value, **kwargs):
+        errors = self.__check__(value, **kwargs)
         assert not errors, str(errors)
 
     def digest(self):
@@ -138,33 +138,31 @@ class Cell(BaseValidator):
 class Row(BaseValidator):
     def __init__(self, layout: Layout, **kwargs):
         super().__init__(**kwargs)
+        self.definition = layout.definition
 
-        self.names = list(layout.definition.keys())
-        self.types = list(layout.definition.values())
-
-        expected_length = len(layout.definition)
         self.rules.extend([
-            rule.RowLengthLTE(expected_length),
-            rule.RowLengthGTE(expected_length),
+            rule.RowLengthLTE(len(self.definition)),
+            rule.RowLengthGTE(len(self.definition))
         ])
 
-    def __check__(self, row: list, rix=-1, **kwargs):
+    def __check__(self, row: list, rix=-1):
         e = super().__check__(row)
         if e:  # if row errors are found, skip cell checks
             return exception.RowError(rix, errors=e)
 
-        compare = kwargs.get('compare')
-        for cix, cell in enumerate(row):
-            ce = self.types[cix].__check__(
-                cell, cix, rix=rix, name=self.names[cix], compare=compare
-            )
+        row = dict(zip(self.definition.keys(), row))
+
+        for cix, (name, val) in enumerate(row.items()):
+            t = self.definition[name]
+            comp = {k: row[k] for k in t.comparison_columns()}
+            ce = t.__check__(val, cix, rix=rix, name=name, compare=comp)
             if ce:
                 e.append(ce)
         if e:
             return exception.RowError(rix, errors=e)
 
-    def check(self, row):
-        errors = self.__check__(row)
+    def check(self, row, **kwargs):
+        errors = self.__check__(row, **kwargs)
         assert not errors, str(errors)
 
 
@@ -209,13 +207,10 @@ class File(BaseValidator):
         if e:
             return FileError(file=filepath, errors=e)
 
-        comp_col = self.layout.comparison_columns()
-        names = list(self.layout.definition.keys())
         with open(p) as f:
             hv, rv = Header(self.layout), Row(self.layout)
             for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
-                comp_vals = {i: row[names.index(i)] for i in comp_col}
-                re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix, compare=comp_vals)
+                re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix)
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
