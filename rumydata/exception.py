@@ -28,6 +28,11 @@ class UrNotMyDataError(Exception):
                 yield UrNotMyDataError(el).md(depth)
 
 
+# # noinspection DuplicatedCode
+# class InvalidFileNameError(UrNotMyDataError):
+#     pass
+
+
 class DataError(UrNotMyDataError):
     pass
 
@@ -104,11 +109,6 @@ class FileError(UrNotMyDataError):
         super().__init__(message, errors)
 
 
-class ColumnError(UrNotMyDataError):
-    def __init__(self, msg=None, errors: list = None, **kwargs):
-        super().__init__(msg, errors)
-
-
 class RowError(UrNotMyDataError):
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
         """
@@ -167,12 +167,4 @@ class RowComparisonError(UrNotMyDataError):
 
 
 class CharacterError(UrNotMyDataError):
-    pass
-
-
-class DuplicateValueError(UrNotMyDataError):
-    pass
-
-
-class NoRulesDefinedError(UrNotMyDataError):
     pass
