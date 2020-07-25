@@ -128,11 +128,12 @@ rules to be specified, and the `make_static_rule` method provides us with a
 simple way of generating these rules.
 
 ```python
-from rumydata.cell import Integer
-from rumydata.rule import make_static_rule
+from rumydata.validation import Layout
+from rumydata.cell import Integer, Text, Choice
+from rumydata.rule import make_static_cell_rule
 
 
-odd_rule = make_static_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
+odd_rule = make_static_cell_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
 
 layout = Layout(definition={
     'col1': Text(8),

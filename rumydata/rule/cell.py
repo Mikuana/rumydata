@@ -1,52 +1,11 @@
 import re
 from datetime import datetime
-from pathlib import Path
-from typing import Union, List
 
 from rumydata import exception as ex
+from rumydata.rule.base import CellRule
 
 
-class Rule:
-    """ Base class for defining data type rules """
-    exception_class = ex.UrNotMyDataError
-
-    def evaluator(self):
-        """
-        :return: a function which expects to evaluate to True, if the value
-        provided to the function meets the rule.
-        """
-        pass
-
-    def exception_msg(self):
-        """
-        :return: a sanitized error message which is specific to the function,
-        contains no direct link to the value that was checked.
-        """
-        return self.exception_class(self.explain())
-
-    def explain(self) -> str:
-        """
-        :return: an explanation of the rule that is applied
-        """
-        pass
-
-
-class ColumnCompareRule(Rule):
-    exception_class = ex.ColumnComparisonError
-
-    def __init__(self, compare_to: str):
-        self.compare_to = compare_to
-
-
-class GreaterThanColumn(ColumnCompareRule):
-    def evaluator(self):
-        return lambda x, y: x > y
-
-    def explain(self) -> str:
-        return f"must be greater than column '{self.compare_to}'"
-
-
-class NotNull(Rule):
+class NotNull(CellRule):
     exception_class = ex.NullValueError
 
     @classmethod
@@ -62,7 +21,7 @@ class NotNull(Rule):
         return 'cannot be empty/blank'
 
 
-class ExactChar(Rule):
+class ExactChar(CellRule):
     exception_class = ex.LengthError
 
     def __init__(self, exact_length):
@@ -75,7 +34,7 @@ class ExactChar(Rule):
         return f'must be exactly {str(self.exact_length)} characters'
 
 
-class MinChar(Rule):
+class MinChar(CellRule):
     exception_class = ex.LengthError
 
     def __init__(self, min_length):
@@ -88,7 +47,7 @@ class MinChar(Rule):
         return f'must be at least {str(self.min_length)} characters'
 
 
-class MaxChar(Rule):
+class MaxChar(CellRule):
     exception_class = ex.LengthError
 
     def __init__(self, max_length):
@@ -101,7 +60,7 @@ class MaxChar(Rule):
         return f'must be no more than {str(self.max_length)} characters'
 
 
-class Choice(Rule):
+class Choice(CellRule):
     exception_class = ex.InvalidChoiceError
 
     def __init__(self, choices: list):
@@ -114,7 +73,7 @@ class Choice(Rule):
         return f'must be one of {self.choices}'
 
 
-class MinDigit(Rule):
+class MinDigit(CellRule):
     """
     Check that count of characters, after removing all non-digits, meets or
     exceeds the specified minimum. Used to evaluate length of significant digits
@@ -132,7 +91,7 @@ class MinDigit(Rule):
         return f'must have at least {str(self.min_length)} digit characters'
 
 
-class MaxDigit(Rule):
+class MaxDigit(CellRule):
     """
     Check that count of characters, after removing all non-digits, is less than
     or equal to the specified minimum. Used to evaluate length of significant
@@ -150,8 +109,8 @@ class MaxDigit(Rule):
         return f'must have no more than {self.max_length} digit characters'
 
 
-class OnlyNumbers(Rule):
-    exception_class = ex.DataError  # TODO: character error
+class OnlyNumbers(CellRule):
+    exception_class = ex.CharacterError
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)
@@ -160,7 +119,7 @@ class OnlyNumbers(Rule):
         return 'must only contain characters 0-9'
 
 
-class NoLeadingZero(Rule):
+class NoLeadingZero(CellRule):
     """
     Ensure that there is no leading zero after removing all non-digit characters.
     A lone zero (0) will not raise an error.
@@ -174,7 +133,7 @@ class NoLeadingZero(Rule):
         return 'cannot have a leading zero digit'
 
 
-class CanBeFloat(Rule):
+class CanBeFloat(CellRule):
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -184,7 +143,7 @@ class CanBeFloat(Rule):
         return 'can be coerced into a float value'
 
 
-class CanBeInteger(Rule):
+class CanBeInteger(CellRule):
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -194,7 +153,7 @@ class CanBeInteger(Rule):
         return 'can be coerced into an integer value'
 
 
-class CanBeDateIso(Rule):
+class CanBeDateIso(CellRule):
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -204,7 +163,7 @@ class CanBeDateIso(Rule):
         return 'can be coerced into a ISO-8601 date'
 
 
-class NumericDecimals(Rule):
+class NumericDecimals(CellRule):
     exception_class = ex.CurrencyPatternError
 
     def __init__(self, decimals=2):
@@ -217,7 +176,7 @@ class NumericDecimals(Rule):
         return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
-class LengthComparison(Rule):
+class LengthComparison(CellRule):
     """
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
@@ -272,7 +231,7 @@ class LengthLT(LengthComparison):
         return lambda x: len(x) < self.comparison_value
 
 
-class NumericComparison(Rule):
+class NumericComparison(CellRule):
     """
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
@@ -327,7 +286,7 @@ class NumericLT(NumericComparison):
         return lambda x: float(x) < self.comparison_value
 
 
-class DateComparison(Rule):
+class DateComparison(CellRule):
     """
     Base date value comparison class. Requires that the value can be coerced
     to a date using the specified format for the field.
@@ -383,7 +342,7 @@ class DateLT(DateComparison):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
-class RowLengthLTE(Rule):
+class RowLengthLTE(CellRule):
     exception_class = ex.RowLengthError
 
     def __init__(self, comparison_value):
@@ -396,7 +355,7 @@ class RowLengthLTE(Rule):
         return f'row length must be equal to {str(self.comparison_value)}, not greater'
 
 
-class RowLengthGTE(Rule):
+class RowLengthGTE(CellRule):
     exception_class = ex.RowLengthError
 
     def __init__(self, comparison_value):
@@ -407,112 +366,3 @@ class RowLengthGTE(Rule):
 
     def explain(self) -> str:
         return f'row length must be equal to {str(self.comparison_value)}, not less'
-
-
-class HeaderRule(Rule):
-    def __init__(self, definition):
-        self.definition = definition
-
-
-class HeaderColumnOrder(HeaderRule):
-    exception_class = ex.DataError
-
-    def evaluator(self):
-        return lambda x: x == list(self.definition)
-
-    def explain(self):
-        return 'Header row must explicitly match order of definition'
-
-
-class HeaderNoExtra(HeaderRule):
-    exception_class = ex.UnexpectedColumnError
-
-    def evaluator(self):
-        return lambda x: all([y in self.definition for y in x])
-
-    def explain(self):
-        return 'Header row must not have unexpected columns'
-
-
-class HeaderNoMissing(HeaderRule):
-    exception_class = ex.MissingColumnError
-
-    def evaluator(self):
-        return lambda x: all([y in x for y in self.definition])
-
-    def explain(self) -> str:
-        return 'Header row must not be missing any expected columns'
-
-
-class HeaderNoDuplicate(HeaderRule):
-    exception_class = ex.DuplicateColumnError
-
-    def evaluator(self):
-        return lambda x: len(x) == len(set(x))
-
-    def explain(self):
-        return 'Header row must not contain duplicate values'
-
-
-class FileRule(Rule):
-    pass
-
-
-class FileExists(FileRule):
-    exception_class = FileNotFoundError
-
-    def evaluator(self):
-        return lambda x: Path(x).exists()
-
-    def explain(self) -> str:
-        return 'file must exist'
-
-
-class FileNameMatchesPattern(FileRule):
-    exception_class = ex.FilePatternError
-
-    def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
-        self.patterns = [pattern] if isinstance(pattern, re.Pattern) else pattern
-
-    def evaluator(self):
-        return lambda x: any([p.fullmatch(Path(x).name) for p in self.patterns])
-
-    def explain(self) -> str:
-        return 'file name must match a pattern provided in the layout'
-
-
-class FileNameMatchesOnePattern(FileRule):
-    exception_class = ex.UrNotMyDataError
-
-    def __init__(self, patterns: list):
-        self.patterns = patterns
-
-    def evaluator(self):
-        return lambda x: sum([
-            True if p.fullmatch(Path(x).name) else False for p in self.patterns
-        ]) <= 1
-
-    def explain(self) -> str:
-        return 'file cannot match multiple patterns provided in the layout'
-
-
-def make_static_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
-    """
-    Return a factory generated Rule class. The function used by the rule must
-    directly evaluate a single positional argument (i.e. x, but not x and y).
-    Because the Rule cannot be passed a value on initialization, neither the
-    evaluator or explain methods in the return class can be dynamic.
-    """
-
-    class FactoryRule(Rule):
-        exception_class = exception
-
-        @classmethod
-        def evaluator(cls):
-            return func
-
-        @classmethod
-        def explain(cls) -> str:
-            return assertion
-
-    return FactoryRule()

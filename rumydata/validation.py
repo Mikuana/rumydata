@@ -3,7 +3,11 @@ from pathlib import Path
 from re import compile
 from typing import Union, Pattern
 
-from rumydata import exception, rule
+import rumydata.rule.base
+import rumydata.rule.cell
+import rumydata.rule.file
+import rumydata.rule.header
+from rumydata import exception
 from rumydata.exception import FileError
 
 
@@ -62,7 +66,7 @@ class BaseValidator:
 
             # noinspection PyBroadException
             try:
-                if issubclass(type(r), rule.ColumnCompareRule):
+                if issubclass(type(r), rumydata.rule.base.ColumnsRule):
                     e = r.evaluator()(value, kwargs.get('compare')[r.compare_to])
                 else:
                     e = r.evaluator()(value)
@@ -106,7 +110,7 @@ class Cell(BaseValidator):
         self.nullable = nullable
 
         if not self.nullable:
-            self.rules.append(rule.NotNull)
+            self.rules.append(rumydata.rule.cell.NotNull)
 
     def __check__(self, value, cix=-1, **kwargs):
         # if data is nullable and value is empty, skip all checks
@@ -130,7 +134,7 @@ class Cell(BaseValidator):
     def comparison_columns(self):
         compares = set()
         for r in self.rules:
-            if issubclass(type(r), rule.ColumnCompareRule):
+            if issubclass(type(r), rumydata.rule.base.ColumnsRule):
                 compares.add(r.compare_to)
         return compares
 
@@ -141,8 +145,8 @@ class Row(BaseValidator):
         self.definition = layout.definition
 
         self.rules.extend([
-            rule.RowLengthLTE(len(self.definition)),
-            rule.RowLengthGTE(len(self.definition))
+            rumydata.rule.cell.RowLengthLTE(len(self.definition)),
+            rumydata.rule.cell.RowLengthGTE(len(self.definition))
         ])
 
     def __check__(self, row: list, rix=-1):
@@ -171,10 +175,10 @@ class Header(BaseValidator):
         super().__init__(**kwargs)
 
         self.rules.extend([
-            rule.HeaderColumnOrder(layout.definition),
-            rule.HeaderNoExtra(layout.definition),
-            rule.HeaderNoDuplicate(layout.definition),
-            rule.HeaderNoMissing(layout.definition)
+            rumydata.rule.header.HeaderColumnOrder(layout.definition),
+            rumydata.rule.header.HeaderNoExtra(layout.definition),
+            rumydata.rule.header.HeaderNoDuplicate(layout.definition),
+            rumydata.rule.header.HeaderNoMissing(layout.definition)
         ])
 
     def __check__(self, row: list, **kwargs):
@@ -197,8 +201,8 @@ class File(BaseValidator):
         self.max_errors = max_errors
         self.layout = layout
         self.rules.extend([
-            rule.FileExists(),
-            rule.FileNameMatchesPattern(self.layout.pattern),
+            rumydata.rule.file.FileExists(),
+            rumydata.rule.file.FileNameMatchesPattern(self.layout.pattern),
         ])
 
     def __check__(self, filepath: Union[str, Path], **kwargs):
