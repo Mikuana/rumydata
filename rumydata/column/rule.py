@@ -1,24 +1,17 @@
 from rumydata import exception as ex
-from rumydata.base import BaseRule, ColumnData
+from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
+    exception_class = ex.ColumnComparisonError
 
-    def prepare(self, data: ColumnData) -> tuple:
-        return data.values,
+    def __init__(self, compare_to: str):
+        self.compare_to = compare_to
 
 
-class Unique(Rule):
-    exception_class = ex.DuplicateValueError
-
-    def prepare(self, data: ColumnData) -> tuple:
-        return [x for x in data.values if not x == ''],
-
+class GreaterThanColumn(Rule):
     def evaluator(self):
-        return lambda x: len(x) == len(set(x))
+        return lambda x, y: x > y
 
-    def exception_msg(self):
-        return self.exception_class(self.explain())
-
-    def explain(self):
-        return 'values must be unique'
+    def explain(self) -> str:
+        return f"must be greater than column '{self.compare_to}'"

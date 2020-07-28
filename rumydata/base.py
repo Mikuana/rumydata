@@ -1,14 +1,9 @@
-from dataclasses import dataclass
-
 from rumydata import exception as ex
 
 
 class BaseRule:
     """ Base class for defining data type rules """
     exception_class = ex.UrNotMyDataError
-
-    def prepare(self, data) -> tuple:
-        return data,
 
     def evaluator(self):
         """
@@ -36,19 +31,15 @@ class BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, data, rule_type, **kwargs):
+    def __check__(self, value, **kwargs):
         errors = []
-        if not self.rules:
-            return [ex.NoRulesDefinedError()]
-
         for r in self.rules:
+
             # noinspection PyBroadException
             try:
-                if issubclass(type(r), rule_type):
-                    x = r.prepare(data)
-                    e = r.evaluator()(*x)
-                    if not e:
-                        errors.append(r.exception_msg())
+                e = r.evaluator()(value)
+                if not e:
+                    errors.append(r.exception_msg())
             except Exception as e:  # get type, and rewrite safe message
                 errors.append(r.exception_class(
                     f'raised {e.__class__.__name__} while checking if value {r.explain()}')
@@ -78,49 +69,3 @@ class BaseSubject:
                     yield x
         else:
             yield error
-
-
-@dataclass
-class CellData:
-    value: str
-    compare: dict = None
-
-
-@dataclass
-class RowData:
-    values: list
-
-
-@dataclass
-class ColumnData:
-    values: list
-
-
-class Columns:
-    def __init__(self, definition: dict, **kwargs):
-        """
-        Defines the layout of a tabular file.
-
-        :param definition: dictionary of column names with DataType definitions
-        """
-
-        self.definition = definition
-        self.length = len(definition)
-        self.title = kwargs.get('title')
-
-    def digest(self):
-        return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
-
-    def markdown_digest(self):
-        fields = f'# {self.title}' + '\n\n' if self.title else ''
-        fields += '\n'.join([
-            f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
-            for k, v in self.definition.items()
-        ])
-        return fields
-
-    def comparison_columns(self):
-        compares = set()
-        for v in self.definition.values():
-            compares.update(v.comparison_columns())
-        return compares

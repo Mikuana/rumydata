@@ -1,35 +1,32 @@
 from rumydata import exception as ex
-from rumydata.base import BaseRule, RowData
+from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
     exception_class = ex.RowComparisonError
 
-    def prepare(self, data: RowData) -> tuple:
-        return data.values,
-
 
 class RowLengthLTE(Rule):
     exception_class = ex.RowLengthError
 
-    def __init__(self, columns_length):
-        self.columns_length = columns_length
+    def __init__(self, comparison_value):
+        self.comparison_value = comparison_value
 
     def evaluator(self):
-        return lambda x: len(x) <= self.columns_length
+        return lambda x: len(x) <= self.comparison_value
 
     def explain(self) -> str:
-        return f'row length must be equal to {str(self.columns_length)}, not greater'
+        return f'row length must be equal to {str(self.comparison_value)}, not greater'
 
 
 class RowLengthGTE(Rule):
     exception_class = ex.RowLengthError
 
-    def __init__(self, columns_length):
-        self.columns_length = columns_length
+    def __init__(self, comparison_value):
+        self.comparison_value = comparison_value
 
     def evaluator(self):
-        return lambda x: len(x) >= self.columns_length
+        return lambda x: len(x) >= self.comparison_value
 
     def explain(self) -> str:
-        return f'row length must be equal to {str(self.columns_length)}, not less'
+        return f'row length must be equal to {str(self.comparison_value)}, not less'

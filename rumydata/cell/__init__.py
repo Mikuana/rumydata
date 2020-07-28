@@ -1,5 +1,42 @@
-import rumydata.rule.cell
-from rumydata.validation import Cell
+from rumydata import exception as ex
+from rumydata.base import BaseSubject
+from rumydata.column.rule import Rule
+from rumydata.cell import rule
+
+
+class Cell(BaseSubject):
+    def __init__(self, nullable=False, rules: list = None):
+        super().__init__(rules)
+        self.nullable = nullable
+
+        if not self.nullable:
+            self.rules.append(rule.NotNull)
+
+    def __check__(self, value, cix=-1, **kwargs):
+        # if data is nullable and value is empty, skip all checks
+        if self.nullable and value == '':
+            pass
+        else:
+            e = super().__check__(value, compare=kwargs.get('compare'))
+            if e:
+                return ex.CellError(cix, errors=e, **kwargs)
+
+    def check(self, value, **kwargs):
+        errors = self.__check__(value, **kwargs)
+        assert not errors, str(errors)
+
+    def digest(self):
+        dig = super().digest()
+        if self.nullable:
+            dig.append('Nullable')
+        return dig
+
+    def comparison_columns(self):
+        compares = set()
+        for r in self.rules:
+            if issubclass(type(r), Rule):
+                compares.add(r.compare_to)
+        return compares
 
 
 class Text(Cell):
@@ -9,11 +46,11 @@ class Text(Cell):
         self.descriptors['Type'] = 'String'
         self.descriptors['Max Length'] = f'{str(max_length)} characters'
 
-        self.rules.append(rumydata.rule.cell.MaxChar(max_length))
+        self.rules.append(rule.MaxChar(max_length))
 
         if min_length:
             self.descriptors['Min Length'] = f'{str(min_length)} characters'
-            self.rules.append(rumydata.rule.cell.MinChar(min_length))
+            self.rules.append(rule.MinChar(min_length))
 
 
 class Date(Cell):
@@ -23,15 +60,15 @@ class Date(Cell):
         self.descriptors['Type'] = 'Date'
         self.descriptors['Format'] = 'YYYY-MM-DD'
 
-        self.rules.append(rumydata.rule.cell.CanBeDateIso())
+        self.rules.append(rule.CanBeDateIso())
 
         if max_date:
             self.descriptors['Max Date'] = f'{max_date}'
-            self.rules.append(rumydata.rule.cell.DateLTE(max_date))
+            self.rules.append(rule.DateLTE(max_date))
 
         if min_date:
             self.descriptors['Min Date'] = f'{min_date}'
-            self.rules.append(rumydata.rule.cell.DateGTE(min_date))
+            self.rules.append(rule.DateGTE(min_date))
 
 
 class Currency(Cell):
@@ -42,8 +79,8 @@ class Currency(Cell):
         self.descriptors['Format'] = f'{"9" * (significant_digits - 2)}.99'
         self.descriptors['Max Length'] = f'{str(significant_digits)} digits'
 
-        self.rules.append(rumydata.rule.cell.MaxDigit(significant_digits))
-        self.rules.append(rumydata.rule.cell.NumericDecimals())
+        self.rules.append(rule.MaxDigit(significant_digits))
+        self.rules.append(rule.NumericDecimals())
 
 
 class Digit(Cell):
@@ -54,12 +91,12 @@ class Digit(Cell):
         self.descriptors['Format'] = f'{"0" * max_length}'
         self.descriptors['Max Length'] = f'{str(max_length)} digits'
 
-        self.rules.append(rumydata.rule.cell.OnlyNumbers())
-        self.rules.append(rumydata.rule.cell.MaxChar(max_length))
+        self.rules.append(rule.OnlyNumbers())
+        self.rules.append(rule.MaxChar(max_length))
 
         if min_length:
             self.descriptors['Min Length'] = f'{str(min_length)} digits'
-            self.rules.append(rumydata.rule.cell.MinChar(min_length))
+            self.rules.append(rule.MinChar(min_length))
 
 
 class Integer(Cell):
@@ -70,13 +107,13 @@ class Integer(Cell):
         self.descriptors['Format'] = f'{"9" * max_length}'
         self.descriptors['Max Length'] = f'{str(max_length)} digits'
 
-        self.rules.append(rumydata.rule.cell.CanBeInteger())
-        self.rules.append(rumydata.rule.cell.NoLeadingZero())
-        self.rules.append(rumydata.rule.cell.MaxDigit(max_length))
+        self.rules.append(rule.CanBeInteger())
+        self.rules.append(rule.NoLeadingZero())
+        self.rules.append(rule.MaxDigit(max_length))
 
         if min_length:
             self.descriptors['Min Length'] = f'{str(max_length)} digits'
-            self.rules.append(rumydata.rule.cell.MinDigit(min_length))
+            self.rules.append(rule.MinDigit(min_length))
 
 
 class Choice(Cell):
@@ -85,4 +122,4 @@ class Choice(Cell):
 
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
-        self.rules.append(rumydata.rule.cell.Choice(valid_values))
+        self.rules.append(rule.Choice(valid_values))
