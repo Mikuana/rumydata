@@ -2,10 +2,14 @@ import re
 from datetime import datetime
 
 from rumydata import exception as ex
-from rumydata.rule.base import CellRule
+from rumydata.base import BaseRule
 
 
-class NotNull(CellRule):
+class Rule(BaseRule):
+    pass
+
+
+class NotNull(Rule):
     exception_class = ex.NullValueError
 
     @classmethod
@@ -21,7 +25,7 @@ class NotNull(CellRule):
         return 'cannot be empty/blank'
 
 
-class ExactChar(CellRule):
+class ExactChar(Rule):
     exception_class = ex.LengthError
 
     def __init__(self, exact_length):
@@ -34,7 +38,7 @@ class ExactChar(CellRule):
         return f'must be exactly {str(self.exact_length)} characters'
 
 
-class MinChar(CellRule):
+class MinChar(Rule):
     exception_class = ex.LengthError
 
     def __init__(self, min_length):
@@ -47,7 +51,7 @@ class MinChar(CellRule):
         return f'must be at least {str(self.min_length)} characters'
 
 
-class MaxChar(CellRule):
+class MaxChar(Rule):
     exception_class = ex.LengthError
 
     def __init__(self, max_length):
@@ -60,7 +64,7 @@ class MaxChar(CellRule):
         return f'must be no more than {str(self.max_length)} characters'
 
 
-class Choice(CellRule):
+class Choice(Rule):
     exception_class = ex.InvalidChoiceError
 
     def __init__(self, choices: list):
@@ -73,7 +77,7 @@ class Choice(CellRule):
         return f'must be one of {self.choices}'
 
 
-class MinDigit(CellRule):
+class MinDigit(Rule):
     """
     Check that count of characters, after removing all non-digits, meets or
     exceeds the specified minimum. Used to evaluate length of significant digits
@@ -91,7 +95,7 @@ class MinDigit(CellRule):
         return f'must have at least {str(self.min_length)} digit characters'
 
 
-class MaxDigit(CellRule):
+class MaxDigit(Rule):
     """
     Check that count of characters, after removing all non-digits, is less than
     or equal to the specified minimum. Used to evaluate length of significant
@@ -109,7 +113,7 @@ class MaxDigit(CellRule):
         return f'must have no more than {self.max_length} digit characters'
 
 
-class OnlyNumbers(CellRule):
+class OnlyNumbers(Rule):
     exception_class = ex.CharacterError
 
     def evaluator(self):
@@ -119,7 +123,7 @@ class OnlyNumbers(CellRule):
         return 'must only contain characters 0-9'
 
 
-class NoLeadingZero(CellRule):
+class NoLeadingZero(Rule):
     """
     Ensure that there is no leading zero after removing all non-digit characters.
     A lone zero (0) will not raise an error.
@@ -133,7 +137,7 @@ class NoLeadingZero(CellRule):
         return 'cannot have a leading zero digit'
 
 
-class CanBeFloat(CellRule):
+class CanBeFloat(Rule):
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -143,7 +147,7 @@ class CanBeFloat(CellRule):
         return 'can be coerced into a float value'
 
 
-class CanBeInteger(CellRule):
+class CanBeInteger(Rule):
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -153,7 +157,7 @@ class CanBeInteger(CellRule):
         return 'can be coerced into an integer value'
 
 
-class CanBeDateIso(CellRule):
+class CanBeDateIso(Rule):
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -163,7 +167,7 @@ class CanBeDateIso(CellRule):
         return 'can be coerced into a ISO-8601 date'
 
 
-class NumericDecimals(CellRule):
+class NumericDecimals(Rule):
     exception_class = ex.CurrencyPatternError
 
     def __init__(self, decimals=2):
@@ -176,7 +180,7 @@ class NumericDecimals(CellRule):
         return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
-class LengthComparison(CellRule):
+class LengthComparison(Rule):
     """
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
@@ -231,7 +235,7 @@ class LengthLT(LengthComparison):
         return lambda x: len(x) < self.comparison_value
 
 
-class NumericComparison(CellRule):
+class NumericComparison(Rule):
     """
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
@@ -286,7 +290,7 @@ class NumericLT(NumericComparison):
         return lambda x: float(x) < self.comparison_value
 
 
-class DateComparison(CellRule):
+class DateComparison(Rule):
     """
     Base date value comparison class. Requires that the value can be coerced
     to a date using the specified format for the field.
@@ -342,27 +346,24 @@ class DateLT(DateComparison):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
-class RowLengthLTE(CellRule):
-    exception_class = ex.RowLengthError
 
-    def __init__(self, comparison_value):
-        self.comparison_value = comparison_value
+def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
+    """
+    Return a factory generated Rule class. The function used by the rule must
+    directly evaluate a single positional argument (i.e. x, but not x and y).
+    Because the Rule cannot be passed a value on initialization, neither the
+    evaluator or explain methods in the return class can be dynamic.
+    """
 
-    def evaluator(self):
-        return lambda x: len(x) <= self.comparison_value
+    class FactoryRule(Rule):
+        exception_class = exception
 
-    def explain(self) -> str:
-        return f'row length must be equal to {str(self.comparison_value)}, not greater'
+        @classmethod
+        def evaluator(cls):
+            return func
 
+        @classmethod
+        def explain(cls) -> str:
+            return assertion
 
-class RowLengthGTE(CellRule):
-    exception_class = ex.RowLengthError
-
-    def __init__(self, comparison_value):
-        self.comparison_value = comparison_value
-
-    def evaluator(self):
-        return lambda x: len(x) >= self.comparison_value
-
-    def explain(self) -> str:
-        return f'row length must be equal to {str(self.comparison_value)}, not less'
+    return FactoryRule()

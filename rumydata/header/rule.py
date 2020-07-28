@@ -1,8 +1,14 @@
 from rumydata import exception as ex
-from rumydata.rule.base import HeaderRule
+
+from rumydata.base import BaseRule
 
 
-class HeaderNoExtra(HeaderRule):
+class Rule(BaseRule):
+    def __init__(self, definition):
+        self.definition = definition
+
+
+class NoExtra(Rule):
     exception_class = ex.UnexpectedColumnError
 
     def evaluator(self):
@@ -12,7 +18,7 @@ class HeaderNoExtra(HeaderRule):
         return 'Header row must not have unexpected columns'
 
 
-class HeaderNoMissing(HeaderRule):
+class NoMissing(Rule):
     exception_class = ex.MissingColumnError
 
     def evaluator(self):
@@ -22,7 +28,7 @@ class HeaderNoMissing(HeaderRule):
         return 'Header row must not be missing any expected columns'
 
 
-class HeaderNoDuplicate(HeaderRule):
+class NoDuplicate(Rule):
     exception_class = ex.DuplicateColumnError
 
     def evaluator(self):
@@ -32,7 +38,7 @@ class HeaderNoDuplicate(HeaderRule):
         return 'Header row must not contain duplicate values'
 
 
-class HeaderColumnOrder(HeaderRule):
+class ColumnOrder(Rule):
     exception_class = ex.DataError
 
     def evaluator(self):

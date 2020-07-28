@@ -3,10 +3,14 @@ from pathlib import Path
 from typing import Union, List
 
 from rumydata import exception as ex
-from rumydata.rule.base import FileRule
+from rumydata.base import BaseRule
 
 
-class FileExists(FileRule):
+class Rule(BaseRule):
+    pass
+
+
+class FileExists(Rule):
     exception_class = FileNotFoundError
 
     def evaluator(self):
@@ -16,7 +20,7 @@ class FileExists(FileRule):
         return 'file must exist'
 
 
-class FileNameMatchesPattern(FileRule):
+class FileNameMatchesPattern(Rule):
     exception_class = ex.FilePatternError
 
     def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
@@ -29,7 +33,7 @@ class FileNameMatchesPattern(FileRule):
         return 'file name must match a pattern provided in the layout'
 
 
-class FileNameMatchesOnePattern(FileRule):
+class FileNameMatchesOnePattern(Rule):
     exception_class = ex.UrNotMyDataError
 
     def __init__(self, patterns: list):
