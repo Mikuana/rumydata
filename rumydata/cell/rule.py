@@ -2,11 +2,14 @@ import re
 from datetime import datetime
 
 from rumydata import exception as ex
-from rumydata.base import BaseRule
+from rumydata.base import BaseRule, CellData
 
 
 class Rule(BaseRule):
-    pass
+
+    @classmethod
+    def prepare(cls, data: CellData) -> tuple:
+        return data.value,
 
 
 class NotNull(Rule):
@@ -344,7 +347,6 @@ class DateLT(DateComparison):
 
     def evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
-
 
 
 def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:

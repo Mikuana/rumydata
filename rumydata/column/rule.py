@@ -1,5 +1,5 @@
 from rumydata import exception as ex
-from rumydata.base import BaseRule
+from rumydata.base import BaseRule, CellData
 
 
 class Rule(BaseRule):
@@ -7,6 +7,9 @@ class Rule(BaseRule):
 
     def __init__(self, compare_to: str):
         self.compare_to = compare_to
+
+    def prepare(self, data: CellData) -> tuple:
+        return data.value, data.compare[self.compare_to]
 
 
 class GreaterThanColumn(Rule):

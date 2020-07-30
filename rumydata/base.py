@@ -1,9 +1,14 @@
+from dataclasses import dataclass
+
 from rumydata import exception as ex
 
 
 class BaseRule:
     """ Base class for defining data type rules """
     exception_class = ex.UrNotMyDataError
+
+    def prepare(self, data) -> tuple:
+        return data,
 
     def evaluator(self):
         """
@@ -31,15 +36,17 @@ class BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, value, **kwargs):
+    def __check__(self, data, **kwargs):
         errors = []
+        restrict = kwargs.get('restrict', True)
         for r in self.rules:
-
             # noinspection PyBroadException
             try:
-                e = r.evaluator()(value)
-                if not e:
-                    errors.append(r.exception_msg())
+                if restrict or issubclass(type(r), restrict):
+                    x = r.prepare(data)
+                    e = r.evaluator()(*x)
+                    if not e:
+                        errors.append(r.exception_msg())
             except Exception as e:  # get type, and rewrite safe message
                 errors.append(r.exception_class(
                     f'raised {e.__class__.__name__} while checking if value {r.explain()}')
@@ -69,3 +76,9 @@ class BaseSubject:
                     yield x
         else:
             yield error
+
+
+@dataclass
+class CellData:
+    value: str
+    compare: dict = None

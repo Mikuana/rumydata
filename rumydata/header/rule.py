@@ -1,11 +1,12 @@
+from rumydata import column
 from rumydata import exception as ex
 
 from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
-    def __init__(self, definition):
-        self.definition = definition
+    def __init__(self, columns: column.Columns):
+        self.definition = columns.definition
 
 
 class NoExtra(Rule):

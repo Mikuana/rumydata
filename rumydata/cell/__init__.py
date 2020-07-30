@@ -1,6 +1,6 @@
+from rumydata import column
 from rumydata import exception as ex
-from rumydata.base import BaseSubject
-from rumydata.column.rule import Rule
+from rumydata.base import BaseSubject, CellData
 from rumydata.cell import rule
 
 
@@ -12,17 +12,18 @@ class Cell(BaseSubject):
         if not self.nullable:
             self.rules.append(rule.NotNull)
 
-    def __check__(self, value, cix=-1, **kwargs):
+    def __check__(self, data: CellData, cix=-1, **kwargs):
         # if data is nullable and value is empty, skip all checks
-        if self.nullable and value == '':
+        restrict = (rule.Rule, column.rule.Rule)
+        if self.nullable and data.value == '':
             pass
         else:
-            e = super().__check__(value, compare=kwargs.get('compare'))
+            e = super().__check__(data, restrict=restrict)
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
-    def check(self, value, **kwargs):
-        errors = self.__check__(value, **kwargs)
+    def check(self, data, **kwargs):
+        errors = self.__check__(data, **kwargs)
         assert not errors, str(errors)
 
     def digest(self):
@@ -34,7 +35,7 @@ class Cell(BaseSubject):
     def comparison_columns(self):
         compares = set()
         for r in self.rules:
-            if issubclass(type(r), Rule):
+            if issubclass(type(r), column.rule.Rule):
                 compares.add(r.compare_to)
         return compares
 
@@ -123,3 +124,7 @@ class Choice(Cell):
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
         self.rules.append(rule.Choice(valid_values))
+
+
+if __name__ == '__main__':
+    Integer(1).check(CellData('1'))
