@@ -1,11 +1,11 @@
-from rumydata import column
+import rumydata.base
 from rumydata import exception as ex
 from rumydata.base import BaseSubject, CellData
 from rumydata.row import rule
 
 
 class Row(BaseSubject):
-    def __init__(self, columns: column.Columns, **kwargs):
+    def __init__(self, columns: rumydata.base.Columns, **kwargs):
         super().__init__(**kwargs)
         self.columns = columns
 

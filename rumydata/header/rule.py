@@ -1,11 +1,11 @@
-from rumydata import column
+import rumydata.base
 from rumydata import exception as ex
 
 from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
-    def __init__(self, columns: column.Columns):
+    def __init__(self, columns: rumydata.base.Columns):
         self.definition = columns.definition
 
 
