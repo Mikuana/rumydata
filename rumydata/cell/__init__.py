@@ -124,7 +124,3 @@ class Choice(Cell):
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
         self.rules.append(rule.Choice(valid_values))
-
-
-if __name__ == '__main__':
-    Integer(1).check(CellData('1'))
