@@ -1,6 +1,5 @@
 from rumydata import exception as ex
-from rumydata.base import BaseSubject
-from rumydata.column import Columns
+from rumydata.base import BaseSubject, Columns
 from rumydata.header import rule
 
 

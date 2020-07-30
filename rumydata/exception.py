@@ -28,11 +28,6 @@ class UrNotMyDataError(Exception):
                 yield UrNotMyDataError(el).md(depth)
 
 
-# # noinspection DuplicatedCode
-# class InvalidFileNameError(UrNotMyDataError):
-#     pass
-
-
 class DataError(UrNotMyDataError):
     pass
 

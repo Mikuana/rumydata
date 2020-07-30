@@ -1,4 +1,3 @@
-from rumydata import column
 from rumydata import exception as ex
 from rumydata.base import BaseSubject, CellData
 from rumydata.cell import rule
@@ -14,11 +13,10 @@ class Cell(BaseSubject):
 
     def __check__(self, data: CellData, cix=-1, **kwargs):
         # if data is nullable and value is empty, skip all checks
-        restrict = (rule.Rule, column.rule.Rule)
         if self.nullable and data.value == '':
             pass
         else:
-            e = super().__check__(data, restrict=restrict)
+            e = super().__check__(data, restrict=rule.Rule)
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
@@ -35,7 +33,7 @@ class Cell(BaseSubject):
     def comparison_columns(self):
         compares = set()
         for r in self.rules:
-            if issubclass(type(r), column.rule.Rule):
+            if issubclass(type(r), rule.ColumnComparisonRule):
                 compares.add(r.compare_to)
         return compares
 

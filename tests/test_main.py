@@ -1,3 +1,8 @@
+"""
+This is a giant dumpster fire. It needs to be broken apart into a set of more
+sensible scripts.
+"""
+
 import csv
 import tempfile
 import uuid
@@ -6,12 +11,11 @@ from pathlib import Path
 
 import pytest
 
+import rumydata.cell.rule
 from rumydata import cell
-from rumydata import column
 from rumydata import exception as ex
-from rumydata.base import CellData
+from rumydata.base import CellData, Columns
 from rumydata.cell import Cell
-from rumydata.column import Columns
 from rumydata.file import File
 from rumydata.header import Header
 from rumydata.row import Row
@@ -317,25 +321,25 @@ def test_static_rules_bad(value, func, assertion, kwargs):
 
 
 def test_column_compare_rule_good():
-    x = Cell(rules=[column.rule.GreaterThanColumn('x')])
+    x = Cell(rules=[rumydata.cell.rule.GreaterThanColumn('x')])
     assert not x.check(CellData('1', {'x': '0'}))
 
 
 def test_column_compare_rule_bad():
-    x = Cell(rules=[column.rule.GreaterThanColumn('x')])
+    x = Cell(rules=[rumydata.cell.rule.GreaterThanColumn('x')])
     assert x.has_error('1', compare={'x': '1'}, error=ex.ColumnComparisonError)
 
 
 def test_column_compare_row_good():
     row = Row(Columns({
-        'a': cell.Integer(1, rules=[column.rule.GreaterThanColumn('b')]),
+        'a': cell.Integer(1, rules=[rumydata.cell.rule.GreaterThanColumn('b')]),
         'b': cell.Integer(1)
     }))
     assert not row.check(['3', '2'])
 
 
 @pytest.mark.parametrize('compare_rule,row', [
-    (column.rule.GreaterThanColumn('x'), ['2', '3']),
+    (rumydata.cell.rule.GreaterThanColumn('x'), ['2', '3']),
 ])
 def test_column_compare_file_good(tmpdir, compare_rule, row):
     cols = Columns({'x': Cell(), 'y': Cell(rules=[compare_rule])})
@@ -343,7 +347,7 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
 
 
 @pytest.mark.parametrize('compare_rule,row', [
-    (column.rule.GreaterThanColumn('x'), ['1', '1']),
+    (rumydata.cell.rule.GreaterThanColumn('x'), ['1', '1']),
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
     cols = Columns({'x': Cell(), 'y': Cell(rules=[compare_rule])})

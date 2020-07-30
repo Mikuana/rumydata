@@ -3,8 +3,7 @@ from pathlib import Path
 from typing import Union
 
 from rumydata import exception as ex
-from rumydata.base import BaseSubject
-from rumydata.column import Columns
+from rumydata.base import BaseSubject, Columns
 from rumydata.file import rule
 from rumydata.header import Header
 from rumydata.row import Row
