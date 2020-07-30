@@ -1,18 +1,18 @@
 from rumydata import exception as ex
 from rumydata.base import BaseSubject
-from rumydata.layout import Layout
+from rumydata.column import Columns
 from rumydata.header import rule
 
 
 class Header(BaseSubject):
-    def __init__(self, layout: Layout, **kwargs):
+    def __init__(self, columns: Columns, **kwargs):
         super().__init__(**kwargs)
 
         self.rules.extend([
-            rule.ColumnOrder(layout.definition),
-            rule.NoExtra(layout.definition),
-            rule.NoDuplicate(layout.definition),
-            rule.NoMissing(layout.definition)
+            rule.ColumnOrder(columns),
+            rule.NoExtra(columns),
+            rule.NoDuplicate(columns),
+            rule.NoMissing(columns)
         ])
 
     def __check__(self, row: list, **kwargs):

@@ -4,23 +4,23 @@ from typing import Union
 
 from rumydata import exception as ex
 from rumydata.base import BaseSubject
+from rumydata.column import Columns
 from rumydata.file import rule
 from rumydata.header import Header
 from rumydata.row import Row
 
 
 class File(BaseSubject):
-    def __init__(self, layout, max_errors=100, **kwargs):
+    def __init__(self, columns: Columns, max_errors=100, **kwargs):
         # pop any csv reader kwargs for later use
         x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
         self.csv_kwargs = {k: v for k, v in x.items() if v}
         super().__init__(**kwargs)
 
         self.max_errors = max_errors
-        self.layout = layout
+        self.columns = columns
         self.rules.extend([
-            rule.FileExists(),
-            rule.FileNameMatchesPattern(self.layout.pattern),
+            rule.FileExists()
         ])
 
     def __check__(self, filepath: Union[str, Path], **kwargs):
@@ -30,7 +30,7 @@ class File(BaseSubject):
             return ex.FileError(file=filepath, errors=e)
 
         with open(p) as f:
-            hv, rv = Header(self.layout), Row(self.layout)
+            hv, rv = Header(self.columns), Row(self.columns)
             for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
                 re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix)
                 if re:
