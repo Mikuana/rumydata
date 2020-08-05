@@ -9,10 +9,10 @@ class Rule(BaseRule):
 
 
 class Unique(Rule):
-    exception_class = ex.DataError
+    exception_class = ex.DuplicateValueError
 
     def prepare(self, data: ColumnData) -> tuple:
-        return [x for x in ColumnData.values if not x == ''],
+        return [x for x in data.values if not x == ''],
 
     def evaluator(self):
         return lambda x: len(x) == len(set(x))

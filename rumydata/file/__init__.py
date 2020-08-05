@@ -4,7 +4,7 @@ from typing import Union
 
 from rumydata import column
 from rumydata import exception as ex
-from rumydata.base import BaseSubject, Columns, RowData
+from rumydata.base import BaseSubject, Columns, RowData, ColumnData
 from rumydata.file import rule
 from rumydata.header import Header
 from rumydata.row import Row
@@ -25,7 +25,7 @@ class File(BaseSubject):
 
     def __check__(self, filepath: Union[str, Path], **kwargs):
         p = Path(filepath) if isinstance(filepath, str) else filepath
-        e = super().__check__(p, restrict=rule.Rule)  # check file-based rules first
+        e = super().__check__(p, rule_type=rule.Rule)  # check file-based rules first
         if e:
             return ex.FileError(file=filepath, errors=e)
 
@@ -38,7 +38,7 @@ class File(BaseSubject):
             for k in column_cache.keys()
         }
 
-        with open(p) as f:
+        with open(p, newline='') as f:
             hv, rv = Header(self.columns), Row(self.columns)
             for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
                 row = RowData(row)
@@ -51,15 +51,16 @@ class File(BaseSubject):
                         m = f"max of {str(self.max_errors)} row errors exceeded"
                         e.append(ex.MaxExceededError(m))
                         break
-                for k, ix in column_cache_map.items():
-                    column_cache[k].append(row.values[ix])
+                if rix > 0:
+                    for k, ix in column_cache_map.items():
+                        column_cache[k].append(row.values[ix])
 
-        # for k, v in column_cache.items():
-        #     ce = self.columns.definition[k].__check__(
-        #         ColumnData(v), restrict=column.rule.Rule
-        #     )
-        #     if ce:
-        #         e.append(ce)
+        for k, v in column_cache.items():
+            ce = self.columns.definition[k].__check__(
+                ColumnData(v), rule_type=column.rule.Rule
+            )
+            if ce:
+                e.append(ce)
         if e:
             return ex.FileError(file=p.name, errors=e)
 

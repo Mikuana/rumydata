@@ -36,16 +36,15 @@ class BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, data, **kwargs):
+    def __check__(self, data, rule_type, **kwargs):
         errors = []
-        restrict = kwargs.get('restrict', True)
         if not self.rules:
-            return [ex.UrNotMyDataError('No rules defined')]
+            return [ex.NoRulesDefinedError()]
 
         for r in self.rules:
             # noinspection PyBroadException
             try:
-                if issubclass(type(r), restrict):
+                if issubclass(type(r), rule_type):
                     x = r.prepare(data)
                     e = r.evaluator()(*x)
                     if not e:

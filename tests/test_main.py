@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 import rumydata.cell.rule
-from rumydata import cell
+from rumydata import cell, column
 from rumydata import exception as ex
 from rumydata.base import CellData, RowData, Columns
 from rumydata.cell import Cell
@@ -37,19 +37,23 @@ def tmpdir():
         yield Path(d)
 
 
-def write_row(directory, columns: Columns, row):
+def write_row(directory, columns: Columns, row, rows=False):
     p = Path(directory, str(uuid.uuid4()))
-    with p.open('w') as o:
+    with p.open('w', newline='') as o:
         writer = csv.writer(o)
         writer.writerow(list(columns.definition))
-        writer.writerow(row)
+        if rows:
+            for r in row:
+                writer.writerow(r)
+        else:
+            writer.writerow(row)
     return p
 
 
 @pytest.fixture()
 def basic_good(tmpdir):
     p = Path(tmpdir, 'good.csv')
-    with p.open('w') as o:
+    with p.open('w', newline='') as o:
         writer = csv.writer(o)
         writer.writerow(['col1', 'col2', 'col3'])
         writer.writerow(['A', '1', '2020-01-01'])
@@ -352,3 +356,15 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
     cols = Columns({'x': Cell(), 'y': Cell(rules=[compare_rule])})
     assert File(cols).has_error(write_row(tmpdir, cols, row), ex.ColumnComparisonError)
+
+
+def test_unique_bad(tmpdir):
+    cols = Columns({'x': Cell(rules=[column.rule.Unique()])})
+    f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
+    assert File(cols).has_error(f, ex.DuplicateValueError)
+
+
+def test_unique_good(tmpdir):
+    cols = Columns({'x': Cell(rules=[column.rule.Unique()])})
+    f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
+    assert not File(cols).check(f)

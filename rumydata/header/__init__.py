@@ -14,8 +14,8 @@ class Header(BaseSubject):
             rule.NoMissing(columns)
         ])
 
-    def __check__(self, row: RowData, **kwargs):
-        e = super().__check__(row, restrict=rule.Rule)
+    def __check__(self, row: RowData, rule_type=rule.Rule, **kwargs):
+        e = super().__check__(row, rule_type=rule_type)
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(0, errors=e)
 

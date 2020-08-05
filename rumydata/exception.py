@@ -168,3 +168,11 @@ class RowComparisonError(UrNotMyDataError):
 
 class CharacterError(UrNotMyDataError):
     pass
+
+
+class DuplicateValueError(UrNotMyDataError):
+    pass
+
+
+class NoRulesDefinedError(UrNotMyDataError):
+    pass
