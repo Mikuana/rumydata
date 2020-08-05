@@ -7,24 +7,20 @@ from rumydata.base import BaseRule, CellData
 
 class Rule(BaseRule):
 
-    @classmethod
-    def prepare(cls, data: CellData) -> tuple:
+    def prepare(self, data: CellData) -> tuple:
         return data.value,
 
 
 class NotNull(Rule):
     exception_class = ex.NullValueError
 
-    @classmethod
-    def evaluator(cls):
+    def evaluator(self):
         return lambda x: x != ''
 
-    @classmethod
-    def exception_msg(cls):
-        return cls.exception_class(cls.explain())
+    def exception_msg(self):
+        return self.exception_class(self.explain())
 
-    @classmethod
-    def explain(cls):
+    def explain(self):
         return 'cannot be empty/blank'
 
 

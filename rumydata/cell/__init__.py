@@ -1,5 +1,5 @@
 from rumydata import exception as ex
-from rumydata.base import BaseSubject, CellData
+from rumydata.base import BaseSubject
 from rumydata.cell import rule
 
 
@@ -9,14 +9,14 @@ class Cell(BaseSubject):
         self.nullable = nullable
 
         if not self.nullable:
-            self.rules.append(rule.NotNull)
+            self.rules.append(rule.NotNull())
 
-    def __check__(self, data: CellData, cix=-1, **kwargs):
+    def __check__(self, data, cix=-1, **kwargs):
         # if data is nullable and value is empty, skip all checks
         if self.nullable and data.value == '':
             pass
         else:
-            e = super().__check__(data, restrict=rule.Rule)
+            e = super().__check__(data, restrict=kwargs.get('restrict', rule.Rule))
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
@@ -36,6 +36,9 @@ class Cell(BaseSubject):
             if issubclass(type(r), rule.ColumnComparisonRule):
                 compares.add(r.compare_to)
         return compares
+
+    def has_rule_type(self, rule_type):
+        return any([issubclass(type(r), rule_type) for r in self.rules])
 
 
 class Text(Cell):

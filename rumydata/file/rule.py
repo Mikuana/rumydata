@@ -7,7 +7,9 @@ from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
-    pass
+
+    def prepare(self, data: Union[str, Path]) -> tuple:
+        return data,
 
 
 class FileExists(Rule):

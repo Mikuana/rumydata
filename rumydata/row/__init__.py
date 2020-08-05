@@ -1,6 +1,6 @@
 import rumydata.base
 from rumydata import exception as ex
-from rumydata.base import BaseSubject, CellData
+from rumydata.base import BaseSubject, CellData, RowData
 from rumydata.row import rule
 
 
@@ -14,12 +14,12 @@ class Row(BaseSubject):
             rule.RowLengthGTE(self.columns.length)
         ])
 
-    def __check__(self, row: list, rix=-1):
-        e = super().__check__(row)
+    def __check__(self, row: RowData, rix=-1):
+        e = super().__check__(row, restrict=rule.Rule)
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(rix, errors=e)
 
-        row = dict(zip(self.columns.definition.keys(), row))
+        row = dict(zip(self.columns.definition.keys(), row.values))
 
         for cix, (name, val) in enumerate(row.items()):
             t = self.columns.definition[name]
