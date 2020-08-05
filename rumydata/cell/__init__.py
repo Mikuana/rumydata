@@ -11,12 +11,12 @@ class Cell(BaseSubject):
         if not self.nullable:
             self.rules.append(rule.NotNull())
 
-    def __check__(self, data, cix=-1, **kwargs):
+    def __check__(self, data, cix=-1, rule_type=rule.Rule, **kwargs):
         # if data is nullable and value is empty, skip all checks
-        if self.nullable and data.value == '':
+        if self.nullable and issubclass(rule_type, rule.Rule) and data.value == '':
             pass
         else:
-            e = super().__check__(data, restrict=kwargs.get('restrict', rule.Rule))
+            e = super().__check__(data, rule_type=rule_type)
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 

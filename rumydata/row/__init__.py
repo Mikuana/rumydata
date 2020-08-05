@@ -14,8 +14,8 @@ class Row(BaseSubject):
             rule.RowLengthGTE(self.columns.length)
         ])
 
-    def __check__(self, row: RowData, rix=-1):
-        e = super().__check__(row, restrict=rule.Rule)
+    def __check__(self, row: RowData, rix=-1, rule_type=rule.Rule):
+        e = super().__check__(row, rule_type=rule_type)
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(rix, errors=e)
 
