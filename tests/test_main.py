@@ -14,7 +14,7 @@ import pytest
 import rumydata.cell.rule
 from rumydata import cell
 from rumydata import exception as ex
-from rumydata.base import CellData, Columns
+from rumydata.base import CellData, RowData, Columns
 from rumydata.cell import Cell
 from rumydata.file import File
 from rumydata.header import Header
@@ -240,7 +240,7 @@ def test_choice_bad(value, choices, kwargs, err):
 
 
 def test_row_good(basic):
-    assert not Row(Columns(basic)).check(['1', '2', '2020-01-01'])
+    assert not Row(Columns(basic)).check(RowData(['1', '2', '2020-01-01']))
 
 
 @pytest.mark.parametrize('value,err', [
@@ -252,7 +252,7 @@ def test_row_bad(basic, value, err):
 
 
 def test_header_good(basic):
-    assert not Header(Columns(basic)).check(['col1', 'col2', 'col3'])
+    assert not Header(Columns(basic)).check(RowData(['col1', 'col2', 'col3']))
 
 
 @pytest.mark.parametrize('value,err', [
@@ -335,7 +335,7 @@ def test_column_compare_row_good():
         'a': cell.Integer(1, rules=[rumydata.cell.rule.GreaterThanColumn('b')]),
         'b': cell.Integer(1)
     }))
-    assert not row.check(['3', '2'])
+    assert not row.check(RowData(['3', '2']))
 
 
 @pytest.mark.parametrize('compare_rule,row', [

@@ -1,5 +1,5 @@
 from rumydata import exception as ex
-from rumydata.base import BaseSubject, Columns
+from rumydata.base import BaseSubject, Columns, RowData
 from rumydata.header import rule
 
 
@@ -14,8 +14,8 @@ class Header(BaseSubject):
             rule.NoMissing(columns)
         ])
 
-    def __check__(self, row: list, **kwargs):
-        e = super().__check__(row)
+    def __check__(self, row: RowData, **kwargs):
+        e = super().__check__(row, restrict=rule.Rule)
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(0, errors=e)
 

@@ -39,10 +39,13 @@ class BaseSubject:
     def __check__(self, data, **kwargs):
         errors = []
         restrict = kwargs.get('restrict', True)
+        if not self.rules:
+            return [ex.UrNotMyDataError('No rules defined')]
+
         for r in self.rules:
             # noinspection PyBroadException
             try:
-                if restrict or issubclass(type(r), restrict):
+                if issubclass(type(r), restrict):
                     x = r.prepare(data)
                     e = r.evaluator()(*x)
                     if not e:
@@ -82,6 +85,16 @@ class BaseSubject:
 class CellData:
     value: str
     compare: dict = None
+
+
+@dataclass
+class RowData:
+    values: list
+
+
+@dataclass
+class ColumnData:
+    values: list
 
 
 class Columns:
