@@ -8,6 +8,7 @@ from packaging.version import parse
 try:
     from importlib.metadata import version
 except ImportError:
+    # noinspection PyUnresolvedReferences,PyUnresolvedReferences
     from importlib_metadata import version
 
 from distutils.version import LooseVersion

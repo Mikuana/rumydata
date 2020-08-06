@@ -1,49 +1,30 @@
 import re
 from datetime import datetime
-from pathlib import Path
-from typing import Union, List
+from typing import Union, Tuple, Dict, AnyStr
 
 from rumydata import exception as ex
+from rumydata.base import BaseRule
 
 
-class Rule:
-    """ Base class for defining data type rules """
-    exception_class = ex.UrNotMyDataError
+class Rule(BaseRule):
 
-    def evaluator(self):
-        """
-        :return: a function which expects to evaluate to True, if the value
-        provided to the function meets the rule.
-        """
-        pass
-
-    def exception_msg(self):
-        """
-        :return: a sanitized error message which is specific to the function,
-        contains no direct link to the value that was checked.
-        """
-        return self.exception_class(self.explain())
-
-    def explain(self) -> str:
-        """
-        :return: an explanation of the rule that is applied
-        """
-        pass
+    def prepare(self, data: Union[AnyStr, Tuple[AnyStr, Dict]]) -> tuple:
+        if isinstance(data, str):
+            return data,
+        else:
+            return data[0],
 
 
 class NotNull(Rule):
     exception_class = ex.NullValueError
 
-    @classmethod
-    def evaluator(cls):
+    def evaluator(self):
         return lambda x: x != ''
 
-    @classmethod
-    def exception_msg(cls):
-        return cls.exception_class(cls.explain())
+    def exception_msg(self):
+        return self.exception_class(self.explain())
 
-    @classmethod
-    def explain(cls):
+    def explain(self):
         return 'cannot be empty/blank'
 
 
@@ -136,7 +117,7 @@ class MaxDigit(Rule):
 
 
 class OnlyNumbers(Rule):
-    exception_class = ex.DataError  # TODO: character error
+    exception_class = ex.CharacterError
 
     def evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)
@@ -368,114 +349,39 @@ class DateLT(DateComparison):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
-class RowLengthLTE(Rule):
-    exception_class = ex.RowLengthError
+def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
+    """
+    Return a factory generated Rule class. The function used by the rule must
+    directly evaluate a single positional argument (i.e. x, but not x and y).
+    Because the Rule cannot be passed a value on initialization, neither the
+    evaluator or explain methods in the return class can be dynamic.
+    """
 
-    def __init__(self, comparison_value):
-        self.comparison_value = comparison_value
+    class FactoryRule(Rule):
+        exception_class = exception
 
+        def evaluator(self):
+            return func
+
+        def explain(self) -> str:
+            return assertion
+
+    return FactoryRule()
+
+
+class ColumnComparisonRule(Rule):
+    exception_class = ex.ColumnComparisonError
+
+    def __init__(self, compare_to: str):
+        self.compare_to = compare_to
+
+    def prepare(self, data: Tuple[AnyStr, Dict]) -> tuple:
+        return data[0], data[1][self.compare_to]
+
+
+class GreaterThanColumn(ColumnComparisonRule):
     def evaluator(self):
-        return lambda x: len(x) <= self.comparison_value
+        return lambda x, y: x > y
 
     def explain(self) -> str:
-        return f'row length must be equal to {str(self.comparison_value)}, not greater'
-
-
-class RowLengthGTE(Rule):
-    exception_class = ex.RowLengthError
-
-    def __init__(self, comparison_value):
-        self.comparison_value = comparison_value
-
-    def evaluator(self):
-        return lambda x: len(x) >= self.comparison_value
-
-    def explain(self) -> str:
-        return f'row length must be equal to {str(self.comparison_value)}, not less'
-
-
-class HeaderRule(Rule):
-    def __init__(self, definition):
-        self.definition = definition
-
-
-class HeaderColumnOrder(HeaderRule):
-    exception_class = ex.DataError
-
-    def evaluator(self):
-        return lambda x: x == list(self.definition)
-
-    def explain(self):
-        return 'Header row must explicitly match order of definition'
-
-
-class HeaderNoExtra(HeaderRule):
-    exception_class = ex.UnexpectedColumnError
-
-    def evaluator(self):
-        return lambda x: all([y in self.definition for y in x])
-
-    def explain(self):
-        return 'Header row must not have unexpected columns'
-
-
-class HeaderNoMissing(HeaderRule):
-    exception_class = ex.MissingColumnError
-
-    def evaluator(self):
-        return lambda x: all([y in x for y in self.definition])
-
-    def explain(self) -> str:
-        return 'Header row must not be missing any expected columns'
-
-
-class HeaderNoDuplicate(HeaderRule):
-    exception_class = ex.DuplicateColumnError
-
-    def evaluator(self):
-        return lambda x: len(x) == len(set(x))
-
-    def explain(self):
-        return 'Header row must not contain duplicate values'
-
-
-class FileRule(Rule):
-    pass
-
-
-class FileExists(FileRule):
-    exception_class = FileNotFoundError
-
-    def evaluator(self):
-        return lambda x: Path(x).exists()
-
-    def explain(self) -> str:
-        return 'file must exist'
-
-
-class FileNameMatchesPattern(FileRule):
-    exception_class = ex.FilePatternError
-
-    def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
-        self.patterns = [pattern] if isinstance(pattern, re.Pattern) else pattern
-
-    def evaluator(self):
-        return lambda x: any([p.fullmatch(Path(x).name) for p in self.patterns])
-
-    def explain(self) -> str:
-        return 'file name must match a pattern provided in the layout'
-
-
-class FileNameMatchesOnePattern(FileRule):
-    exception_class = ex.UrNotMyDataError
-
-    def __init__(self, patterns: list):
-        self.patterns = patterns
-
-    def evaluator(self):
-        return lambda x: sum([
-            True if p.fullmatch(Path(x).name) else False for p in self.patterns
-        ]) <= 1
-
-    def explain(self) -> str:
-        return 'file cannot match multiple patterns provided in the layout'
+        return f"must be greater than column '{self.compare_to}'"

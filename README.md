@@ -16,6 +16,7 @@ at its core.
  - the code that defines the data, documents the data
  - the code that defines the data, validates the data
 
+
 ## Example
 
 For this example, we'll pretend that Alice needs Bob to send her data.
@@ -26,8 +27,9 @@ of the layout so that she can share it with Bob. She accomplishes that with the
 code below.
 
 ```python
-from rumydata import Layout
-from rumydata.cell import Text, Choice, Integer
+
+from rumydata.subject import Layout
+from rumydata.subject.cell import Text, Integer, Choice
 layout = Layout(definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z'], nullable=True),
@@ -81,8 +83,10 @@ concept of this package is demonstrated in this step; _the code that defines the
 data, validates the data_.
 
 ```python
-from rumydata import Layout
-from rumydata.cell import Text, Choice, Integer
+
+from rumydata.subject import Layout
+from rumydata import Choice
+from rumydata.subject.cell import Text, Integer
 layout = Layout(definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z'], nullable=True),
@@ -97,7 +101,7 @@ When Alice checks the file for validity, she receives the following message:
 AssertionError: 
  - File: None
    - Row: 4
-     - Cell: 4,2 (col2)
+     - Field: 4,2 (col2)
        - InvalidChoice: must be one of ['x', 'y', 'z']
 ```
 
@@ -114,6 +118,31 @@ her provided was not one of the valid choices. He can also refer back to the def
 digest, and see that `col2` is nullable, and that he can send a blank value instead
 of the invalid value that he sent.
 
-# Errors
+## Extension
 
-Add error raising content.
+Although this package contains a number of built-in rules to ease the definition
+of a `Layout`, it is expected that users will have their own rules that need to
+be applied on a regular basis. The simplest way to do this is by generating a
+static rule and adding it to a `Field`.
+
+As an example, let's say that Alice realized that the `col3` in her layout needs
+to be an *odd* number only. The `Field` class provides a parameter for additional
+rules to be specified, and the `make_static_rule` method provides us with a
+simple way of generating these rules.
+
+```python
+from rumydata import rules, Layout
+from rumydata.field import *
+
+
+odd_rule = rules.cell.make_static_cell_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
+
+layout = Layout(definition={
+    'col1': Text(8),
+    'col2': Choice(['x', 'y', 'z'], nullable=True),
+    'col3': Integer(1, rules=[odd_rule])
+})
+```
+
+If Alice were to check Bob's data now, it would determine that cell 3,3 is not
+an odd number, and raise an exception.
