@@ -27,8 +27,9 @@ of the layout so that she can share it with Bob. She accomplishes that with the
 code below.
 
 ```python
-from rumydata import Layout
-from rumydata.cell import Text, Choice, Integer
+
+from rumydata.subject import Layout
+from rumydata.subject.cell import Text, Integer, Choice
 layout = Layout(definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z'], nullable=True),
@@ -82,8 +83,10 @@ concept of this package is demonstrated in this step; _the code that defines the
 data, validates the data_.
 
 ```python
-from rumydata import Layout
-from rumydata.cell import Text, Choice, Integer
+
+from rumydata.subject import Layout
+from rumydata.cell import  Choice
+from rumydata.subject.cell import Text, Integer
 layout = Layout(definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z'], nullable=True),
@@ -128,11 +131,13 @@ rules to be specified, and the `make_static_rule` method provides us with a
 simple way of generating these rules.
 
 ```python
-from rumydata.cell import Integer
-from rumydata.rule import make_static_rule
+from rumydata.subject import Layout
+from rumydata.cell import  Choice
+from rumydata.subject.cell import Text, Integer
+from rumydata.rule import make_static_cell_rule
 
 
-odd_rule = make_static_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
+odd_rule = make_static_cell_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
 
 layout = Layout(definition={
     'col1': Text(8),

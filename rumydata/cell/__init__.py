@@ -1,5 +1,44 @@
-from rumydata import rule
-from rumydata.validation import Cell
+from rumydata import exception as ex
+from rumydata.base import BaseSubject
+from rumydata.cell import rule
+
+
+class Cell(BaseSubject):
+    def __init__(self, nullable=False, rules: list = None):
+        super().__init__(rules)
+        self.nullable = nullable
+
+        if not self.nullable:
+            self.rules.append(rule.NotNull())
+
+    def __check__(self, data, cix=-1, rule_type=rule.Rule, **kwargs):
+        # if data is nullable and value is empty, skip all checks
+        if self.nullable and issubclass(rule_type, rule.Rule) and data.value == '':
+            pass
+        else:
+            e = super().__check__(data, rule_type=rule_type)
+            if e:
+                return ex.CellError(cix, errors=e, **kwargs)
+
+    def check(self, data, **kwargs):
+        errors = self.__check__(data, **kwargs)
+        assert not errors, str(errors)
+
+    def digest(self):
+        dig = super().digest()
+        if self.nullable:
+            dig.append('Nullable')
+        return dig
+
+    def comparison_columns(self):
+        compares = set()
+        for r in self.rules:
+            if issubclass(type(r), rule.ColumnComparisonRule):
+                compares.add(r.compare_to)
+        return compares
+
+    def has_rule_type(self, rule_type):
+        return any([issubclass(type(r), rule_type) for r in self.rules])
 
 
 class Text(Cell):
