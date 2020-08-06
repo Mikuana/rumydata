@@ -1,3 +1,5 @@
+from typing import Union, Tuple, AnyStr, Dict
+
 from rumydata import exception as ex
 from rumydata.base import BaseSubject
 from rumydata.rules import cell as clr, row as rr, column as cr, header as hr
@@ -20,7 +22,7 @@ class Field(BaseSubject):
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
-    def check_cell(self, value: str, **kwargs):
+    def check_cell(self, value: Union[AnyStr, Tuple[AnyStr, Dict]], **kwargs):
         errors = self.__check__(value, rule_type=clr.Rule, **kwargs)
         assert not errors, str(errors)
 

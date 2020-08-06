@@ -50,7 +50,7 @@ class File(BaseSubject):
                         break
                 if rix > 0:
                     for k, ix in column_cache_map.items():
-                        column_cache[k].append(row.values[ix])
+                        column_cache[k].append(row[ix])
 
         for k, v in column_cache.items():
             ce = self.fields.definition[k].__check__(v, rule_type=cr.Rule)

@@ -334,7 +334,7 @@ def test_static_rules_bad(value, func, assertion, kwargs):
 
 def test_column_compare_rule_good():
     x = field.Field(rules=[rumydata.rules.cell.GreaterThanColumn('x')])
-    assert not x.check_cell('1', compare={'x': '0'})
+    assert not x.check_cell(('1', {'x': '0'}))
 
 
 def test_column_compare_rule_bad():
