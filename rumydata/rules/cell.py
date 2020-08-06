@@ -1,14 +1,18 @@
 import re
 from datetime import datetime
+from typing import Union, Tuple, Dict, AnyStr
 
 from rumydata import exception as ex
-from rumydata.base import BaseRule, CellData
+from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
 
-    def prepare(self, data: CellData) -> tuple:
-        return data.value,
+    def prepare(self, data: Union[AnyStr, Tuple[AnyStr, Dict]]) -> tuple:
+        if isinstance(data, str):
+            return data,
+        else:
+            return data[0],
 
 
 class NotNull(Rule):
@@ -356,12 +360,10 @@ def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rul
     class FactoryRule(Rule):
         exception_class = exception
 
-        @classmethod
-        def evaluator(cls):
+        def evaluator(self):
             return func
 
-        @classmethod
-        def explain(cls) -> str:
+        def explain(self) -> str:
             return assertion
 
     return FactoryRule()
@@ -373,8 +375,8 @@ class ColumnComparisonRule(Rule):
     def __init__(self, compare_to: str):
         self.compare_to = compare_to
 
-    def prepare(self, data: CellData) -> tuple:
-        return data.value, data.compare[self.compare_to]
+    def prepare(self, data: Tuple[AnyStr, Dict]) -> tuple:
+        return data[0], data[1][self.compare_to]
 
 
 class GreaterThanColumn(ColumnComparisonRule):
