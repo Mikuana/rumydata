@@ -19,7 +19,7 @@ class FileExists(Rule):
         return lambda x: Path(x).exists()
 
     def explain(self) -> str:
-        return 'file must exist'
+        return 'files must exist'
 
 
 class FileNameMatchesPattern(Rule):
@@ -32,7 +32,7 @@ class FileNameMatchesPattern(Rule):
         return lambda x: any([p.fullmatch(Path(x).name) for p in self.patterns])
 
     def explain(self) -> str:
-        return 'file name must match a pattern provided in the layout'
+        return 'files name must match a pattern provided in the layout'
 
 
 class FileNameMatchesOnePattern(Rule):
@@ -47,4 +47,4 @@ class FileNameMatchesOnePattern(Rule):
         ]) <= 1
 
     def explain(self) -> str:
-        return 'file cannot match multiple patterns provided in the layout'
+        return 'files cannot match multiple patterns provided in the layout'

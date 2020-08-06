@@ -85,7 +85,7 @@ data, validates the data_.
 ```python
 
 from rumydata.subject import Layout
-from rumydata.cell import  Choice
+from rumydata import Choice
 from rumydata.subject.cell import Text, Integer
 layout = Layout(definition={
     'col1': Text(8),
@@ -101,7 +101,7 @@ When Alice checks the file for validity, she receives the following message:
 AssertionError: 
  - File: None
    - Row: 4
-     - Cell: 4,2 (col2)
+     - Field: 4,2 (col2)
        - InvalidChoice: must be one of ['x', 'y', 'z']
 ```
 
@@ -123,10 +123,10 @@ of the invalid value that he sent.
 Although this package contains a number of built-in rules to ease the definition
 of a `Layout`, it is expected that users will have their own rules that need to
 be applied on a regular basis. The simplest way to do this is by generating a
-static rule and adding it to a `Cell`.
+static rule and adding it to a `Field`.
 
 As an example, let's say that Alice realized that the `col3` in her layout needs
-to be an *odd* number only. The `Cell` class provides a parameter for additional
+to be an *odd* number only. The `Field` class provides a parameter for additional
 rules to be specified, and the `make_static_rule` method provides us with a
 simple way of generating these rules.
 

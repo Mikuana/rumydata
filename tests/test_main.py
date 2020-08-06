@@ -11,24 +11,21 @@ from pathlib import Path
 
 import pytest
 
-import rumydata.cell.rule
-from rumydata import cell, column
+import rumydata.rules.cell
 from rumydata import exception as ex
-from rumydata.base import CellData, RowData, Columns
-from rumydata.cell import Cell
+from rumydata import field
 from rumydata.file import File
-from rumydata.header import Header
-from rumydata.row import Row
+from rumydata.rules import header as hr, row as rr, column as cr
 
 
 @pytest.fixture()
 def basic() -> dict:
-    return {'col1': cell.Text(1), 'col2': cell.Integer(1), 'col3': cell.Date()}
+    return {'col1': rumydata.field.Text(1), 'col2': rumydata.field.Integer(1), 'col3': rumydata.field.Date()}
 
 
 @pytest.fixture()
 def minimal_layout():
-    return Columns(dict(x=cell.Digit(1)))
+    return field.Fields(dict(x=rumydata.field.Digit(1)))
 
 
 @pytest.fixture()
@@ -37,7 +34,7 @@ def tmpdir():
         yield Path(d)
 
 
-def write_row(directory, columns: Columns, row, rows=False):
+def write_row(directory, columns: field.Fields, row, rows=False):
     p = Path(directory, str(uuid.uuid4()))
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
@@ -63,9 +60,9 @@ def basic_good(tmpdir):
 @pytest.fixture()
 def readme_layout():
     return {
-        'col1': cell.Text(8),
-        'col2': cell.Choice(['x', 'y', 'z'], nullable=True),
-        'col3': cell.Integer(1)
+        'col1': field.Text(8),
+        'col2': field.Choice(['x', 'y', 'z'], nullable=True),
+        'col3': field.Integer(1)
     }
 
 
@@ -91,8 +88,18 @@ def minimal_bad(rows, directory):
     return p
 
 
+def empty_rows(rows, directory):
+    p = Path(directory, str(uuid.uuid4()))
+    with p.open('w') as f:
+        w = csv.writer(f)
+        w.writerow(['x'])
+        for i in range(rows):
+            w.writerow('')
+    return p
+
+
 def test_file_not_exists(basic):
-    assert File(Columns(basic)).has_error('abc123.csv', FileNotFoundError)
+    assert File(field.Fields(basic)).__has_error__('abc123.csv', FileNotFoundError)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -102,7 +109,7 @@ def test_file_not_exists(basic):
     ('', dict(max_length=1, min_length=1, nullable=True))
 ])
 def test_text_good(value, kwargs):
-    assert not cell.Text(**kwargs).check(CellData(value))
+    assert not rumydata.field.Text(**kwargs).check_cell(value)
 
 
 @pytest.mark.parametrize('value,kwargs,err', [
@@ -111,7 +118,7 @@ def test_text_good(value, kwargs):
     ('x', dict(max_length=80, min_length=2), ex.LengthError),
 ])
 def test_text_bad(value, kwargs, err):
-    assert cell.Text(**kwargs).has_error(CellData(value), err)
+    assert rumydata.field.Text(**kwargs).__has_error__(value, err)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -122,7 +129,7 @@ def test_text_bad(value, kwargs, err):
     ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02'))
 ])
 def test_date_good(value, kwargs):
-    assert not cell.Date(**kwargs).check(CellData(value))
+    assert not field.Date(**kwargs).check_cell(value)
 
 
 @pytest.mark.parametrize('value,err,kwargs', [
@@ -135,7 +142,7 @@ def test_date_good(value, kwargs):
     ('2020-01-05', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03'))
 ])
 def test_date_bad(value, err, kwargs):
-    assert cell.Date(**kwargs).has_error(CellData(value), err)
+    assert rumydata.field.Date(**kwargs).__has_error__(value, err)
 
 
 @pytest.mark.parametrize('value,sig_dig,kwargs', [
@@ -144,29 +151,29 @@ def test_date_bad(value, err, kwargs):
     ('123.0', 5, {}),
     ('123', 5, {}),
     ('', 1, dict(nullable=True)),
-    ('-0.01', 3, dict(rules=[cell.rule.NumericLT(0)])),
-    ('0', 3, dict(rules=[cell.rule.NumericLTE(0)])),
-    ('0.00', 3, dict(rules=[cell.rule.NumericET(0)])),
-    ('0', 3, dict(rules=[cell.rule.NumericGTE(0)])),
-    ('0.01', 3, dict(rules=[cell.rule.NumericGT(0)])),
+    ('-0.01', 3, dict(rules=[rumydata.rules.cell.NumericLT(0)])),
+    ('0', 3, dict(rules=[rumydata.rules.cell.NumericLTE(0)])),
+    ('0.00', 3, dict(rules=[rumydata.rules.cell.NumericET(0)])),
+    ('0', 3, dict(rules=[rumydata.rules.cell.NumericGTE(0)])),
+    ('0.01', 3, dict(rules=[rumydata.rules.cell.NumericGT(0)])),
 ])
 def test_currency_good(value, sig_dig, kwargs):
-    assert not cell.Currency(sig_dig, **kwargs).check(CellData(value))
+    assert not rumydata.field.Currency(sig_dig, **kwargs).check_cell(value)
 
 
 @pytest.mark.parametrize('value,sig_dig,rules,err', [
-    ('0.00', 5, [cell.rule.NumericLT(0)], ex.ValueComparisonError),
-    ('0.01', 5, [cell.rule.NumericLTE(0)], ex.ValueComparisonError),
-    ('0.01', 5, [cell.rule.NumericET(0)], ex.ValueComparisonError),
-    ('-0.01', 5, [cell.rule.NumericGTE(0)], ex.ValueComparisonError),
-    ('-0.01', 5, [cell.rule.NumericGT(0)], ex.ValueComparisonError),
+    ('0.00', 5, [rumydata.rules.cell.NumericLT(0)], ex.ValueComparisonError),
+    ('0.01', 5, [rumydata.rules.cell.NumericLTE(0)], ex.ValueComparisonError),
+    ('0.01', 5, [rumydata.rules.cell.NumericET(0)], ex.ValueComparisonError),
+    ('-0.01', 5, [rumydata.rules.cell.NumericGTE(0)], ex.ValueComparisonError),
+    ('-0.01', 5, [rumydata.rules.cell.NumericGT(0)], ex.ValueComparisonError),
     ('', 5, [], ex.NullValueError),
     ('123.45', 4, [], ex.LengthError),
     ('123.', 4, [], ex.CurrencyPatternError),
     ('123.456', 4, [], ex.CurrencyPatternError)
 ])
 def test_currency_bad(value, sig_dig, rules, err):
-    assert cell.Currency(sig_dig, rules=rules).has_error(CellData(value), err)
+    assert rumydata.field.Currency(sig_dig, rules=rules).__has_error__(value, err)
 
 
 @pytest.mark.parametrize('value,max_length, kwargs', [
@@ -177,7 +184,7 @@ def test_currency_bad(value, sig_dig, rules, err):
     ('123', 3, dict(min_length=2))
 ])
 def test_digit_good(value, max_length, kwargs):
-    assert not cell.Digit(max_length, **kwargs).check(CellData(value))
+    assert not rumydata.field.Digit(max_length, **kwargs).check_cell(value)
 
 
 @pytest.mark.parametrize('value,max_length,err,kwargs', [
@@ -187,7 +194,7 @@ def test_digit_good(value, max_length, kwargs):
     ('5', 3, ex.LengthError, dict(min_length=2))
 ])
 def test_digit_bad(value, max_length, err, kwargs):
-    assert cell.Digit(max_length, **kwargs).has_error(CellData(value), err)
+    assert rumydata.field.Digit(max_length, **kwargs).__has_error__(value, err)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs', [
@@ -197,24 +204,24 @@ def test_digit_bad(value, max_length, err, kwargs):
     ('1', 2, {}),
     ('11', 2, dict(min_length=2)),
     ('', 1, dict(nullable=True)),
-    ('-1', 1, dict(rules=[cell.rule.NumericLT(0)])),
-    ('-1', 1, dict(rules=[cell.rule.NumericLTE(0)])),
-    ('0', 1, dict(rules=[cell.rule.NumericLTE(0)])),
-    ('0', 1, dict(rules=[cell.rule.NumericET(0)])),
-    ('0', 1, dict(rules=[cell.rule.NumericGTE(0)])),
-    ('1', 1, dict(rules=[cell.rule.NumericGTE(0)])),
-    ('1', 1, dict(rules=[cell.rule.NumericGT(0)]))
+    ('-1', 1, dict(rules=[rumydata.rules.cell.NumericLT(0)])),
+    ('-1', 1, dict(rules=[rumydata.rules.cell.NumericLTE(0)])),
+    ('0', 1, dict(rules=[rumydata.rules.cell.NumericLTE(0)])),
+    ('0', 1, dict(rules=[rumydata.rules.cell.NumericET(0)])),
+    ('0', 1, dict(rules=[rumydata.rules.cell.NumericGTE(0)])),
+    ('1', 1, dict(rules=[rumydata.rules.cell.NumericGTE(0)])),
+    ('1', 1, dict(rules=[rumydata.rules.cell.NumericGT(0)]))
 ])
 def test_integer_good(value, max_length, kwargs):
-    assert not cell.Integer(max_length, **kwargs).check(CellData(value))
+    assert not rumydata.field.Integer(max_length, **kwargs).check_cell(value)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs,err', [
-    ('0', 1, dict(rules=[cell.rule.NumericLT(0)]), ex.ValueComparisonError),
-    ('1', 1, dict(rules=[cell.rule.NumericLTE(0)]), ex.ValueComparisonError),
-    ('1', 1, dict(rules=[cell.rule.NumericET(0)]), ex.ValueComparisonError),
-    ('-1', 1, dict(rules=[cell.rule.NumericGTE(0)]), ex.ValueComparisonError),
-    ('0', 1, dict(rules=[cell.rule.NumericGT(0)]), ex.ValueComparisonError),
+    ('0', 1, dict(rules=[rumydata.rules.cell.NumericLT(0)]), ex.ValueComparisonError),
+    ('1', 1, dict(rules=[rumydata.rules.cell.NumericLTE(0)]), ex.ValueComparisonError),
+    ('1', 1, dict(rules=[rumydata.rules.cell.NumericET(0)]), ex.ValueComparisonError),
+    ('-1', 1, dict(rules=[rumydata.rules.cell.NumericGTE(0)]), ex.ValueComparisonError),
+    ('0', 1, dict(rules=[rumydata.rules.cell.NumericGT(0)]), ex.ValueComparisonError),
     ('', 1, {}, ex.NullValueError),
     ('1', 2, dict(min_length=2), ex.LengthError),
     ('111', 2, {}, ex.LengthError),
@@ -222,7 +229,7 @@ def test_integer_good(value, max_length, kwargs):
     ('01', 2, {}, ex.LeadingZeroError)
 ])
 def test_integer_bad(value, max_length, kwargs, err):
-    assert cell.Integer(max_length, **kwargs).has_error(CellData(value), err)
+    assert rumydata.field.Integer(max_length, **kwargs).__has_error__(value, err)
 
 
 @pytest.mark.parametrize('value,choices,kwargs', [
@@ -232,7 +239,7 @@ def test_integer_bad(value, max_length, kwargs, err):
     ('', ['x'], dict(nullable=True))
 ])
 def test_choice_good(value, choices, kwargs):
-    assert not cell.Choice(choices, **kwargs).check(CellData(value))
+    assert not field.Choice(choices, **kwargs).check_cell(value)
 
 
 @pytest.mark.parametrize('value,choices,kwargs,err', [
@@ -240,11 +247,11 @@ def test_choice_good(value, choices, kwargs):
     ('x', ['z'], {}, ex.InvalidChoiceError)
 ])
 def test_choice_bad(value, choices, kwargs, err):
-    assert cell.Choice(choices, **kwargs).has_error(CellData(value), err)
+    assert field.Choice(choices, **kwargs).__has_error__(value, err)
 
 
 def test_row_good(basic):
-    assert not Row(Columns(basic)).check(RowData(['1', '2', '2020-01-01']))
+    assert not field.Fields(basic).check_row(['1', '2', '2020-01-01'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -252,11 +259,11 @@ def test_row_good(basic):
     ([1, 2], ex.RowLengthError)
 ])
 def test_row_bad(basic, value, err):
-    assert Row(Columns(basic)).has_error(value, err)
+    assert field.Fields(basic).__has_error__(value, err, rule_type=rr.Rule)
 
 
 def test_header_good(basic):
-    assert not Header(Columns(basic)).check(RowData(['col1', 'col2', 'col3']))
+    assert not field.Fields(basic).check_header(['col1', 'col2', 'col3'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -265,42 +272,43 @@ def test_header_good(basic):
     (['col1', 'col2', 'col4'], ex.UnexpectedColumnError)
 ])
 def test_header_bad(basic, value, err):
-    assert Header(Columns(basic)).has_error(value, err)
+    assert field.Fields(basic).__has_error__(value, err, rule_type=hr.Rule)
 
 
 def test_file_good(basic_good, basic):
-    assert not File(Columns(basic)).check(basic_good)
+    assert not File(field.Fields(basic)).check(basic_good)
 
 
 def test_layout_good(basic, basic_good):
-    assert not File(Columns(basic)).check(basic_good)
+    assert not File(field.Fields(basic)).check(basic_good)
 
 
 def test_readme_example(readme_layout, readme_data):
-    assert File(Columns(readme_layout)). \
-        has_error(readme_data, ex.InvalidChoiceError)
+    assert File(field.Fields(readme_layout)).__has_error__(readme_data, ex.InvalidChoiceError)
 
 
-@pytest.mark.parametrize('rows,max_errors', [
+@pytest.mark.parametrize('rows,me', [
     (1, 0),
     (2, 1),
     (101, 100),
     (int(1e5), 100),
 ])
-def test_has_max_error(minimal_layout, tmpdir, rows, max_errors):
-    assert File(minimal_layout, max_errors=max_errors). \
-        has_error(minimal_bad(rows, tmpdir), ex.MaxExceededError)
+def test_has_max_error(tmpdir, rows, me):
+    fields = field.Fields({'x': field.Field()})
+    file = empty_rows(rows, tmpdir)
+    assert File(fields, max_errors=me).__has_error__(file, ex.MaxExceededError)
 
 
-@pytest.mark.parametrize('rows,max_errors', [
+@pytest.mark.parametrize('rows,me', [
     (1, 1),
     (99, 100),
     (100, 100),
     (100, int(1e5)),
 ])
-def test_missing_max_error(minimal_layout, tmpdir, rows, max_errors):
-    assert not File(minimal_layout, max_errors=max_errors). \
-        has_error(minimal_bad(rows, tmpdir), ex.MaxExceededError)
+def test_missing_max_error(tmpdir, rows, me):
+    fields = field.Fields({'x': field.Field()})
+    file = empty_rows(rows, tmpdir)
+    assert not File(fields, max_errors=me).__has_error__(file, ex.MaxExceededError)
 
 
 @pytest.mark.parametrize('value,func,assertion', [
@@ -309,8 +317,8 @@ def test_missing_max_error(minimal_layout, tmpdir, rows, max_errors):
     ('2020-01-01', lambda x: dt.fromisoformat(x), "must be an isodate"),
 ])
 def test_static_rules_good(value, func, assertion):
-    x = Cell(rules=[cell.rule.make_static_cell_rule(func, assertion)])
-    assert not x.check(CellData(value))
+    x = field.Field(rules=[rumydata.rules.cell.make_static_cell_rule(func, assertion)])
+    assert not x.check_cell(value)
 
 
 @pytest.mark.parametrize('value,func,assertion,kwargs', [
@@ -320,51 +328,51 @@ def test_static_rules_good(value, func, assertion):
     ('', lambda x: 1 / 0, "custom exception", dict(exception=ZeroDivisionError))
 ])
 def test_static_rules_bad(value, func, assertion, kwargs):
-    x = Cell(rules=[cell.rule.make_static_cell_rule(func, assertion, **kwargs)])
-    assert x.has_error(CellData(value), kwargs.get('exception', ex.UrNotMyDataError))
+    x = field.Field(rules=[rumydata.rules.cell.make_static_cell_rule(func, assertion, **kwargs)])
+    assert x.__has_error__(value, kwargs.get('exception', ex.UrNotMyDataError))
 
 
 def test_column_compare_rule_good():
-    x = Cell(rules=[rumydata.cell.rule.GreaterThanColumn('x')])
-    assert not x.check(CellData('1', {'x': '0'}))
+    x = field.Field(rules=[rumydata.rules.cell.GreaterThanColumn('x')])
+    assert not x.check_cell('1', compare={'x': '0'})
 
 
 def test_column_compare_rule_bad():
-    x = Cell(rules=[rumydata.cell.rule.GreaterThanColumn('x')])
-    assert x.has_error('1', compare={'x': '1'}, error=ex.ColumnComparisonError)
+    x = field.Field(rules=[rumydata.rules.cell.GreaterThanColumn('x')])
+    assert x.__has_error__('1', compare={'x': '1'}, error=ex.ColumnComparisonError)
 
 
 def test_column_compare_row_good():
-    row = Row(Columns({
-        'a': cell.Integer(1, rules=[rumydata.cell.rule.GreaterThanColumn('b')]),
-        'b': cell.Integer(1)
-    }))
-    assert not row.check(RowData(['3', '2']))
+    fields = field.Fields({
+        'a': rumydata.field.Integer(1, rules=[rumydata.rules.cell.GreaterThanColumn('b')]),
+        'b': rumydata.field.Integer(1)
+    })
+    assert not fields.check_row(['3', '2'])
 
 
 @pytest.mark.parametrize('compare_rule,row', [
-    (rumydata.cell.rule.GreaterThanColumn('x'), ['2', '3']),
+    (rumydata.rules.cell.GreaterThanColumn('x'), ['2', '3']),
 ])
 def test_column_compare_file_good(tmpdir, compare_rule, row):
-    cols = Columns({'x': Cell(), 'y': Cell(rules=[compare_rule])})
+    cols = field.Fields({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
     assert not File(cols).check(write_row(tmpdir, cols, row))
 
 
 @pytest.mark.parametrize('compare_rule,row', [
-    (rumydata.cell.rule.GreaterThanColumn('x'), ['1', '1']),
+    (rumydata.rules.cell.GreaterThanColumn('x'), ['1', '1']),
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
-    cols = Columns({'x': Cell(), 'y': Cell(rules=[compare_rule])})
-    assert File(cols).has_error(write_row(tmpdir, cols, row), ex.ColumnComparisonError)
+    cols = field.Fields({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
+    assert File(cols).__has_error__(write_row(tmpdir, cols, row), ex.ColumnComparisonError)
 
 
 def test_unique_bad(tmpdir):
-    cols = Columns({'x': Cell(rules=[column.rule.Unique()])})
+    cols = field.Fields({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
-    assert File(cols).has_error(f, ex.DuplicateValueError)
+    assert File(cols).__has_error__(f, ex.DuplicateValueError)
 
 
 def test_unique_good(tmpdir):
-    cols = Columns({'x': Cell(rules=[column.rule.Unique()])})
+    cols = field.Fields({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
     assert not File(cols).check(f)

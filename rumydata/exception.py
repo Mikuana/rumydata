@@ -95,9 +95,9 @@ class FilePatternError(UrNotMyDataError):
 class FileError(UrNotMyDataError):
     def __init__(self, file, msg=None, errors: list = None):
         """
-        :param file: name of the file that will be reported with the error message.
-        :param msg: a custom message to include when reporting errors in this file.
-        :param errors: a list of errors contained in this file.
+        :param file: name of the files that will be reported with the error message.
+        :param msg: a custom message to include when reporting errors in this files.
+        :param errors: a list of errors contained in this files.
         """
         message = file
         message += f'; {msg}' if msg else ''

@@ -2,47 +2,44 @@ import csv
 from pathlib import Path
 from typing import Union
 
-from rumydata import column
 from rumydata import exception as ex
-from rumydata.base import BaseSubject, Columns, RowData, ColumnData
-from rumydata.file import rule
-from rumydata.header import Header
-from rumydata.row import Row
+from rumydata.base import BaseSubject
+from rumydata.field import Fields
+from rumydata.rules import file, column as cr, header as hr, row as rr
 
 
 class File(BaseSubject):
-    def __init__(self, columns: Columns, max_errors=100, **kwargs):
+    def __init__(self, fields: Fields, max_errors=100, **kwargs):
         # pop any csv reader kwargs for later use
         x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
         self.csv_kwargs = {k: v for k, v in x.items() if v}
         super().__init__(**kwargs)
 
         self.max_errors = max_errors
-        self.columns = columns
+        self.fields = fields
         self.rules.extend([
-            rule.FileExists()
+            file.FileExists()
         ])
 
     def __check__(self, filepath: Union[str, Path], **kwargs):
         p = Path(filepath) if isinstance(filepath, str) else filepath
-        e = super().__check__(p, rule_type=rule.Rule)  # check file-based rules first
+        e = super().__check__(p, rule_type=file.Rule)  # check files-based rules first
         if e:
             return ex.FileError(file=filepath, errors=e)
 
         column_cache = {
-            k: [] for k, v in self.columns.definition.items()
-            if v.has_rule_type(column.rule.Rule)
+            k: [] for k, v in self.fields.definition.items()
+            if v.has_rule_type(cr.Rule)
         }
         column_cache_map = {
-            k: list(self.columns.definition.keys()).index(k)
+            k: list(self.fields.definition.keys()).index(k)
             for k in column_cache.keys()
         }
 
         with open(p, newline='') as f:
-            hv, rv = Header(self.columns), Row(self.columns)
             for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
-                row = RowData(row)
-                re = hv.__check__(row) if rix == 0 else rv.__check__(row, rix)
+                rt = hr.Rule if rix == 0 else rr.Rule
+                re = self.fields.__check__(row, rule_type=rt, rix=rix)
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
@@ -56,9 +53,7 @@ class File(BaseSubject):
                         column_cache[k].append(row.values[ix])
 
         for k, v in column_cache.items():
-            ce = self.columns.definition[k].__check__(
-                ColumnData(v), rule_type=column.rule.Rule
-            )
+            ce = self.fields.definition[k].__check__(v, rule_type=cr.Rule)
             if ce:
                 e.append(ce)
         if e:

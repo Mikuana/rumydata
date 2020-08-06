@@ -1,15 +1,15 @@
-import rumydata.base
-from rumydata import exception as ex
+from typing import List, AnyStr
 
-from rumydata.base import BaseRule, RowData
+from rumydata import exception as ex
+from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
-    def __init__(self, columns: rumydata.base.Columns):
+    def __init__(self, columns):
         self.definition = columns.definition
 
-    def prepare(self, data: RowData) -> tuple:
-        return data.values,
+    def prepare(self, data: List[AnyStr]) -> tuple:
+        return data,
 
 
 class NoExtra(Rule):

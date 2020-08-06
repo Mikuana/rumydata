@@ -1,12 +1,14 @@
+from typing import List, AnyStr
+
 from rumydata import exception as ex
-from rumydata.base import BaseRule, RowData
+from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
     exception_class = ex.RowComparisonError
 
-    def prepare(self, data: RowData) -> tuple:
-        return data.values,
+    def prepare(self, data: List[AnyStr]) -> tuple:
+        return data,
 
 
 class RowLengthLTE(Rule):
