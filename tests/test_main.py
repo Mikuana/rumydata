@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+import rumydata.file
 import rumydata.rules.cell
 from rumydata import exception as ex
 from rumydata import field
@@ -25,7 +26,7 @@ def basic() -> dict:
 
 @pytest.fixture()
 def minimal_layout():
-    return field.Fields(dict(x=rumydata.field.Digit(1)))
+    return rumydata.file.Layout(dict(x=rumydata.field.Digit(1)))
 
 
 @pytest.fixture()
@@ -34,7 +35,7 @@ def tmpdir():
         yield Path(d)
 
 
-def write_row(directory, columns: field.Fields, row, rows=False):
+def write_row(directory, columns: rumydata.file.Layout, row, rows=False):
     p = Path(directory, str(uuid.uuid4()))
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
@@ -99,7 +100,7 @@ def empty_rows(rows, directory):
 
 
 def test_file_not_exists(basic):
-    assert File(field.Fields(basic)).__has_error__('abc123.csv', FileNotFoundError)
+    assert File(rumydata.file.Layout(basic)).__has_error__('abc123.csv', FileNotFoundError)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -251,7 +252,7 @@ def test_choice_bad(value, choices, kwargs, err):
 
 
 def test_row_good(basic):
-    assert not field.Fields(basic).check_row(['1', '2', '2020-01-01'])
+    assert not rumydata.file.Layout(basic).check_row(['1', '2', '2020-01-01'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -259,11 +260,11 @@ def test_row_good(basic):
     ([1, 2], ex.RowLengthError)
 ])
 def test_row_bad(basic, value, err):
-    assert field.Fields(basic).__has_error__(value, err, rule_type=rr.Rule)
+    assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=rr.Rule)
 
 
 def test_header_good(basic):
-    assert not field.Fields(basic).check_header(['col1', 'col2', 'col3'])
+    assert not rumydata.file.Layout(basic).check_header(['col1', 'col2', 'col3'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -272,19 +273,19 @@ def test_header_good(basic):
     (['col1', 'col2', 'col4'], ex.UnexpectedColumnError)
 ])
 def test_header_bad(basic, value, err):
-    assert field.Fields(basic).__has_error__(value, err, rule_type=hr.Rule)
+    assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=hr.Rule)
 
 
 def test_file_good(basic_good, basic):
-    assert not File(field.Fields(basic)).check(basic_good)
+    assert not File(rumydata.file.Layout(basic)).check(basic_good)
 
 
 def test_layout_good(basic, basic_good):
-    assert not File(field.Fields(basic)).check(basic_good)
+    assert not File(rumydata.file.Layout(basic)).check(basic_good)
 
 
 def test_readme_example(readme_layout, readme_data):
-    assert File(field.Fields(readme_layout)).__has_error__(readme_data, ex.InvalidChoiceError)
+    assert File(rumydata.file.Layout(readme_layout)).__has_error__(readme_data, ex.InvalidChoiceError)
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -294,7 +295,7 @@ def test_readme_example(readme_layout, readme_data):
     (int(1e5), 100),
 ])
 def test_has_max_error(tmpdir, rows, me):
-    fields = field.Fields({'x': field.Field()})
+    fields = rumydata.file.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
     assert File(fields, max_errors=me).__has_error__(file, ex.MaxExceededError)
 
@@ -306,7 +307,7 @@ def test_has_max_error(tmpdir, rows, me):
     (100, int(1e5)),
 ])
 def test_missing_max_error(tmpdir, rows, me):
-    fields = field.Fields({'x': field.Field()})
+    fields = rumydata.file.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
     assert not File(fields, max_errors=me).__has_error__(file, ex.MaxExceededError)
 
@@ -343,7 +344,7 @@ def test_column_compare_rule_bad():
 
 
 def test_column_compare_row_good():
-    fields = field.Fields({
+    fields = rumydata.file.Layout({
         'a': rumydata.field.Integer(1, rules=[rumydata.rules.cell.GreaterThanColumn('b')]),
         'b': rumydata.field.Integer(1)
     })
@@ -354,7 +355,7 @@ def test_column_compare_row_good():
     (rumydata.rules.cell.GreaterThanColumn('x'), ['2', '3']),
 ])
 def test_column_compare_file_good(tmpdir, compare_rule, row):
-    cols = field.Fields({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
+    cols = rumydata.file.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
     assert not File(cols).check(write_row(tmpdir, cols, row))
 
 
@@ -362,17 +363,17 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
     (rumydata.rules.cell.GreaterThanColumn('x'), ['1', '1']),
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
-    cols = field.Fields({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
+    cols = rumydata.file.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
     assert File(cols).__has_error__(write_row(tmpdir, cols, row), ex.ColumnComparisonError)
 
 
 def test_unique_bad(tmpdir):
-    cols = field.Fields({'x': field.Field(rules=[cr.Unique()])})
+    cols = rumydata.file.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
     assert File(cols).__has_error__(f, ex.DuplicateValueError)
 
 
 def test_unique_good(tmpdir):
-    cols = field.Fields({'x': field.Field(rules=[cr.Unique()])})
+    cols = rumydata.file.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
     assert not File(cols).check(f)

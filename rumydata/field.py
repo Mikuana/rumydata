@@ -2,7 +2,11 @@ from typing import Union, Tuple, AnyStr, Dict
 
 from rumydata import exception as ex
 from rumydata.base import BaseSubject
-from rumydata.rules import cell as clr, row as rr, column as cr, header as hr
+from rumydata.rules import cell as clr, column as cr
+
+__all__ = [
+    'Field', 'Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice'
+]
 
 
 class Field(BaseSubject):
@@ -45,75 +49,6 @@ class Field(BaseSubject):
 
     def has_rule_type(self, rule_type):
         return any([issubclass(type(r), rule_type) for r in self.rules])
-
-
-class Fields(BaseSubject):
-    def __init__(self, definition: dict, **kwargs):
-        """
-        Defines the layout of a tabular files.
-
-        :param definition: dictionary of column names with DataType definitions
-        """
-        super().__init__(**kwargs)
-
-        self.definition = definition
-        self.length = len(definition)
-        self.title = kwargs.get('title')
-
-        self.rules.extend([
-            hr.ColumnOrder(self),
-            hr.NoExtra(self),
-            hr.NoDuplicate(self),
-            hr.NoMissing(self),
-            rr.RowLengthLTE(self.length),
-            rr.RowLengthGTE(self.length)
-        ])
-
-    def __check__(self, row, rule_type, rix=None):
-        e = super().__check__(row, rule_type=rule_type)
-        if e:  # if row errors are found, skip cell checks
-            return ex.RowError(rix or -1, errors=e)
-
-        if rule_type == rr.Rule:
-            row = dict(zip(self.definition.keys(), row))
-
-            for cix, (name, val) in enumerate(row.items()):
-                t = self.definition[name]
-                comp = {k: row[k] for k in t.comparison_columns()}
-                check_args = dict(
-                    data=(val, comp), rule_type=clr.Rule,
-                    rix=rix, cix=cix, name=name
-                )
-                ce = t.__check__(**check_args)
-                if ce:
-                    e.append(ce)
-            if e:
-                return ex.RowError(rix, errors=e)
-
-    def check_header(self, row, rix=0):
-        errors = self.__check__(row, rule_type=hr.Rule, rix=rix)
-        assert not errors, str(errors)
-
-    def check_row(self, row, rix=-1):
-        errors = self.__check__(row, rule_type=rr.Rule, rix=rix)
-        assert not errors, str(errors)
-
-    def digest(self):
-        return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
-
-    def markdown_digest(self):
-        fields = f'# {self.title}' + '\n\n' if self.title else ''
-        fields += '\n'.join([
-            f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
-            for k, v in self.definition.items()
-        ])
-        return fields
-
-    def comparison_columns(self):
-        compares = set()
-        for v in self.definition.values():
-            compares.update(v.comparison_columns())
-        return compares
 
 
 class Text(Field):

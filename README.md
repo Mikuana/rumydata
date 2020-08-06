@@ -131,13 +131,11 @@ rules to be specified, and the `make_static_rule` method provides us with a
 simple way of generating these rules.
 
 ```python
-from rumydata.subject import Layout
-from rumydata.cell import  Choice
-from rumydata.subject.cell import Text, Integer
-from rumydata.rule import make_static_cell_rule
+from rumydata import rules, Layout
+from rumydata.field import *
 
 
-odd_rule = make_static_cell_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
+odd_rule = rules.cell.make_static_cell_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
 
 layout = Layout(definition={
     'col1': Text(8),
