@@ -27,5 +27,7 @@ setuptools.setup(
         "Operating System :: OS Independent"
     ],
     python_requires=">=3.7",
+    setup_requires=['pytest-runner'],
+    tests_require=['pytest', 'openpyxl'],
     packages=setuptools.find_packages()
 )
