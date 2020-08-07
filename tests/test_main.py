@@ -71,6 +71,18 @@ def basic_good_excel(tmpdir):
 
 
 @pytest.fixture()
+def basic_row_skip_good(tmpdir):
+    p = Path(tmpdir, 'good.csv')
+    with p.open('w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerow(['garbage'])
+        writer.writerow(['garbage'])
+        writer.writerow(['col1', 'col2', 'col3'])
+        writer.writerow(['A', '1', '2020-01-01'])
+    yield p.as_posix()
+
+
+@pytest.fixture()
 def readme_layout():
     return {
         'col1': field.Text(8),
@@ -294,6 +306,10 @@ def test_file_good(basic_good, basic):
 
 def test_file_excel_good(basic_good_excel, basic):
     assert not File(rumydata.file.Layout(basic), file_type='excel').check(basic_good_excel)
+
+
+def test_file_rowskip_good(basic_row_skip_good, basic):
+    assert not File(rumydata.file.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
 
 def test_layout_good(basic, basic_good):

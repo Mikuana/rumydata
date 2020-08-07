@@ -78,7 +78,7 @@ class Layout(BaseSubject):
 
 class File(BaseSubject):
     def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
-        self.file_type = kwargs.get('file_type', 'csv')
+        self.file_type = kwargs.pop('file_type', 'csv')
 
         if self.file_type == 'csv':
             x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
@@ -88,7 +88,8 @@ class File(BaseSubject):
             self.excel_kwargs = {k: v for k, v in x.items() if v}
         else:
             raise Exception(f'Invalid file type: {self.file_type}')
-        kwargs.pop('file_type', None)
+
+        self.skip_rows = kwargs.pop('skip_rows', 0)
 
         super().__init__(**kwargs)
 
@@ -130,8 +131,10 @@ class File(BaseSubject):
                     return [str(x or '') for x in r]
 
             for rix, row in enumerate(generator):
+                if rix < self.skip_rows:
+                    continue
                 row = row_handler(row)
-                rt = hr.Rule if rix == 0 else rr.Rule
+                rt = hr.Rule if rix == (0 + self.skip_rows) else rr.Rule
                 re = self.layout.__check__(row, rule_type=rt, rix=rix)
                 if re:
                     e.append(re)
