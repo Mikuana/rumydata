@@ -308,7 +308,7 @@ def test_file_excel_good(basic_good_excel, basic):
     assert not File(rumydata.file.Layout(basic), file_type='excel').check(basic_good_excel)
 
 
-def test_file_rowskip_good(basic_row_skip_good, basic):
+def test_file_row_skip_good(basic_row_skip_good, basic):
     assert not File(rumydata.file.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
 
