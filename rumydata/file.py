@@ -78,9 +78,18 @@ class Layout(BaseSubject):
 
 class File(BaseSubject):
     def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
-        # pop any csv reader kwargs for later use
-        x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
-        self.csv_kwargs = {k: v for k, v in x.items() if v}
+        self.file_type = kwargs.get('file_type', 'csv')
+
+        if self.file_type == 'csv':
+            x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
+            self.csv_kwargs = {k: v for k, v in x.items() if v}
+        elif self.file_type == 'excel':
+            x = {x: kwargs.pop(x, None) for x in ['sheet']}
+            self.excel_kwargs = {k: v for k, v in x.items() if v}
+        else:
+            raise Exception(f'Invalid file type: {self.file_type}')
+        kwargs.pop('file_type', None)
+
         super().__init__(**kwargs)
 
         self.max_errors = max_errors
@@ -105,7 +114,23 @@ class File(BaseSubject):
         }
 
         with open(p, newline='') as f:
-            for rix, row in enumerate(csv.reader(f, **self.csv_kwargs)):
+            if self.file_type == 'csv':
+                generator = csv.reader(f, **self.csv_kwargs)
+
+                def row_handler(r):  # handle csv rows as-is
+                    return r
+            elif self.file_type == 'excel':
+                from openpyxl import load_workbook
+                wb = load_workbook(p)
+                sheet = self.excel_kwargs.get('sheet')
+                ws = wb.get_sheet_by_name(sheet) if sheet else wb.active
+                generator = ws.values
+
+                def row_handler(r):  # convert values to strings and replace None with empty
+                    return [str(x or '') for x in r]
+
+            for rix, row in enumerate(generator):
+                row = row_handler(row)
                 rt = hr.Rule if rix == 0 else rr.Rule
                 re = self.layout.__check__(row, rule_type=rt, rix=rix)
                 if re:

@@ -10,6 +10,7 @@ from datetime import datetime as dt
 from pathlib import Path
 
 import pytest
+from openpyxl import Workbook
 
 import rumydata.file
 import rumydata.rules.cell
@@ -55,6 +56,17 @@ def basic_good(tmpdir):
         writer = csv.writer(o)
         writer.writerow(['col1', 'col2', 'col3'])
         writer.writerow(['A', '1', '2020-01-01'])
+    yield p.as_posix()
+
+
+@pytest.fixture()
+def basic_good_excel(tmpdir):
+    p = Path(tmpdir, 'good.xlsx')
+    wb = Workbook()
+    ws = wb.active
+    ws.append(['col1', 'col2', 'col3'])
+    ws.append(['A', '1', '2020-01-01'])
+    wb.save(p)
     yield p.as_posix()
 
 
@@ -278,6 +290,10 @@ def test_header_bad(basic, value, err):
 
 def test_file_good(basic_good, basic):
     assert not File(rumydata.file.Layout(basic)).check(basic_good)
+
+
+def test_file_excel_good(basic_good_excel, basic):
+    assert not File(rumydata.file.Layout(basic), file_type='excel').check(basic_good_excel)
 
 
 def test_layout_good(basic, basic_good):
