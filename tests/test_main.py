@@ -151,7 +151,8 @@ def test_text_bad(value, kwargs, err):
     ('', dict(nullable=True)),
     ('2020-01-01', dict(max_date='2020-01-01')),
     ('2020-01-01', dict(max_date='2020-01-02')),
-    ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02'))
+    ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02')),
+    ('2020-01-01 00:00:00', dict(truncate_time=True))
 ])
 def test_date_good(value, kwargs):
     assert not field.Date(**kwargs).check_cell(value)
@@ -164,7 +165,9 @@ def test_date_good(value, kwargs):
     ('2020-01-01', ex.ValueComparisonError, dict(min_date='2020-01-02')),
     ('2020-01-02', ex.ValueComparisonError, dict(max_date='2020-01-01')),
     ('2020-01-01', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-05', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03'))
+    ('2020-01-05', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
+    ('2020-01-01 00:00:00', ex.ConversionError, dict(truncate_time=True)),
+    ('2020-01-01 00:00:01', ex.ConversionError, dict(truncate_time=False))
 ])
 def test_date_bad(value, err, kwargs):
     assert rumydata.field.Date(**kwargs).__has_error__(value, err)
@@ -261,7 +264,9 @@ def test_integer_bad(value, max_length, kwargs, err):
     ('x', ['x'], {}),
     ('x', ['x', 'y'], {}),
     ('y', ['x', 'y'], {}),
-    ('', ['x'], dict(nullable=True))
+    ('', ['x'], dict(nullable=True)),
+    ('X', ['x'], dict(case_insensitive=True)),
+    ('x', ['X'], dict(case_insensitive=True))
 ])
 def test_choice_good(value, choices, kwargs):
     assert not field.Choice(choices, **kwargs).check_cell(value)
@@ -298,6 +303,10 @@ def test_header_good(basic):
 ])
 def test_header_bad(basic, value, err):
     assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=hr.Rule)
+
+
+def test_header_skip(basic):
+    assert not rumydata.file.Layout(basic, skip_header=True).check_header(['col1', 'col2', 'col4'])
 
 
 def test_file_good(basic_good, basic):
@@ -408,4 +417,20 @@ def test_unique_bad(tmpdir):
 def test_unique_good(tmpdir):
     cols = rumydata.file.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
+    assert not File(cols).check(f)
+
+
+@pytest.mark.parametrize('row,kwargs', [
+    (['1', '1'], {}),
+    (['1', '1'], dict(empty_row_ok=False)),
+    (['', ''], dict(empty_row_ok=True))
+])
+def test_empty_row_good(row, kwargs):
+    lay = rumydata.file.Layout({'x': field.Integer(1), 'y': field.Integer(2)}, **kwargs)
+    assert not lay.check_row(row)
+
+
+def test_empty_row_file_good(tmpdir):
+    cols = rumydata.file.Layout({'x': field.Field()}, empty_row_ok=True)
+    f = write_row(tmpdir, cols, [['1'], ['2'], ['']], rows=True)
     assert not File(cols).check(f)
