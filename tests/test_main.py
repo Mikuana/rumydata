@@ -418,3 +418,19 @@ def test_unique_good(tmpdir):
     cols = rumydata.file.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
     assert not File(cols).check(f)
+
+
+@pytest.mark.parametrize('row,kwargs', [
+    (['1', '1'], {}),
+    (['1', '1'], dict(empty_row_ok=False)),
+    (['', ''], dict(empty_row_ok=True))
+])
+def test_empty_row_good(row, kwargs):
+    lay = rumydata.file.Layout({'x': field.Integer(1), 'y': field.Integer(2)}, **kwargs)
+    assert not lay.check_row(row)
+
+
+def test_empty_row_file_good(tmpdir):
+    cols = rumydata.file.Layout({'x': field.Field()}, empty_row_ok=True)
+    f = write_row(tmpdir, cols, [['1'], ['2'], ['']], rows=True)
+    assert not File(cols).check(f)
