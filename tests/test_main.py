@@ -261,7 +261,9 @@ def test_integer_bad(value, max_length, kwargs, err):
     ('x', ['x'], {}),
     ('x', ['x', 'y'], {}),
     ('y', ['x', 'y'], {}),
-    ('', ['x'], dict(nullable=True))
+    ('', ['x'], dict(nullable=True)),
+    ('X', ['x'], dict(case_insensitive=True)),
+    ('x', ['X'], dict(case_insensitive=True))
 ])
 def test_choice_good(value, choices, kwargs):
     assert not field.Choice(choices, **kwargs).check_cell(value)

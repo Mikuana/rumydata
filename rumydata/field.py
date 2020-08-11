@@ -129,9 +129,11 @@ class Integer(Field):
 
 
 class Choice(Field):
-    def __init__(self, valid_values: list, **kwargs):
+    def __init__(self, valid_values: list, case_insensitive=False, **kwargs):
         super().__init__(**kwargs)
 
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
-        self.rules.append(clr.Choice(valid_values))
+        self.rules.append(
+            clr.Choice(valid_values, case_insensitive=case_insensitive)
+        )

@@ -1,6 +1,6 @@
 import re
 from datetime import datetime
-from typing import Union, Tuple, Dict, AnyStr
+from typing import Union, Tuple, Dict, AnyStr, List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
@@ -70,14 +70,25 @@ class MaxChar(Rule):
 class Choice(Rule):
     exception_class = ex.InvalidChoiceError
 
-    def __init__(self, choices: list):
+    def __init__(self, choices: List[str], case_insensitive=False):
         self.choices = choices
+        self.case_insensitive = case_insensitive
+        self.eval_choices = [x.lower() for x in choices] if case_insensitive else choices
+
+    def prepare(self, data: str) -> tuple:
+        if self.case_insensitive:
+            return data.lower(),
+        else:
+            return data,
 
     def evaluator(self):
-        return lambda x: x in self.choices
+        return lambda x: x in self.eval_choices
 
     def explain(self):
-        return f'must be one of {self.choices}'
+        return (
+            f'must be one of {self.choices}'
+            f'{" (case insensitive)" if self.case_insensitive else " (case sensitive)"}'
+        )
 
 
 class MinDigit(Rule):
