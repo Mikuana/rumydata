@@ -67,20 +67,23 @@ class Text(Field):
 
 class Date(Field):
     def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
+        rule_kwargs = {
+            'truncate_time': kwargs.pop('truncate_time', False)
+        }
         super().__init__(**kwargs)
 
         self.descriptors['Type'] = 'Date'
         self.descriptors['Format'] = 'YYYY-MM-DD'
 
-        self.rules.append(clr.CanBeDateIso())
+        self.rules.append(clr.CanBeDateIso(**rule_kwargs))
 
         if max_date:
             self.descriptors['Max Date'] = f'{max_date}'
-            self.rules.append(clr.DateLTE(max_date))
+            self.rules.append(clr.DateLTE(max_date, **rule_kwargs))
 
         if min_date:
             self.descriptors['Min Date'] = f'{min_date}'
-            self.rules.append(clr.DateGTE(min_date))
+            self.rules.append(clr.DateGTE(min_date, **rule_kwargs))
 
 
 class Currency(Field):
