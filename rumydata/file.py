@@ -14,6 +14,8 @@ class Layout(BaseSubject):
 
         :param definition: dictionary of column names with DataType definitions
         """
+        self.empty_row_ok = kwargs.pop('empty_row_ok', False)
+
         super().__init__(**kwargs)
 
         self.definition = definition
@@ -29,8 +31,12 @@ class Layout(BaseSubject):
             rr.RowLengthGTE(self.length)
         ])
 
-    def __check__(self, row, rule_type, rix=None):
+    def __check__(self, row, rule_type, rix=None, **kwargs):
+        if self.empty_row_ok and all([x == '' for x in row]):
+            return
+
         e = super().__check__(row, rule_type=rule_type)
+
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(rix or -1, errors=e)
 
