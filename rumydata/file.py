@@ -14,6 +14,8 @@ class Layout(BaseSubject):
 
         :param definition: dictionary of column names with DataType definitions
         """
+        self.skip_header = kwargs.pop('skip_header', False)
+
         super().__init__(**kwargs)
 
         self.definition = definition
@@ -30,6 +32,9 @@ class Layout(BaseSubject):
         ])
 
     def __check__(self, row, rule_type, rix=None):
+        if rule_type == hr.Rule and self.skip_header:
+            return
+
         e = super().__check__(row, rule_type=rule_type)
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(rix or -1, errors=e)

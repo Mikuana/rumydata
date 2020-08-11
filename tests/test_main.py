@@ -300,6 +300,10 @@ def test_header_bad(basic, value, err):
     assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=hr.Rule)
 
 
+def test_header_skip(basic):
+    assert not rumydata.file.Layout(basic, skip_header=True).check_header(['col1', 'col2', 'col4'])
+
+
 def test_file_good(basic_good, basic):
     assert not File(rumydata.file.Layout(basic)).check(basic_good)
 
