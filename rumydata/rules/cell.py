@@ -160,16 +160,6 @@ class CanBeInteger(Rule):
         return 'can be coerced into an integer value'
 
 
-class CanBeDateIso(Rule):
-    exception_class = ex.ConversionError
-
-    def evaluator(self):
-        return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
-
-    def explain(self):
-        return 'can be coerced into a ISO-8601 date'
-
-
 class NumericDecimals(Rule):
     exception_class = ex.CurrencyPatternError
 
@@ -293,7 +283,33 @@ class NumericLT(NumericComparison):
         return lambda x: float(x) < self.comparison_value
 
 
-class DateComparison(Rule):
+class DateRule(Rule):
+    exception_class = ex.ConversionError
+
+    def __init__(self, **kwargs):
+        self.truncate_time = kwargs.pop('truncate_time', False)
+        super().__init__(**kwargs)
+
+    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
+        if self.truncate_time:
+            no_time = ' 00:00:00'
+            if isinstance(data, str) and data.endswith(no_time):
+                data = data[:-len(no_time)]
+            elif data[0].endswith(no_time):
+                data = data[0][:-len(no_time)], data[1]
+
+        return super().prepare(data)
+
+
+class CanBeDateIso(DateRule):
+    def evaluator(self):
+        return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
+
+    def explain(self):
+        return 'can be coerced into a ISO-8601 date'
+
+
+class DateComparison(DateRule):
     """
     Base date value comparison class. Requires that the value can be coerced
     to a date using the specified format for the field.
@@ -301,9 +317,10 @@ class DateComparison(Rule):
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
-    def __init__(self, comparison_value, date_format='%Y-%m-%d'):
+    def __init__(self, comparison_value, date_format='%Y-%m-%d', **kwargs):
         self.date_format = date_format
         self.comparison_value = datetime.strptime(comparison_value, date_format)
+        super().__init__(**kwargs)
 
     def explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'

@@ -151,7 +151,8 @@ def test_text_bad(value, kwargs, err):
     ('', dict(nullable=True)),
     ('2020-01-01', dict(max_date='2020-01-01')),
     ('2020-01-01', dict(max_date='2020-01-02')),
-    ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02'))
+    ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02')),
+    ('2020-01-01 00:00:00', dict(truncate_time=True))
 ])
 def test_date_good(value, kwargs):
     assert not field.Date(**kwargs).check_cell(value)
@@ -164,7 +165,9 @@ def test_date_good(value, kwargs):
     ('2020-01-01', ex.ValueComparisonError, dict(min_date='2020-01-02')),
     ('2020-01-02', ex.ValueComparisonError, dict(max_date='2020-01-01')),
     ('2020-01-01', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-05', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03'))
+    ('2020-01-05', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
+    ('2020-01-01 00:00:00', ex.ConversionError, dict(truncate_time=True)),
+    ('2020-01-01 00:00:01', ex.ConversionError, dict(truncate_time=False))
 ])
 def test_date_bad(value, err, kwargs):
     assert rumydata.field.Date(**kwargs).__has_error__(value, err)
