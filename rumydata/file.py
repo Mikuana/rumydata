@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Union, Dict
 
 from rumydata import exception as ex
+from rumydata import field
 from rumydata.base import BaseSubject
 from rumydata.rules import file, column as cr, header as hr, row as rr, cell as clr
 
@@ -35,8 +36,6 @@ class Layout(BaseSubject):
     def __check__(self, row, rule_type, rix=None):
         if rule_type == hr.Rule and self.skip_header:
             return
-        elif rule_type == rr.Rule and self.empty_row_ok and all([x == '' for x in row]):
-            return
 
         e = super().__check__(row, rule_type=rule_type)
 
@@ -45,6 +44,10 @@ class Layout(BaseSubject):
 
         if rule_type == rr.Rule:
             row = dict(zip(self.definition.keys(), row))
+            ignore = {k: isinstance(v, field.Ignore) for k, v in self.definition.items()}
+            # if empty row is okay, and all fields are either empty, or Ignore class
+            if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
+                return
 
             for cix, (name, val) in enumerate(row.items()):
                 t = self.definition[name]
