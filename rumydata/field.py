@@ -51,6 +51,22 @@ class Field(BaseSubject):
         return any([issubclass(type(r), rule_type) for r in self.rules])
 
 
+class Ignore(Field):
+    """
+    Ignore the values found in this field. This will cause other dependencies (like row checks) to
+    treat any values in this field as if they were empty. While the check method still exists, this
+    class overwrites those inherited methods to intentionally have no effect.
+    """
+
+    # noinspection PyMissingConstructor
+    def __init__(self):
+        self.rules = []
+        self.descriptors = {}
+
+    def __check__(self, *args, **kwargs):
+        pass
+
+
 class Text(Field):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)

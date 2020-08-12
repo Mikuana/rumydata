@@ -434,3 +434,25 @@ def test_empty_row_file_good(tmpdir):
     cols = rumydata.file.Layout({'x': field.Field()}, empty_row_ok=True)
     f = write_row(tmpdir, cols, [['1'], ['2'], ['']], rows=True)
     assert not File(cols).check(f)
+
+
+@pytest.mark.parametrize('cell', [
+    '',
+    '1',
+    '8k;asdfkl;asdf'
+])
+def test_ignore_cell(cell):
+    assert not field.Ignore().check_cell(cell)
+
+
+@pytest.mark.parametrize('row', [
+    (['1', '']),
+    (['', '']),
+    (['1', '1'])
+])
+def test_ignore_row(row):
+    """ Test that ignore rows count as empty for the purpose of accepting empty rows """
+    lay = rumydata.file.Layout(
+        {'x': field.Ignore(), 'y': field.Integer(1)}, empty_row_ok=True
+    )
+    assert not lay.check_row(row)
