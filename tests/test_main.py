@@ -22,7 +22,12 @@ from rumydata.rules import header as hr, row as rr, column as cr
 
 @pytest.fixture()
 def basic() -> dict:
-    return {'col1': rumydata.field.Text(1), 'col2': rumydata.field.Integer(1), 'col3': rumydata.field.Date()}
+    return {
+        'col1': rumydata.field.Text(1),
+        'col2': rumydata.field.Integer(1),
+        'col3': rumydata.field.Date(),
+        'col4': field.Choice(['X', 'Y', 'Z'])
+    }
 
 
 @pytest.fixture()
@@ -54,8 +59,8 @@ def basic_good(tmpdir):
     p = Path(tmpdir, 'good.csv')
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
-        writer.writerow(['col1', 'col2', 'col3'])
-        writer.writerow(['A', '1', '2020-01-01'])
+        writer.writerow(['col1', 'col2', 'col3', 'col4'])
+        writer.writerow(['A', '1', '2020-01-01', 'X'])
     yield p.as_posix()
 
 
@@ -64,8 +69,8 @@ def basic_good_excel(tmpdir):
     p = Path(tmpdir, 'good.xlsx')
     wb = Workbook()
     ws = wb.active
-    ws.append(['col1', 'col2', 'col3'])
-    ws.append(['A', '1', '2020-01-01'])
+    ws.append(['col1', 'col2', 'col3', 'col4'])
+    ws.append(['A', '1', '2020-01-01', 'X'])
     wb.save(p)
     yield p.as_posix()
 
@@ -77,8 +82,8 @@ def basic_row_skip_good(tmpdir):
         writer = csv.writer(o)
         writer.writerow(['garbage'])
         writer.writerow(['garbage'])
-        writer.writerow(['col1', 'col2', 'col3'])
-        writer.writerow(['A', '1', '2020-01-01'])
+        writer.writerow(['col1', 'col2', 'col3', 'col4'])
+        writer.writerow(['A', '1', '2020-01-01', 'X'])
     yield p.as_posix()
 
 
@@ -281,25 +286,25 @@ def test_choice_bad(value, choices, kwargs, err):
 
 
 def test_row_good(basic):
-    assert not rumydata.file.Layout(basic).check_row(['1', '2', '2020-01-01'])
+    assert not rumydata.file.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
 
 
 @pytest.mark.parametrize('value,err', [
-    ([1, 2, 3, 4], ex.RowLengthError),
-    ([1, 2], ex.RowLengthError)
+    ([1, 2, 3, 4, 5], ex.RowLengthError),
+    ([1, 2, 3], ex.RowLengthError)
 ])
 def test_row_bad(basic, value, err):
     assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=rr.Rule)
 
 
 def test_header_good(basic):
-    assert not rumydata.file.Layout(basic).check_header(['col1', 'col2', 'col3'])
+    assert not rumydata.file.Layout(basic).check_header(['col1', 'col2', 'col3', 'col4'])
 
 
 @pytest.mark.parametrize('value,err', [
     (['col1', 'col2'], ex.MissingColumnError),
     (['col1', 'col2', 'col2'], ex.DuplicateColumnError),
-    (['col1', 'col2', 'col4'], ex.UnexpectedColumnError)
+    (['col1', 'col2', 'col5'], ex.UnexpectedColumnError)
 ])
 def test_header_bad(basic, value, err):
     assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=hr.Rule)

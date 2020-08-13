@@ -75,11 +75,14 @@ class Choice(Rule):
         self.case_insensitive = case_insensitive
         self.eval_choices = [x.lower() for x in choices] if case_insensitive else choices
 
-    def prepare(self, data: str) -> tuple:
+    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if self.case_insensitive:
-            return data.lower(),
-        else:
-            return data,
+            if isinstance(data, str):
+                data = data.lower(),
+            else:
+                data = data[0].lower(), data[1]
+
+        return super().prepare(data)
 
     def evaluator(self):
         return lambda x: x in self.eval_choices
