@@ -1,4 +1,24 @@
-from typing import List, AnyStr
+"""
+rumydata column validation rules
+
+These rules capture a common, but much more complex use case for data
+validation, when it is necessary to compare the values of a single column across
+multiple rows. The most intuitive example of this is the Unique rule, which
+requires that every value in a column (excepting blanks) be unique/distinct.
+
+These rules are intended to be used by adding them directly to rules argument in
+the constructor of the classes in the field submodule.
+
+Users of this package should be aware that the introduction of a column rule can
+have a dramatic increase on the resources required to perform validation. If
+there are no column validation rules present in a Layout, then each row will be
+discarded from memory after validation is complete. However, each field that has
+one or more column rules will require the entire to be available for validation.
+In small data sets the impact will be minor, but larger data sets have the
+potential to introduce performance impacts.
+"""
+
+from typing import List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
@@ -6,14 +26,14 @@ from rumydata.base import BaseRule
 
 class Rule(BaseRule):
 
-    def prepare(self, data: List[AnyStr]) -> tuple:
+    def prepare(self, data: List[str]) -> tuple:
         return data,
 
 
 class Unique(Rule):
     exception_class = ex.DuplicateValueError
 
-    def prepare(self, data: List[AnyStr]) -> tuple:
+    def prepare(self, data: List[str]) -> tuple:
         return [x for x in data if not x == ''],
 
     def evaluator(self):

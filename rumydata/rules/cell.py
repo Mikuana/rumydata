@@ -1,3 +1,15 @@
+"""
+rumydata cell validation rules
+
+These rules make up the heart of what most users of the rumydata package will
+be interested in when attempting to extend the out-of-the box behavior. These
+rules are generally applied to a single value, in the case of the Rule class,
+but can also be used to compare the value in a cell to another value in the same
+row, in the case of the ColumnComparisonRule class.
+
+These rules are intended to be used by adding them directly to rules argument in
+the constructor of the classes in the field submodule.
+"""
 import re
 from datetime import datetime
 from typing import Union, Tuple, Dict, AnyStr, List

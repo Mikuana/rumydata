@@ -1,3 +1,11 @@
+"""
+rumydata row rules
+
+These rules are applied to entire rows and are generally not intended to be
+used directly. They accomplish things like ensuring that the entire row contains
+the expected number of values, before attempting to validate individual cells.
+"""
+
 from typing import List, AnyStr
 
 from rumydata import exception as ex

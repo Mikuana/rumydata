@@ -1,3 +1,15 @@
+"""
+rumydata field/column/element objects
+
+This submodule contains the various field type objects that are used to define
+the fields (i.e. columns, elements) that make up a tabular data set. These field
+objects can be extended by adding additional rules in the rules keyword of the
+fields constructor. Additional modification, including the definition of
+entirely new field types can be achieved by subclassing the Field base class.
+
+See the rumydata.rules submodule to learn more about the use of rules to extend
+field class behavior.
+"""
 from typing import Union, Tuple, AnyStr, Dict
 
 from rumydata import exception as ex

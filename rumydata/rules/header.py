@@ -1,3 +1,11 @@
+"""
+rumydata row rules
+
+These rules are applied to header rows and are generally not intended to be
+used directly. These rules ensure that the headers are named as expected, is
+not missing any names, or containing any extras.
+"""
+
 from typing import List, AnyStr
 
 from rumydata import exception as ex

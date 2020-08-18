@@ -1,3 +1,11 @@
+"""
+rumydata file rules
+
+These rules are applied to entire files and are generally not meant to be used
+directly. These accomplish things like confirming a file exists, that it matches
+a particular regex pattern, etc.
+"""
+
 import re
 from pathlib import Path
 from typing import Union, List
