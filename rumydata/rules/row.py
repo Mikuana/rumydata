@@ -6,7 +6,7 @@ used directly. They accomplish things like ensuring that the entire row contains
 the expected number of values, before attempting to validate individual cells.
 """
 
-from typing import List, AnyStr
+from typing import List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
@@ -15,7 +15,7 @@ from rumydata.base import BaseRule
 class Rule(BaseRule):
     exception_class = ex.RowComparisonError
 
-    def prepare(self, data: List[AnyStr]) -> tuple:
+    def prepare(self, data: List[str]) -> tuple:
         return data,
 
 

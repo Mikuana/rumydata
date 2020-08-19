@@ -12,7 +12,7 @@ the constructor of the classes in the field submodule.
 """
 import re
 from datetime import datetime
-from typing import Union, Tuple, Dict, AnyStr, List
+from typing import Union, Tuple, Dict, List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
@@ -20,7 +20,7 @@ from rumydata.base import BaseRule
 
 class Rule(BaseRule):
 
-    def prepare(self, data: Union[AnyStr, Tuple[AnyStr, Dict]]) -> tuple:
+    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if isinstance(data, str):
             return data,
         else:
@@ -418,7 +418,7 @@ class ColumnComparisonRule(Rule):
     def __init__(self, compare_to: str):
         self.compare_to = compare_to
 
-    def prepare(self, data: Tuple[AnyStr, Dict]) -> tuple:
+    def prepare(self, data: Tuple[str, Dict]) -> tuple:
         return data[0], data[1][self.compare_to]
 
 

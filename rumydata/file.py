@@ -119,7 +119,7 @@ class File(BaseSubject):
 
         column_cache = {
             k: [] for k, v in self.layout.definition.items()
-            if v.has_rule_type(cr.Rule)
+            if v.__has_rule_type__(cr.Rule)
         }
         column_cache_map = {
             k: list(self.layout.definition.keys()).index(k)

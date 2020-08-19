@@ -6,7 +6,7 @@ used directly. These rules ensure that the headers are named as expected, is
 not missing any names, or containing any extras.
 """
 
-from typing import List, AnyStr
+from typing import List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
@@ -16,7 +16,7 @@ class Rule(BaseRule):
     def __init__(self, columns):
         self.definition = columns.definition
 
-    def prepare(self, data: List[AnyStr]) -> tuple:
+    def prepare(self, data: List[str]) -> tuple:
         return data,
 
 
