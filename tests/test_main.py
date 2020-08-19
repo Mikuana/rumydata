@@ -444,7 +444,7 @@ def test_empty_row_file_good(tmpdir):
 @pytest.mark.parametrize('cell', [
     '',
     '1',
-    '8k;asdfkl;asdf'
+    '8k;abc;abc'
 ])
 def test_ignore_cell(cell):
     assert not field.Ignore().check_cell(cell)
