@@ -5,7 +5,7 @@ This submodule contains the base objects that are used by other modules in this
 package. This is not intended for use by end-users.
 """
 
-from typing import List
+from typing import List, Union
 
 from rumydata import exception as ex
 
@@ -103,7 +103,7 @@ class BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, data, rule_type) -> List[ex.UrNotMyDataError]:
+    def __check__(self, data, rule_type) -> Union[List[ex.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 

@@ -33,7 +33,7 @@ class Layout(BaseSubject):
             rr.RowLengthGTE(self.length)
         ])
 
-    def __check__(self, row, rule_type, rix=None):
+    def __check__(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
             return
 
@@ -111,7 +111,7 @@ class File(BaseSubject):
             file.FileExists()
         ])
 
-    def __check__(self, filepath: Union[str, Path], **kwargs):
+    def __check__(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super().__check__(p, rule_type=file.Rule)  # check files-based rules first
         if e:
