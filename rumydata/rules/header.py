@@ -13,6 +13,8 @@ from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
+    """ Header Rule """
+
     def __init__(self, columns):
         self.definition = columns.definition
 
@@ -21,6 +23,8 @@ class Rule(BaseRule):
 
 
 class NoExtra(Rule):
+    """ No extra header elements Rule """
+
     exception_class = ex.UnexpectedColumnError
 
     def evaluator(self):
@@ -31,6 +35,8 @@ class NoExtra(Rule):
 
 
 class NoMissing(Rule):
+    """ No missing header elements Rule """
+
     exception_class = ex.MissingColumnError
 
     def evaluator(self):
@@ -41,6 +47,7 @@ class NoMissing(Rule):
 
 
 class NoDuplicate(Rule):
+    """ No duplicate header elements Rule """
     exception_class = ex.DuplicateColumnError
 
     def evaluator(self):
@@ -51,6 +58,8 @@ class NoDuplicate(Rule):
 
 
 class ColumnOrder(Rule):
+    """ Fixed header element order Rule """
+
     exception_class = ex.DataError
 
     def evaluator(self):

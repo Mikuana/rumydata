@@ -25,12 +25,15 @@ from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
+    """ Column Rule """
 
     def prepare(self, data: List[str]) -> tuple:
         return data,
 
 
 class Unique(Rule):
+    """ Column values unique Rule """
+
     exception_class = ex.DuplicateValueError
 
     def prepare(self, data: List[str]) -> tuple:

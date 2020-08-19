@@ -13,6 +13,8 @@ from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
+    """ Row Rule """
+
     exception_class = ex.RowComparisonError
 
     def prepare(self, data: List[str]) -> tuple:
@@ -20,6 +22,8 @@ class Rule(BaseRule):
 
 
 class RowLengthLTE(Rule):
+    """ Row length less than or equal to Rule """
+
     exception_class = ex.RowLengthError
 
     def __init__(self, columns_length):
@@ -33,6 +37,8 @@ class RowLengthLTE(Rule):
 
 
 class RowLengthGTE(Rule):
+    """ Row greater than or equal to Rule """
+
     exception_class = ex.RowLengthError
 
     def __init__(self, columns_length):

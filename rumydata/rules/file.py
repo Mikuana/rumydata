@@ -15,12 +15,15 @@ from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
+    """ File Rule """
 
     def prepare(self, data: Union[str, Path]) -> tuple:
         return data,
 
 
 class FileExists(Rule):
+    """ File exists Rule """
+
     exception_class = FileNotFoundError
 
     def evaluator(self):
@@ -31,6 +34,8 @@ class FileExists(Rule):
 
 
 class FileNameMatchesPattern(Rule):
+    """ File name matches regex pattern Rule """
+
     exception_class = ex.FilePatternError
 
     def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
@@ -44,6 +49,7 @@ class FileNameMatchesPattern(Rule):
 
 
 class FileNameMatchesOnePattern(Rule):
+    """ File name matches exactly one pattern Rule """
     exception_class = ex.UrNotMyDataError
 
     def __init__(self, patterns: list):
