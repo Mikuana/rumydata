@@ -43,7 +43,7 @@ class Field(BaseSubject):
         if not self.nullable:
             self.rules.append(clr.NotNull())
 
-    def __check__(self, data, cix=-1, rule_type=None, **kwargs):
+    def __check__(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
         """
         Check data against field rules of specified rule type
 
