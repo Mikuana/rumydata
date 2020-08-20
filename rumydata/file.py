@@ -1,3 +1,9 @@
+"""
+rumydata file submodule
+
+This submodule contains the File class, and it's closely related Layout class.
+"""
+
 import csv
 from pathlib import Path
 from typing import Union, Dict
@@ -9,12 +15,26 @@ from rumydata.rules import file, column as cr, header as hr, row as rr, cell as 
 
 
 class Layout(BaseSubject):
+    """
+    Table Layout Class
+
+    This class facilitates the grouping of a collection of Field objects to
+    define a tabular data set. The initialized object can then be used to
+    check a row or header for validity.
+    """
+
     def __init__(self, definition: dict, **kwargs):
         """
         Defines the layout of a tabular files.
 
         :param definition: dictionary of column names with DataType definitions
+        :param skip_header: a boolean control to skip validation of the header
+            in the file. Defaults to False.
+        :param empty_row_ok: a boolean control to skip validation of any row
+            that is completely empty (i.e. every field is blank).
+        :param title: 
         """
+
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
 
