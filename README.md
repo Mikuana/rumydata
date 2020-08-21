@@ -2,53 +2,66 @@
 
 ![img](are-you-my-data.jpg)
 
-This python package takes on the challenges of of transmitting data in text format. 
+This python package provides a set of tools to solve several of the major challenges
+that arise in the transmission of data. These tools attempt to solve four main
+problems:
 
- 1. Provides a simple, and expressive framework to define a data set
- 2. Generates explicit documentation on the dataset for communication with others
- 3. Validates files against definition, providing detailed messages about violations
-    without exposing any information about the actual data in the file
+ 1. defining exactly what your data should be
+ 2. communicating that definition to others (so they can send you data)
+ 3. validating the data that you receive
+ 4. not disclosing the data on accident
+ 
+These problems are solved with the following feature sets in this package:
 
+ 1. an expressive, extensible set of classes to define a data set
+ 2. technical documentation generators, based upon the definition
+ 3. data validation methods, based upon the definition
+ 4. sanitized error messages which state what the data *should* be, but not what
+    it actually is (i.e. what was expected, not what was received)
 
-This package provides all of this with the don't repeat yourself (DRY) principle
-at its core.
+# Installation
 
- - the code that defines the data, documents the data
- - the code that defines the data, validates the data
+For most users, the recommended method to install is via pip:
 
-
-## Example
-
-For this example, we'll pretend that Alice needs Bob to send her data.
-
-Alice will start by defining a layout. In the dataset, she wants a Text column,
-a Choice column, and an Integer. She'll define that below, then generate a digest
-of the layout so that she can share it with Bob. She accomplishes that with the
-code below.
-
-```python
-
-from rumydata.subject import Layout
-from rumydata.subject.cell import Text, Integer, Choice
-layout = Layout(definition={
-    'col1': Text(8),
-    'col2': Choice(['x', 'y', 'z'], nullable=True),
-    'col3': Integer(1)
-})
-print(layout.markdown_digest())
+```shell script
+pip install rumydata
 ```
 
-As you can see in the digest output below, there is a great deal of explicit detail.
-This is to the benefit of Bob, who needs to extract data from his source systems
-and conform it to Alice's expectations.
+This package requires python version 3.7 or higher. By default there are no
+third-party package dependencies. However, if you want to validate the contents
+of Microsoft Excel files `.xls`, you will need to install the `openpyxl` package
+as well. 
 
-This demonstrates a key concept of this package; _the code that defines the data, documents
-the data_. This makes Alice's job easier, but also helps to prevent miscommunication
-and misunderstanding that occurs when Alice documents the expectation separately
-from the actual code.
+## Alice and Bob Exchange Data
+
+### The Good Way
+
+Let's say Alice wants Bob to send her data. Alice will define her data in a
+`Layout`. In the layout, she wants a `Text` field, a `Choice` field, and an
+`Integer`.
+
+```python
+from rumydata import Layout
+from rumydata.field import Text, Integer, Choice
+
+layout = Layout(definition={
+    'col1': Text(8),
+    'col2': Choice(['x', 'y', 'z']),
+    'col3': Integer(1)
+})
+```
+
+With her layout defined, Alice can now communicate what she wants to Bob. The
+`markdown_digest` method outputs a detailed technical specification for the three
+fields that Alice included in her definition, in Markdown format.
+
+```python
+# ...
+layout.markdown_digest()
+```
 
 ```markdown
-- **col1**
+ - **col1**
    - Type: String
    - Max Length: 8 characters
    - cannot be empty/blank
@@ -56,7 +69,7 @@ from the actual code.
  - **col2**
    - Type: Choice
    - Choices: x,y,z
-   - must be one of ['x', 'y', 'z']
+   - must be one of ['x', 'y', 'z'] (case sensitive)
    - Nullable
  - **col3**
    - Type: Numeric
@@ -65,58 +78,63 @@ from the actual code.
    - cannot be empty/blank
    - can be coerced into an integer value
    - cannot have a leading zero digit
-   - must have no more than 1 digits after removing other characters
+   - must have no more than 1 digit characters
 ```
 
-In our example, Alice sends the documentation to Bob, who then performs an extract
-of the data from his system. Bob thinks he's followed the documentation exactly
-as described, but he's actually made a mistake.
+_The code that defines the data, documents the data_. This helps prevent
+miscommunication and misunderstanding that occurs when Alice documents separately
+from the actual definition of her data.
+
+Bob recieves the documentation, and performs an extract of the requested data
+from his system. Bob believes he's followed the documentation exactly as
+described, but he's actually made a mistake.
 
 | col1 | col2 | col3 |
 |------|------|------|
 | abc  | x    | -1   |
-| def  |      | 0    |
 | ghi  | a    | 1    |
 
-Bob sends the data to Alice, who then validates it using her layout. Another key
-concept of this package is demonstrated in this step; _the code that defines the
+Bob sends the data to Alice, who then validates it. _The code that defines the
 data, validates the data_.
 
 ```python
+# ...
+from rumydata import File
 
-from rumydata.subject import Layout
-from rumydata import Choice
-from rumydata.subject.cell import Text, Integer
-layout = Layout(definition={
-    'col1': Text(8),
-    'col2': Choice(['x', 'y', 'z'], nullable=True),
-    'col3': Integer(1)
-})
-layout.check_file(f'bobs_data.csv')
+File(layout).check(f'bobs_data.csv')
 ```
 
-When Alice checks the file for validity, she receives the following message:
+When Alice runs her layout against the csv to check for validity, she receives
+the following message:
 
 ```yaml
 AssertionError: 
- - File: None
-   - Row: 4
-     - Field: 4,2 (col2)
-       - InvalidChoice: must be one of ['x', 'y', 'z']
+ - File: bobs_data.csv
+   - Row: 3
+     - Cell: 3,2 (col2)
+       - InvalidChoice: must be one of ['x', 'y', 'z'] (case sensitive)
 ```
 
-The layout has detected that the second value of the fourth row does not meet the
-defined expectations, and it has provided a detailed message explaining what was
-expected. It is important to note: this error message does **not** describe the
-value that was provided, it only describes what was expected, and where in the
-data that expectation was violated. This is an intentional design of this package,
-as it lets Alice freely communicate with Bob about the issues in the data, with
-little risk of exposing the data itself.
+The second value of the third row does not meet expectations. The message
+describes what was expected, and where in the data that expectation was violated.
+This error message does **not** describe the value that was provided, which makes
+it safe to communicate this error openly. 
 
-Alice sends the message to Bob, and with it he's able to easily see that the value
-her provided was not one of the valid choices. He can also refer back to the definition
-digest, and see that `col2` is nullable, and that he can send a blank value instead
-of the invalid value that he sent.
+Alice sends the message to Bob, and with it he's able to easily see that the 
+provided value was not one of the valid choices. Bob can quickly identify the
+problem in the data and correct it.
+
+### The Better Way
+
+There's a better way they could have done this. The layout that Alice created
+is written in a script that is only seven lines long. That script relies on an
+open source, pure-python package, with no hard dependencies. In other words,
+the code that defines the data is extremely **portable**.
+
+Instead of sending the techincal documentation (which is even longer than the
+script), Alice can instead send Bob the script. With it, Bob can generate the
+documentation himself, and validate the data himself, before sending it to
+Alice. This skips several rounds of back-and-forth communication in the process. 
 
 ## Extension
 
