@@ -110,6 +110,18 @@ class MaxChar(Rule):
         return f'must be no more than {str(self.max_length)} characters'
 
 
+class AsciiChar(Rule):
+    """ Cell contains only ASCII character Rule """
+
+    exception_class = ex.UrNotMyDataError
+
+    def evaluator(self):
+        return lambda x: all(ord(c) < 128 for c in x)
+
+    def explain(self) -> str:
+        return 'must have only ASCII characters'
+
+
 class Choice(Rule):
     """ Cell choice Rule """
 

@@ -32,9 +32,9 @@ third-party package dependencies. However, if you want to validate the contents
 of Microsoft Excel files `.xls`, you will need to install the `openpyxl` package
 as well. 
 
-## Alice and Bob Exchange Data
+# Alice and Bob Exchange Data
 
-### The Good Way
+## The Good Way
 
 Let's say Alice wants Bob to send her data. Alice will define her data in a
 `Layout`. In the layout, she wants a `Text` field, a `Choice` field, and an
@@ -124,7 +124,7 @@ Alice sends the message to Bob, and with it he's able to easily see that the
 provided value was not one of the valid choices. Bob can quickly identify the
 problem in the data and correct it.
 
-### The Better Way
+## The Better Way
 
 There's a better way they could have done this. The layout that Alice created
 is written in a script that is only seven lines long. That script relies on an
@@ -136,31 +136,59 @@ script), Alice can instead send Bob the script. With it, Bob can generate the
 documentation himself, and validate the data himself, before sending it to
 Alice. This skips several rounds of back-and-forth communication in the process. 
 
-## Extension
+# Rules
 
-Although this package contains a number of built-in rules to ease the definition
-of a `Layout`, it is expected that users will have their own rules that need to
-be applied on a regular basis. The simplest way to do this is by generating a
-static rule and adding it to a `Field`.
+## Out of the Box
 
-As an example, let's say that Alice realized that the `col3` in her layout needs
-to be an *odd* number only. The `Field` class provides a parameter for additional
-rules to be specified, and the `make_static_rule` method provides us with a
-simple way of generating these rules.
+This package contains a number of field types which are already configured with
+rules to support that particular type of data. For example, the `Text` field
+includes rules for maximum length, minimum length (optional), and nullability.
+
+However, this may not be enough for your purposes. Perhaps you need to ensure
+that your text field only includes ASCII characters. Fortunately, a rule for this
+already exists in the package, and the Field classes contain a convenient
+parameter for applying additional rules to a field.
 
 ```python
-from rumydata import rules, Layout
-from rumydata.field import *
+from rumydata.rules import cell
+from rumydata.field import Text
 
+my_field = Text(
+    max_length=10, min_length=5, nullable=False, rules=[cell.AsciiChar()]
+)
 
-odd_rule = rules.cell.make_static_cell_rule(lambda x: int(x) % 2 == 0, "must be an odd number")
-
-layout = Layout(definition={
-    'col1': Text(8),
-    'col2': Choice(['x', 'y', 'z'], nullable=True),
-    'col3': Integer(1, rules=[odd_rule])
-})
+my_field.check_cell('ABCDE')
 ```
 
-If Alice were to check Bob's data now, it would determine that cell 3,3 is not
-an odd number, and raise an exception.
+With this new rule applied, any data that is validated against this field will
+be checked for minimum and maximum length, nullability, and whether the
+characters are all ASCII. You can always test these fields using the
+`check_cell` or `check_column` methods, depending up on the
+kind of rule that you're trying to test.
+
+## Extension
+
+In the example above, we added a check for ASCII characters only. But what if
+we need a rule that doesn't exist in the package? Let's say that we cannot allow
+any vowels - A, E, I, O, U - in the cell that we are checking. This package
+makes it easy to develop custom rules and apply them to your fields.
+
+```python
+from rumydata import field
+from rumydata import rules
+
+vowel_rule = rules.cell.make_static_cell_rule(
+    lambda x: all([c.lower() not in ['a', 'e', 'i', 'o', 'u'] for c in x]),
+    "must not have any vowels"
+)
+
+my_field = field.Text(
+    max_length=10, min_length=5, nullable=False,
+    rules=[rules.cell.AsciiChar(), vowel_rule]
+)
+
+my_field.check_cell('ABCDE')
+```
+
+With our custom `vowel_rule`, we will now identify any cells that contain values
+and call this out during validation.
