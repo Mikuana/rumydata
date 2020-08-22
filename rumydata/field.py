@@ -1,23 +1,64 @@
-from typing import Union, Tuple, AnyStr, Dict
+"""
+rumydata field/column/element objects
+
+This submodule contains the various field type objects that are used to define
+the fields (i.e. columns, elements) that make up a tabular data set. These field
+objects can be extended by adding additional rules in the rules keyword of the
+fields constructor. Additional modification, including the definition of
+entirely new field types can be achieved by subclassing the Field base class.
+
+See the rumydata.rules submodule to learn more about the use of rules to extend
+field class behavior.
+"""
+from typing import Union, Tuple, Dict, List
 
 from rumydata import exception as ex
 from rumydata.base import BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
-__all__ = [
-    'Field', 'Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice'
-]
+__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice']
 
 
 class Field(BaseSubject):
+    """
+    Base Field class
+
+    This class provides the framework for the definition of field types in this
+    package.
+    """
+
     def __init__(self, nullable=False, rules: list = None):
+        """
+        Base Field constructor
+
+        :param nullable: a boolean indicator which controls whether the field
+            can be null (blank). Defaults to False, which will cause errors to
+            be raised when checking empty strings.
+        :param rules: a list of rules to apply to this field during checks.
+        """
+
         super().__init__(rules)
         self.nullable = nullable
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
 
-    def __check__(self, data, cix=-1, rule_type=None, **kwargs):
+    def __check__(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
+        """
+        Check data against field rules of specified rule type
+
+        This is the core method used to evaluate data against a subject defined
+        by this class.
+
+        :param data: an object which conforms to the `prepare` method of the
+            class specified in the rule_type parameter
+        :param cix: column index used for error reporting.
+        :param rule_type: a Rule class belonging to one of the submodules in the
+            rules module (e.g. rumydata.rules.cell.Rule). This controls the
+            types of rules that the provided data will be checked against.
+        :return: a list of any errors that were raised while checking the data.
+        """
+
         # if data is nullable and value is empty, skip all checks
         if self.nullable and issubclass(rule_type, clr.Rule) and data == '':
             pass
@@ -26,11 +67,32 @@ class Field(BaseSubject):
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
-    def check_cell(self, value: Union[AnyStr, Tuple[AnyStr, Dict]], **kwargs):
+    def check_cell(self, value: Union[str, Tuple[str, Dict]], **kwargs):
+        """
+        Cell Rule assertion
+
+        Perform an assertion of the provided cell value against the rules
+        defined for the field. If the value fails the check for any of the
+        rules, the assertion will raise a detailed exception message.
+
+        :param value: a cell value, either a string or a tuple of a string
+            and a dictionary, to be checked.
+        """
+
         errors = self.__check__(value, rule_type=clr.Rule, **kwargs)
         assert not errors, str(errors)
 
-    def check_column(self, values: list, **kwargs):
+    def check_column(self, values: List[str], **kwargs):
+        """
+        Column Rule assertion
+
+        Perform an assertion of the provided column values against the rules
+        defined for the field. If the values fail the check for any of the
+        rules, the assertion will raise a detailed exception message.
+
+        :param values: a list of values contained in the column.
+        """
+
         errors = self.__check__(values, rule_type=cr.Rule, **kwargs)
         assert not errors, str(errors)
 
@@ -40,22 +102,31 @@ class Field(BaseSubject):
             dig.append('Nullable')
         return dig
 
-    def comparison_columns(self):
+    def comparison_columns(self) -> set:
+        """
+        Comparison fields report
+
+        A method to report the columns that will need to be compared while
+        checking rules.
+
+        :return: a set of the columns that will need to be compared.
+        """
         compares = set()
         for r in self.rules:
             if issubclass(type(r), clr.ColumnComparisonRule):
                 compares.add(r.compare_to)
         return compares
 
-    def has_rule_type(self, rule_type):
+    def __has_rule_type__(self, rule_type):
         return any([issubclass(type(r), rule_type) for r in self.rules])
 
 
 class Ignore(Field):
     """
-    Ignore the values found in this field. This will cause other dependencies (like row checks) to
-    treat any values in this field as if they were empty. While the check method still exists, this
-    class overwrites those inherited methods to intentionally have no effect.
+    Ignore the values found in this field. This will cause other dependencies
+    (like row checks) to treat any values in this field as if they were empty.
+    While the check method still exists, this class overwrites those inherited
+    methods to intentionally have no effect.
     """
 
     # noinspection PyMissingConstructor

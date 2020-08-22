@@ -1,21 +1,58 @@
+"""
+rumydata cell validation rules
+
+These rules make up the heart of what most users of the rumydata package will
+be interested in when attempting to extend the out-of-the box behavior. These
+rules are generally applied to a single value, in the case of the Rule class,
+but can also be used to compare the value in a cell to another value in the same
+row, in the case of the ColumnComparisonRule class.
+
+These rules are intended to be used by adding them directly to rules argument in
+the constructor of the classes in the field submodule.
+"""
 import re
 from datetime import datetime
-from typing import Union, Tuple, Dict, AnyStr, List
+from typing import Union, Tuple, Dict, List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
 
 
 class Rule(BaseRule):
+    """ Cell Rule """
 
-    def prepare(self, data: Union[AnyStr, Tuple[AnyStr, Dict]]) -> tuple:
+    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if isinstance(data, str):
             return data,
         else:
             return data[0],
 
 
+def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
+    """
+    Static cell rule factory
+
+    Return a factory generated Rule class. The function used by the rule must
+    directly evaluate a single positional argument (i.e. x, but not x and y).
+    Because the Rule cannot be passed a value on initialization, neither the
+    evaluator or explain methods in the return class can be dynamic.
+    """
+
+    class FactoryRule(Rule):
+        exception_class = exception
+
+        def evaluator(self):
+            return func
+
+        def explain(self) -> str:
+            return assertion
+
+    return FactoryRule()
+
+
 class NotNull(Rule):
+    """ Cell not null Rule """
+
     exception_class = ex.NullValueError
 
     def evaluator(self):
@@ -29,6 +66,8 @@ class NotNull(Rule):
 
 
 class ExactChar(Rule):
+    """ Cell exact character length Rule """
+
     exception_class = ex.LengthError
 
     def __init__(self, exact_length):
@@ -42,6 +81,8 @@ class ExactChar(Rule):
 
 
 class MinChar(Rule):
+    """ Cell minimum character length Rule """
+
     exception_class = ex.LengthError
 
     def __init__(self, min_length):
@@ -55,6 +96,8 @@ class MinChar(Rule):
 
 
 class MaxChar(Rule):
+    """ Cell maximum character length Rule """
+
     exception_class = ex.LengthError
 
     def __init__(self, max_length):
@@ -67,7 +110,21 @@ class MaxChar(Rule):
         return f'must be no more than {str(self.max_length)} characters'
 
 
+class AsciiChar(Rule):
+    """ Cell contains only ASCII character Rule """
+
+    exception_class = ex.UrNotMyDataError
+
+    def evaluator(self):
+        return lambda x: all(ord(c) < 128 for c in x)
+
+    def explain(self) -> str:
+        return 'must have only ASCII characters'
+
+
 class Choice(Rule):
+    """ Cell choice Rule """
+
     exception_class = ex.InvalidChoiceError
 
     def __init__(self, choices: List[str], case_insensitive=False):
@@ -96,6 +153,8 @@ class Choice(Rule):
 
 class MinDigit(Rule):
     """
+    Cell minimum digit character Rule
+
     Check that count of characters, after removing all non-digits, meets or
     exceeds the specified minimum. Used to evaluate length of significant digits
     in numeric strings that might contain formatting.
@@ -114,6 +173,8 @@ class MinDigit(Rule):
 
 class MaxDigit(Rule):
     """
+    Cell maximum digit character Rule
+
     Check that count of characters, after removing all non-digits, is less than
     or equal to the specified minimum. Used to evaluate length of significant
     digits in numeric strings that might contain formatting.
@@ -131,6 +192,8 @@ class MaxDigit(Rule):
 
 
 class OnlyNumbers(Rule):
+    """ Cell only digit characters Rule """
+
     exception_class = ex.CharacterError
 
     def evaluator(self):
@@ -142,9 +205,12 @@ class OnlyNumbers(Rule):
 
 class NoLeadingZero(Rule):
     """
+    Cell no leading zero digit Rule
+
     Ensure that there is no leading zero after removing all non-digit characters.
     A lone zero (0) will not raise an error.
     """
+
     exception_class = ex.LeadingZeroError
 
     def evaluator(self):
@@ -155,6 +221,8 @@ class NoLeadingZero(Rule):
 
 
 class CanBeFloat(Rule):
+    """ Cell can be float Rule """
+
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -165,6 +233,8 @@ class CanBeFloat(Rule):
 
 
 class CanBeInteger(Rule):
+    """ Cell can be integer Rule """
+
     exception_class = ex.ConversionError
 
     def evaluator(self):
@@ -175,6 +245,8 @@ class CanBeInteger(Rule):
 
 
 class NumericDecimals(Rule):
+    """ Cell has maximum decimals Rule """
+
     exception_class = ex.CurrencyPatternError
 
     def __init__(self, decimals=2):
@@ -188,10 +260,8 @@ class NumericDecimals(Rule):
 
 
 class LengthComparison(Rule):
-    """
-    Base float value comparison class. Requires that the value can be coerced
-    to a float value.
-    """
+    """ Base length comparison Rule """
+
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
@@ -203,7 +273,8 @@ class LengthComparison(Rule):
 
 
 class LengthGT(LengthComparison):
-    """ Length Greater Than comparison """
+    """ Length greater than comparison Rule """
+
     comparison_language = 'greater than'
 
     def evaluator(self):
@@ -211,7 +282,8 @@ class LengthGT(LengthComparison):
 
 
 class LengthGTE(LengthComparison):
-    """ Length Greater Than or Equal To comparison """
+    """ Length greater than or equal to comparison Rule """
+
     comparison_language = 'greater than or equal to'
 
     def evaluator(self):
@@ -219,7 +291,8 @@ class LengthGTE(LengthComparison):
 
 
 class LengthET(LengthComparison):
-    """ Length Equal To comparison """
+    """ Length equal to comparison Rule """
+
     comparison_language = 'equal to'
 
     def evaluator(self):
@@ -227,7 +300,8 @@ class LengthET(LengthComparison):
 
 
 class LengthLTE(LengthComparison):
-    """ Length Less Than or Equal To comparison """
+    """ Length less than or equal to comparison Rule """
+
     comparison_language = 'less than or equal to'
 
     def evaluator(self):
@@ -235,7 +309,8 @@ class LengthLTE(LengthComparison):
 
 
 class LengthLT(LengthComparison):
-    """ Length Less Than comparison """
+    """ Length less than comparison Rule """
+
     comparison_language = 'less than'
 
     def evaluator(self):
@@ -244,9 +319,12 @@ class LengthLT(LengthComparison):
 
 class NumericComparison(Rule):
     """
+    Numeric length comparison base Rule
+
     Base float value comparison class. Requires that the value can be coerced
     to a float value.
     """
+
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
@@ -258,7 +336,8 @@ class NumericComparison(Rule):
 
 
 class NumericGT(NumericComparison):
-    """ Numeric Greater Than comparison """
+    """ Numeric greater than comparison Rule """
+
     comparison_language = 'greater than'
 
     def evaluator(self):
@@ -266,7 +345,8 @@ class NumericGT(NumericComparison):
 
 
 class NumericGTE(NumericComparison):
-    """ Numeric Greater Than or Equal To comparison """
+    """ Numeric greater than or equal to comparison Rule """
+
     comparison_language = 'greater than or equal to'
 
     def evaluator(self):
@@ -274,7 +354,8 @@ class NumericGTE(NumericComparison):
 
 
 class NumericET(NumericComparison):
-    """ Numeric Equal To comparison """
+    """ Numeric equal to comparison Rule """
+
     comparison_language = 'equal to'
 
     def evaluator(self):
@@ -282,7 +363,8 @@ class NumericET(NumericComparison):
 
 
 class NumericLTE(NumericComparison):
-    """ Numeric Less Than or Equal To comparison """
+    """ Numeric less than or equal to comparison Rule """
+
     comparison_language = 'less than or equal to'
 
     def evaluator(self):
@@ -290,7 +372,7 @@ class NumericLTE(NumericComparison):
 
 
 class NumericLT(NumericComparison):
-    """ Numeric Less Than comparison """
+    """ Numeric less than comparison Rule """
     comparison_language = 'less than'
 
     def evaluator(self):
@@ -298,6 +380,8 @@ class NumericLT(NumericComparison):
 
 
 class DateRule(Rule):
+    """ Base date Rule """
+
     exception_class = ex.ConversionError
 
     def __init__(self, **kwargs):
@@ -316,6 +400,8 @@ class DateRule(Rule):
 
 
 class CanBeDateIso(DateRule):
+    """ Can be ISO-8601 date Rule """
+
     def evaluator(self):
         return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
 
@@ -325,9 +411,12 @@ class CanBeDateIso(DateRule):
 
 class DateComparison(DateRule):
     """
+    Base date comparison Rule
+
     Base date value comparison class. Requires that the value can be coerced
     to a date using the specified format for the field.
     """
+
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
 
@@ -341,7 +430,8 @@ class DateComparison(DateRule):
 
 
 class DateGT(DateComparison):
-    """ Date Greater Than comparison """
+    """ Date greater than comparison Rule """
+
     comparison_language = 'greater than'
 
     def evaluator(self):
@@ -349,7 +439,8 @@ class DateGT(DateComparison):
 
 
 class DateGTE(DateComparison):
-    """ Date Greater Than or Equal To comparison """
+    """ Date greater than or equal to comparison """
+
     comparison_language = 'greater than or equal to'
 
     def evaluator(self):
@@ -357,7 +448,8 @@ class DateGTE(DateComparison):
 
 
 class DateET(DateComparison):
-    """ Date Equal To comparison """
+    """ Date equal to comparison Rule """
+
     comparison_language = 'equal to'
 
     def evaluator(self):
@@ -365,7 +457,8 @@ class DateET(DateComparison):
 
 
 class DateLTE(DateComparison):
-    """ Date Less Than or Equal To comparison """
+    """ Date less than or equal to comparison Rule """
+
     comparison_language = 'less than or equal to'
 
     def evaluator(self):
@@ -373,44 +466,29 @@ class DateLTE(DateComparison):
 
 
 class DateLT(DateComparison):
-    """ Date Less Than comparison """
+    """ Date less than comparison Rule """
+
     comparison_language = 'less than'
 
     def evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
-def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
-    """
-    Return a factory generated Rule class. The function used by the rule must
-    directly evaluate a single positional argument (i.e. x, but not x and y).
-    Because the Rule cannot be passed a value on initialization, neither the
-    evaluator or explain methods in the return class can be dynamic.
-    """
-
-    class FactoryRule(Rule):
-        exception_class = exception
-
-        def evaluator(self):
-            return func
-
-        def explain(self) -> str:
-            return assertion
-
-    return FactoryRule()
-
-
 class ColumnComparisonRule(Rule):
+    """ Base column comparison Rule """
+
     exception_class = ex.ColumnComparisonError
 
     def __init__(self, compare_to: str):
         self.compare_to = compare_to
 
-    def prepare(self, data: Tuple[AnyStr, Dict]) -> tuple:
+    def prepare(self, data: Tuple[str, Dict]) -> tuple:
         return data[0], data[1][self.compare_to]
 
 
 class GreaterThanColumn(ColumnComparisonRule):
+    """ Greater than compared column Rule """
+
     def evaluator(self):
         return lambda x, y: x > y
 

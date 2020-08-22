@@ -1,6 +1,12 @@
+"""
+rumydata file submodule
+
+This submodule contains the File class, and it's closely related Layout class.
+"""
+
 import csv
 from pathlib import Path
-from typing import Union, Dict
+from typing import Union, Dict, List
 
 from rumydata import exception as ex
 from rumydata import field
@@ -9,12 +15,32 @@ from rumydata.rules import file, column as cr, header as hr, row as rr, cell as 
 
 
 class Layout(BaseSubject):
-    def __init__(self, definition: dict, **kwargs):
+    """
+    Table Layout Class
+
+    This class contains a collection of Field objects which form a tabular data
+    set. The initialized object is then used to check a row or header for
+    validity.
+
+    There are two main ways that this class is intended to be used:
+        1. to generate technical documentation for the tabular data set
+        2. to use in concert with a File object to validate the contents
+    """
+
+    def __init__(self, definition: Dict[str, field.Field], **kwargs):
         """
         Defines the layout of a tabular files.
 
         :param definition: dictionary of column names with DataType definitions
+        :param skip_header: (optional) a boolean control to skip validation of
+            the header in the file. Defaults to False.
+        :param empty_row_ok: (optional) a boolean control to skip validation of
+            any row that is completely empty (i.e. every field is blank).
+            Defaults to False.
+        :param title: (optional) a brief name for the layout, which is included
+            in the technical digest.
         """
+
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
 
@@ -33,7 +59,7 @@ class Layout(BaseSubject):
             rr.RowLengthGTE(self.length)
         ])
 
-    def __check__(self, row, rule_type, rix=None):
+    def __check__(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
             return
 
@@ -62,18 +88,47 @@ class Layout(BaseSubject):
             if e:
                 return ex.RowError(rix, errors=e)
 
-    def check_header(self, row, rix=0):
+    def check_header(self, row: List[str], rix=0):
+        """
+        Header Rule assertion
+
+        Perform an assertion of the provided row against the header rules
+        defined for this layout. If the row fails the check for any of the
+        rules, the assertion will raise a detailed exception message.
+
+        :param row: a list of strings which make up the header row
+        :param rix: row index number. Used to report position of the header row
+            in the file. Defaults to 0.
+        """
         errors = self.__check__(row, rule_type=hr.Rule, rix=rix)
         assert not errors, str(errors)
 
-    def check_row(self, row, rix=-1):
+    def check_row(self, row: List[str], rix=-1):
+        """
+        Row Rule assertion
+
+        Perform an assertion of the provided row against the row rules
+        defined for this layout. If the row fails the check for any of the
+        rules, the assertion will raise a detailed exception message.
+
+        :param row: a list of strings which make up the row
+        :param rix: row index number. Used to report position of row in file.
+        """
         errors = self.__check__(row, rule_type=rr.Rule, rix=rix)
         assert not errors, str(errors)
 
     def digest(self):
         return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
 
-    def markdown_digest(self):
+    def markdown_digest(self) -> str:
+        """
+        Layout Markdown digest
+
+        This method returns text in Markdown format, which provides a detailed
+        technical specification for each field in the Layout.
+
+        :return: a Markdown formatted string describing the layout
+        """
         fields = f'# {self.title}' + '\n\n' if self.title else ''
         fields += '\n'.join([
             f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
@@ -81,7 +136,18 @@ class Layout(BaseSubject):
         ])
         return fields
 
-    def comparison_columns(self):
+    def comparison_columns(self) -> set:
+        """
+        Comparison fields report
+
+        A method to report all columns that will need to be compared while
+        checking rules. This works by checking the equivalent method for each
+        field in the layout. This makes it convenient to know which values in
+        a row need to be stored in a dictionary for possible comparison in each
+        cell.
+
+        :return: a set of the columns that will need to be compared.
+        """
         compares = set()
         for v in self.definition.values():
             compares.update(v.comparison_columns())
@@ -89,7 +155,40 @@ class Layout(BaseSubject):
 
 
 class File(BaseSubject):
-    def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
+    """
+    rumydata File class
+
+    This class provides a way to validate the contents of a file against a
+    Layout, and report any rule violations that exist. This is the primary
+    means of using this package.
+    """
+
+    def __init__(self, layout: Union[Layout, Dict], **kwargs):
+        """
+        File class constructor
+
+        :param layout: a Layout object which defines the fields that make up the
+            data set, along with the various rules that should be applied to
+            each one.
+        :param skip_rows: (optional) the number of rows to skip before starting
+            evaluation. Defaults to 0.
+        :param max_errors: (optional) the maximum number of row errors to be
+            collected before halting validation of rows and raising a FileError.
+            This is used to prevent overly verbose (and mostly useless)
+            validation reports from being generated. Defaults to 100. The error
+            limit can overwritten (set to unlimited) by providing a value of -1.
+        :param file_type: (optional) the type of file to be evaluated. Valid
+            values are ['csv', 'excel']. Defaults to 'csv'.
+        :param dialect: (optional) only valid with csv file type. Controls csv
+            dialect parsing.
+        :param delimiter: (optional) only valid with csv file type. Controls csv
+            delimiter parsing.
+        :param quotechar: (optional) only valid with csv file type. Controls csv
+            quote character parsing.
+        :param sheet: (optional) only valid with excel file type. Determines
+            which sheet will be read for tabular data evaluation.
+        """
+        self.max_errors = kwargs.pop('max_errors', 100)
         self.file_type = kwargs.pop('file_type', 'csv')
 
         if self.file_type == 'csv':
@@ -105,13 +204,12 @@ class File(BaseSubject):
 
         super().__init__(**kwargs)
 
-        self.max_errors = max_errors
         self.layout = Layout(layout) if isinstance(layout, Dict) else layout
         self.rules.extend([
             file.FileExists()
         ])
 
-    def __check__(self, filepath: Union[str, Path], **kwargs):
+    def __check__(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super().__check__(p, rule_type=file.Rule)  # check files-based rules first
         if e:
@@ -119,7 +217,7 @@ class File(BaseSubject):
 
         column_cache = {
             k: [] for k, v in self.layout.definition.items()
-            if v.has_rule_type(cr.Rule)
+            if v.__has_rule_type__(cr.Rule)
         }
         column_cache_map = {
             k: list(self.layout.definition.keys()).index(k)
@@ -167,6 +265,14 @@ class File(BaseSubject):
         if e:
             return ex.FileError(file=p.name, errors=e)
 
-    def check(self, file_path):
+    def check(self, file_path: Union[str, Path]) -> None:
+        """
+        File check method
+
+        Perform a check of the layout in this object against a file.
+
+        :param file_path: a file path provided as a string, or a pathlib Path
+            object.
+        """
         errors = self.__check__(file_path)
         assert not errors, str(errors)
