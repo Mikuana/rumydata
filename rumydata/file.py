@@ -59,11 +59,11 @@ class Layout(BaseSubject):
             rr.RowLengthGTE(self.length)
         ])
 
-    def __check__(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
+    def _check(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
             return
 
-        e = super().__check__(row, rule_type=rule_type)
+        e = super()._check(row, rule_type=rule_type)
 
         if e:  # if row errors are found, skip cell checks
             return ex.RowError(rix or -1, errors=e)
@@ -82,7 +82,7 @@ class Layout(BaseSubject):
                     data=(val, comp), rule_type=clr.Rule,
                     rix=rix, cix=cix, name=name
                 )
-                ce = t.__check__(**check_args)
+                ce = t._check(**check_args)
                 if ce:
                     e.append(ce)
             if e:
@@ -100,7 +100,7 @@ class Layout(BaseSubject):
         :param rix: row index number. Used to report position of the header row
             in the file. Defaults to 0.
         """
-        errors = self.__check__(row, rule_type=hr.Rule, rix=rix)
+        errors = self._check(row, rule_type=hr.Rule, rix=rix)
         assert not errors, str(errors)
 
     def check_row(self, row: List[str], rix=-1):
@@ -114,11 +114,11 @@ class Layout(BaseSubject):
         :param row: a list of strings which make up the row
         :param rix: row index number. Used to report position of row in file.
         """
-        errors = self.__check__(row, rule_type=rr.Rule, rix=rix)
+        errors = self._check(row, rule_type=rr.Rule, rix=rix)
         assert not errors, str(errors)
 
-    def digest(self):
-        return [[f'Name: {k}', *v.digest()] for k, v in self.definition.items()]
+    def _digest(self):
+        return [[f'Name: {k}', *v._digest()] for k, v in self.definition.items()]
 
     def markdown_digest(self) -> str:
         """
@@ -131,7 +131,7 @@ class Layout(BaseSubject):
         """
         fields = f'# {self.title}' + '\n\n' if self.title else ''
         fields += '\n'.join([
-            f' - **{k}**' + ''.join(['\n   - ' + x for x in v.digest()])
+            f' - **{k}**' + ''.join(['\n   - ' + x for x in v._digest()])
             for k, v in self.definition.items()
         ])
         return fields
@@ -209,9 +209,9 @@ class File(BaseSubject):
             file.FileExists()
         ])
 
-    def __check__(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
+    def _check(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath
-        e = super().__check__(p, rule_type=file.Rule)  # check files-based rules first
+        e = super()._check(p, rule_type=file.Rule)  # check files-based rules first
         if e:
             return ex.FileError(file=filepath, errors=e)
 
@@ -245,7 +245,7 @@ class File(BaseSubject):
                     continue
                 row = row_handler(row)
                 rt = hr.Rule if rix == (0 + self.skip_rows) else rr.Rule
-                re = self.layout.__check__(row, rule_type=rt, rix=rix)
+                re = self.layout._check(row, rule_type=rt, rix=rix)
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
@@ -259,7 +259,7 @@ class File(BaseSubject):
                         column_cache[k].append(row[ix])
 
         for k, v in column_cache.items():
-            ce = self.layout.definition[k].__check__(v, rule_type=cr.Rule)
+            ce = self.layout.definition[k]._check(v, rule_type=cr.Rule)
             if ce:
                 e.append(ce)
         if e:
@@ -274,5 +274,5 @@ class File(BaseSubject):
         :param file_path: a file path provided as a string, or a pathlib Path
             object.
         """
-        errors = self.__check__(file_path)
+        errors = self._check(file_path)
         assert not errors, str(errors)

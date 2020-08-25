@@ -1,11 +1,15 @@
 """
-rumydata field/column/element objects
+field/column/element objects
 
 This submodule contains the various field type objects that are used to define
 the fields (i.e. columns, elements) that make up a tabular data set. These field
 objects can be extended by adding additional rules in the rules keyword of the
 fields constructor. Additional modification, including the definition of
 entirely new field types can be achieved by subclassing the Field base class.
+
+All field subclasses pass their keyword arguments to the base Field class. See
+documentation for the base Field for a complete listing of optional keyword
+arguments, including rules extension.
 
 See the rumydata.rules submodule to learn more about the use of rules to extend
 field class behavior.
@@ -16,7 +20,7 @@ from rumydata import exception as ex
 from rumydata.base import BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
-__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice']
+__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore']
 
 
 class Field(BaseSubject):
@@ -25,25 +29,21 @@ class Field(BaseSubject):
 
     This class provides the framework for the definition of field types in this
     package.
+
+    :param nullable: a boolean indicator which controls whether the field
+    can be null (blank). Defaults to False, which will cause errors to
+    be raised when checking empty strings.
+    :param rules: a list of rules to apply to this field during checks.
     """
 
     def __init__(self, nullable=False, rules: list = None):
-        """
-        Base Field constructor
-
-        :param nullable: a boolean indicator which controls whether the field
-            can be null (blank). Defaults to False, which will cause errors to
-            be raised when checking empty strings.
-        :param rules: a list of rules to apply to this field during checks.
-        """
-
         super().__init__(rules)
         self.nullable = nullable
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
 
-    def __check__(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
+    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
         """
         Check data against field rules of specified rule type
 
@@ -63,7 +63,7 @@ class Field(BaseSubject):
         if self.nullable and issubclass(rule_type, clr.Rule) and data == '':
             pass
         else:
-            e = super().__check__(data, rule_type=rule_type)
+            e = super()._check(data, rule_type=rule_type)
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
@@ -79,7 +79,7 @@ class Field(BaseSubject):
             and a dictionary, to be checked.
         """
 
-        errors = self.__check__(value, rule_type=clr.Rule, **kwargs)
+        errors = self._check(value, rule_type=clr.Rule, **kwargs)
         assert not errors, str(errors)
 
     def check_column(self, values: List[str], **kwargs):
@@ -93,11 +93,11 @@ class Field(BaseSubject):
         :param values: a list of values contained in the column.
         """
 
-        errors = self.__check__(values, rule_type=cr.Rule, **kwargs)
+        errors = self._check(values, rule_type=cr.Rule, **kwargs)
         assert not errors, str(errors)
 
-    def digest(self):
-        dig = super().digest()
+    def _digest(self):
+        dig = super()._digest()
         if self.nullable:
             dig.append('Nullable')
         return dig
@@ -134,12 +134,22 @@ class Ignore(Field):
         self.rules = []
         self.descriptors = {}
 
-    def __check__(self, *args, **kwargs):
+    def _check(self, *args, **kwargs):
         pass
 
 
 class Text(Field):
+    """
+    Text Field
+
+    A field made up entirely of text. This is one of the least restrictive field
+    types, enforcing only a maximum and (optional) minimum length.
+
+    :param max_length: the maximum number of allowable characters
+    :param min_length: (optional) the minimum number of allowable characters
+    """
     def __init__(self, max_length, min_length=None, **kwargs):
+
         super().__init__(**kwargs)
 
         self.descriptors['Type'] = 'String'

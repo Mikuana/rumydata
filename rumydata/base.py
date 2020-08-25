@@ -103,7 +103,7 @@ class BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def __check__(self, data, rule_type) -> Union[List[ex.UrNotMyDataError], None]:
+    def _check(self, data, rule_type) -> Union[List[ex.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -145,7 +145,7 @@ class BaseSubject:
         :param value: value to be checked
         :return: a list of exceptions raised during check of the provided value
         """
-        return list(self.flatten_exceptions(self.__check__(value, **kwargs)))
+        return list(self.flatten_exceptions(self._check(value, **kwargs)))
 
     def __has_error__(self, value, error, **kwargs) -> bool:
         """
@@ -162,7 +162,7 @@ class BaseSubject:
         """
         return error in [x.__class__ for x in self.__list_errors__(value, **kwargs)]
 
-    def digest(self) -> List[str]:
+    def _digest(self) -> List[str]:
         """
         Subject descriptor list
 

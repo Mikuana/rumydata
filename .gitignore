@@ -1,3 +1,6 @@
+# Ignore makehtml
+docs/make_html.sh
+
 # Ignore scratch files in root
 scritch.py
 bobs_data.csv
