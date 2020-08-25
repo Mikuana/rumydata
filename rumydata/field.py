@@ -31,8 +31,8 @@ class Field(BaseSubject):
     package.
 
     :param nullable: a boolean indicator which controls whether the field
-    can be null (blank). Defaults to False, which will cause errors to
-    be raised when checking empty strings.
+        can be null (blank). Defaults to False, which will cause errors to
+        be raised when checking empty strings.
     :param rules: a list of rules to apply to this field during checks.
     """
 
