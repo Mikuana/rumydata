@@ -17,7 +17,7 @@ from rumydata.base import BaseRule
 class Rule(BaseRule):
     """ File Rule """
 
-    def prepare(self, data: Union[str, Path]) -> tuple:
+    def _prepare(self, data: Union[str, Path]) -> tuple:
         return data,
 
 
@@ -26,10 +26,10 @@ class FileExists(Rule):
 
     exception_class = FileNotFoundError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: Path(x).exists()
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return 'files must exist'
 
 
@@ -41,10 +41,10 @@ class FileNameMatchesPattern(Rule):
     def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
         self.patterns = [pattern] if isinstance(pattern, re.Pattern) else pattern
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: any([p.fullmatch(Path(x).name) for p in self.patterns])
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return 'files name must match a pattern provided in the layout'
 
 
@@ -55,10 +55,10 @@ class FileNameMatchesOnePattern(Rule):
     def __init__(self, patterns: list):
         self.patterns = patterns
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: sum([
             True if p.fullmatch(Path(x).name) else False for p in self.patterns
         ]) <= 1
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return 'files cannot match multiple patterns provided in the layout'

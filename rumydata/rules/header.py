@@ -18,7 +18,7 @@ class Rule(BaseRule):
     def __init__(self, columns):
         self.definition = columns.definition
 
-    def prepare(self, data: List[str]) -> tuple:
+    def _prepare(self, data: List[str]) -> tuple:
         return data,
 
 
@@ -27,10 +27,10 @@ class NoExtra(Rule):
 
     exception_class = ex.UnexpectedColumnError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: all([y in self.definition for y in x])
 
-    def explain(self):
+    def _explain(self):
         return 'Header row must not have unexpected columns'
 
 
@@ -39,10 +39,10 @@ class NoMissing(Rule):
 
     exception_class = ex.MissingColumnError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: all([y in x for y in self.definition])
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return 'Header row must not be missing any expected columns'
 
 
@@ -50,10 +50,10 @@ class NoDuplicate(Rule):
     """ No duplicate header elements Rule """
     exception_class = ex.DuplicateColumnError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) == len(set(x))
 
-    def explain(self):
+    def _explain(self):
         return 'Header row must not contain duplicate values'
 
 
@@ -62,8 +62,8 @@ class ColumnOrder(Rule):
 
     exception_class = ex.DataError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: x == list(self.definition)
 
-    def explain(self):
+    def _explain(self):
         return 'Header row must explicitly match order of definition'

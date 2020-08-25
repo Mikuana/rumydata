@@ -1,5 +1,5 @@
 """
-rumydata data validation rules
+data validation rules
 
 This submodule contains the various rules that are used to validate the contents
 of a file, to determine if it meets the specifications of a layout.
@@ -18,6 +18,6 @@ The rules are divided by the various types:
    matches a particular naming convention.
 """
 
-from rumydata.rules import cell, column, row, header, file
+from rumydata.rules import cell, column, row, header, table
 
-__all__ = ['cell', 'column', 'row', 'header', 'file']
+__all__ = ['cell', 'column', 'row', 'header', 'table']

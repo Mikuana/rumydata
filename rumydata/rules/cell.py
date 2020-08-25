@@ -1,5 +1,5 @@
 """
-rumydata cell validation rules
+cell validation rules
 
 These rules make up the heart of what most users of the rumydata package will
 be interested in when attempting to extend the out-of-the box behavior. These
@@ -17,11 +17,22 @@ from typing import Union, Tuple, Dict, List
 from rumydata import exception as ex
 from rumydata.base import BaseRule
 
+__all__ = [
+    'NotNull', 'ExactChar', 'MinChar', 'MaxChar', 'AsciiChar', 'Choice',
+    'MinDigit', 'MaxDigit', 'OnlyNumbers', 'NoLeadingZero', 'CanBeFloat',
+    'CanBeInteger', 'NumericDecimals', 'LengthComparison', 'LengthGT',
+    'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
+    'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
+    'DateRule', 'CanBeDateIso', 'DateComparison', 'DateGT', 'DateGTE', 'DateET',
+    'DateLTE', 'DateLT', 'ColumnComparisonRule', 'GreaterThanColumn',
+    'make_static_cell_rule'
+]
+
 
 class Rule(BaseRule):
     """ Cell Rule """
 
-    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
+    def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if isinstance(data, str):
             return data,
         else:
@@ -36,15 +47,22 @@ def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rul
     directly evaluate a single positional argument (i.e. x, but not x and y).
     Because the Rule cannot be passed a value on initialization, neither the
     evaluator or explain methods in the return class can be dynamic.
+
+    :param func: a function which takes a single positional argument
+    :param assertion: a string describing the condition which must be met in
+        order for the function to return True
+    :param exception: the UrNotMyDataError type exception to return if the
+        function assertion returns false.
+    :return: a rumydata.rules.cell.Rule
     """
 
     class FactoryRule(Rule):
         exception_class = exception
 
-        def evaluator(self):
+        def _evaluator(self):
             return func
 
-        def explain(self) -> str:
+        def _explain(self) -> str:
             return assertion
 
     return FactoryRule()
@@ -55,13 +73,13 @@ class NotNull(Rule):
 
     exception_class = ex.NullValueError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: x != ''
 
-    def exception_msg(self):
-        return self.exception_class(self.explain())
+    def _exception_msg(self):
+        return self.exception_class(self._explain())
 
-    def explain(self):
+    def _explain(self):
         return 'cannot be empty/blank'
 
 
@@ -73,10 +91,10 @@ class ExactChar(Rule):
     def __init__(self, exact_length):
         self.exact_length = exact_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) == self.exact_length
 
-    def explain(self):
+    def _explain(self):
         return f'must be exactly {str(self.exact_length)} characters'
 
 
@@ -88,10 +106,10 @@ class MinChar(Rule):
     def __init__(self, min_length):
         self.min_length = min_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) >= self.min_length
 
-    def explain(self):
+    def _explain(self):
         return f'must be at least {str(self.min_length)} characters'
 
 
@@ -103,10 +121,10 @@ class MaxChar(Rule):
     def __init__(self, max_length):
         self.max_length = max_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) <= self.max_length
 
-    def explain(self):
+    def _explain(self):
         return f'must be no more than {str(self.max_length)} characters'
 
 
@@ -115,10 +133,10 @@ class AsciiChar(Rule):
 
     exception_class = ex.UrNotMyDataError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: all(ord(c) < 128 for c in x)
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return 'must have only ASCII characters'
 
 
@@ -132,19 +150,19 @@ class Choice(Rule):
         self.case_insensitive = case_insensitive
         self.eval_choices = [x.lower() for x in choices] if case_insensitive else choices
 
-    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
+    def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if self.case_insensitive:
             if isinstance(data, str):
                 data = data.lower(),
             else:
                 data = data[0].lower(), data[1]
 
-        return super().prepare(data)
+        return super()._prepare(data)
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: x in self.eval_choices
 
-    def explain(self):
+    def _explain(self):
         return (
             f'must be one of {self.choices}'
             f'{" (case insensitive)" if self.case_insensitive else " (case sensitive)"}'
@@ -164,10 +182,10 @@ class MinDigit(Rule):
     def __init__(self, min_length):
         self.min_length = min_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
 
-    def explain(self):
+    def _explain(self):
         return f'must have at least {str(self.min_length)} digit characters'
 
 
@@ -184,10 +202,10 @@ class MaxDigit(Rule):
     def __init__(self, max_length):
         self.max_length = max_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
 
-    def explain(self):
+    def _explain(self):
         return f'must have no more than {self.max_length} digit characters'
 
 
@@ -196,10 +214,10 @@ class OnlyNumbers(Rule):
 
     exception_class = ex.CharacterError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: re.fullmatch(r'\d+', x)
 
-    def explain(self):
+    def _explain(self):
         return 'must only contain characters 0-9'
 
 
@@ -213,10 +231,10 @@ class NoLeadingZero(Rule):
 
     exception_class = ex.LeadingZeroError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x))
 
-    def explain(self):
+    def _explain(self):
         return 'cannot have a leading zero digit'
 
 
@@ -225,10 +243,10 @@ class CanBeFloat(Rule):
 
     exception_class = ex.ConversionError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: isinstance(float(x), float)
 
-    def explain(self):
+    def _explain(self):
         return 'can be coerced into a float value'
 
 
@@ -237,10 +255,10 @@ class CanBeInteger(Rule):
 
     exception_class = ex.ConversionError
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: isinstance(int(x), int)
 
-    def explain(self):
+    def _explain(self):
         return 'can be coerced into an integer value'
 
 
@@ -252,10 +270,10 @@ class NumericDecimals(Rule):
     def __init__(self, decimals=2):
         self.decimals = decimals
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x)
 
-    def explain(self):
+    def _explain(self):
         return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
@@ -268,7 +286,7 @@ class LengthComparison(Rule):
     def __init__(self, comparison_value):
         self.comparison_value = comparison_value
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
 
 
@@ -277,7 +295,7 @@ class LengthGT(LengthComparison):
 
     comparison_language = 'greater than'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) > self.comparison_value
 
 
@@ -286,7 +304,7 @@ class LengthGTE(LengthComparison):
 
     comparison_language = 'greater than or equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) >= self.comparison_value
 
 
@@ -295,7 +313,7 @@ class LengthET(LengthComparison):
 
     comparison_language = 'equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) == self.comparison_value
 
 
@@ -304,7 +322,7 @@ class LengthLTE(LengthComparison):
 
     comparison_language = 'less than or equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) <= self.comparison_value
 
 
@@ -313,7 +331,7 @@ class LengthLT(LengthComparison):
 
     comparison_language = 'less than'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) < self.comparison_value
 
 
@@ -331,7 +349,7 @@ class NumericComparison(Rule):
     def __init__(self, comparison_value):
         self.comparison_value = comparison_value
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
 
 
@@ -340,7 +358,7 @@ class NumericGT(NumericComparison):
 
     comparison_language = 'greater than'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: float(x) > self.comparison_value
 
 
@@ -349,7 +367,7 @@ class NumericGTE(NumericComparison):
 
     comparison_language = 'greater than or equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: float(x) >= self.comparison_value
 
 
@@ -358,7 +376,7 @@ class NumericET(NumericComparison):
 
     comparison_language = 'equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: float(x) == self.comparison_value
 
 
@@ -367,7 +385,7 @@ class NumericLTE(NumericComparison):
 
     comparison_language = 'less than or equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: float(x) <= self.comparison_value
 
 
@@ -375,7 +393,7 @@ class NumericLT(NumericComparison):
     """ Numeric less than comparison Rule """
     comparison_language = 'less than'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: float(x) < self.comparison_value
 
 
@@ -388,7 +406,7 @@ class DateRule(Rule):
         self.truncate_time = kwargs.pop('truncate_time', False)
         super().__init__(**kwargs)
 
-    def prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
+    def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if self.truncate_time:
             no_time = ' 00:00:00'
             if isinstance(data, str) and data.endswith(no_time):
@@ -396,16 +414,16 @@ class DateRule(Rule):
             elif data[0].endswith(no_time):
                 data = data[0][:-len(no_time)], data[1]
 
-        return super().prepare(data)
+        return super()._prepare(data)
 
 
 class CanBeDateIso(DateRule):
     """ Can be ISO-8601 date Rule """
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
 
-    def explain(self):
+    def _explain(self):
         return 'can be coerced into a ISO-8601 date'
 
 
@@ -425,7 +443,7 @@ class DateComparison(DateRule):
         self.comparison_value = datetime.strptime(comparison_value, date_format)
         super().__init__(**kwargs)
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
 
 
@@ -434,7 +452,7 @@ class DateGT(DateComparison):
 
     comparison_language = 'greater than'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) > self.comparison_value
 
 
@@ -443,7 +461,7 @@ class DateGTE(DateComparison):
 
     comparison_language = 'greater than or equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) >= self.comparison_value
 
 
@@ -452,7 +470,7 @@ class DateET(DateComparison):
 
     comparison_language = 'equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) == self.comparison_value
 
 
@@ -461,7 +479,7 @@ class DateLTE(DateComparison):
 
     comparison_language = 'less than or equal to'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) <= self.comparison_value
 
 
@@ -470,7 +488,7 @@ class DateLT(DateComparison):
 
     comparison_language = 'less than'
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
 
 
@@ -482,15 +500,15 @@ class ColumnComparisonRule(Rule):
     def __init__(self, compare_to: str):
         self.compare_to = compare_to
 
-    def prepare(self, data: Tuple[str, Dict]) -> tuple:
+    def _prepare(self, data: Tuple[str, Dict]) -> tuple:
         return data[0], data[1][self.compare_to]
 
 
 class GreaterThanColumn(ColumnComparisonRule):
     """ Greater than compared column Rule """
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x, y: x > y
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return f"must be greater than column '{self.compare_to}'"

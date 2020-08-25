@@ -19,7 +19,7 @@ class BaseRule:
     """
     exception_class = ex.UrNotMyDataError
 
-    def prepare(self, data) -> tuple:
+    def _prepare(self, data) -> tuple:
         """
         Handle data object for pre-processing prior to evaluation
 
@@ -41,7 +41,7 @@ class BaseRule:
         """
         return data,
 
-    def evaluator(self):
+    def _evaluator(self):
         """
         Generate a function that will perform evaluation of prepared data.
 
@@ -60,7 +60,7 @@ class BaseRule:
         """
         return lambda x: False  # default to failing evaluation if not overwritten
 
-    def exception_msg(self) -> ex.UrNotMyDataError:
+    def _exception_msg(self) -> ex.UrNotMyDataError:
         """
         Validation exception message
 
@@ -68,9 +68,9 @@ class BaseRule:
         sanitized error message that explicitly avoids showing the specific data
         that failed the validation.
         """
-        return self.exception_class(self.explain())
+        return self.exception_class(self._explain())
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         """
         Rule explanation message
 
@@ -125,13 +125,13 @@ class BaseSubject:
             # noinspection PyBroadException
             try:
                 if issubclass(type(r), rule_type):
-                    x = r.prepare(data)
-                    e = r.evaluator()(*x)
+                    x = r._prepare(data)
+                    e = r._evaluator()(*x)
                     if not e:
-                        errors.append(r.exception_msg())
+                        errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
                 errors.append(r.exception_class(
-                    f'raised {e.__class__.__name__} while checking if value {r.explain()}')
+                    f'raised {e.__class__.__name__} while checking if value {r._explain()}')
                 )
         return errors
 
@@ -145,7 +145,7 @@ class BaseSubject:
         :param value: value to be checked
         :return: a list of exceptions raised during check of the provided value
         """
-        return list(self.flatten_exceptions(self._check(value, **kwargs)))
+        return list(self._flatten_exceptions(self._check(value, **kwargs)))
 
     def __has_error__(self, value, error, **kwargs) -> bool:
         """
@@ -174,11 +174,11 @@ class BaseSubject:
             description of the definition of this subject.
         """
         x = [f'{k}: {v}' if v else k for k, v in self.descriptors.items()]
-        y = [x.explain() for x in self.rules]
+        y = [x._explain() for x in self.rules]
         return x + y
 
     @classmethod
-    def flatten_exceptions(cls, error):
+    def _flatten_exceptions(cls, error):
         """
         Nested exception generator function
 
@@ -198,11 +198,11 @@ class BaseSubject:
         """
         if isinstance(error, list):
             for el in error:
-                yield cls.flatten_exceptions(el)
+                yield cls._flatten_exceptions(el)
         elif issubclass(error.__class__, ex.UrNotMyDataError):
             yield error
             for el in error.errors:
-                for x in cls.flatten_exceptions(el):
+                for x in cls._flatten_exceptions(el):
                     yield x
         else:
             yield error

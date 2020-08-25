@@ -17,7 +17,7 @@ class Rule(BaseRule):
 
     exception_class = ex.RowComparisonError
 
-    def prepare(self, data: List[str]) -> tuple:
+    def _prepare(self, data: List[str]) -> tuple:
         return data,
 
 
@@ -29,10 +29,10 @@ class RowLengthLTE(Rule):
     def __init__(self, columns_length):
         self.columns_length = columns_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) <= self.columns_length
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return f'row length must be equal to {str(self.columns_length)}, not greater'
 
 
@@ -44,8 +44,8 @@ class RowLengthGTE(Rule):
     def __init__(self, columns_length):
         self.columns_length = columns_length
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) >= self.columns_length
 
-    def explain(self) -> str:
+    def _explain(self) -> str:
         return f'row length must be equal to {str(self.columns_length)}, not less'
