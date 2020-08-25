@@ -77,7 +77,7 @@ class Layout(BaseSubject):
 
             for cix, (name, val) in enumerate(row.items()):
                 t = self.definition[name]
-                comp = {k: row[k] for k in t.comparison_columns()}
+                comp = {k: row[k] for k in t._comparison_columns()}
                 check_args = dict(
                     data=(val, comp), rule_type=clr.Rule,
                     rix=rix, cix=cix, name=name
@@ -150,7 +150,7 @@ class Layout(BaseSubject):
         """
         compares = set()
         for v in self.definition.values():
-            compares.update(v.comparison_columns())
+            compares.update(v._comparison_columns())
         return compares
 
 

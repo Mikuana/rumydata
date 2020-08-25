@@ -43,30 +43,6 @@ class Field(BaseSubject):
         if not self.nullable:
             self.rules.append(clr.NotNull())
 
-    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
-        """
-        Check data against field rules of specified rule type
-
-        This is the core method used to evaluate data against a subject defined
-        by this class.
-
-        :param data: an object which conforms to the `prepare` method of the
-            class specified in the rule_type parameter
-        :param cix: column index used for error reporting.
-        :param rule_type: a Rule class belonging to one of the submodules in the
-            rules module (e.g. rumydata.rules.cell.Rule). This controls the
-            types of rules that the provided data will be checked against.
-        :return: a list of any errors that were raised while checking the data.
-        """
-
-        # if data is nullable and value is empty, skip all checks
-        if self.nullable and issubclass(rule_type, clr.Rule) and data == '':
-            pass
-        else:
-            e = super()._check(data, rule_type=rule_type)
-            if e:
-                return ex.CellError(cix, errors=e, **kwargs)
-
     def check_cell(self, value: Union[str, Tuple[str, Dict]], **kwargs):
         """
         Cell Rule assertion
@@ -96,13 +72,31 @@ class Field(BaseSubject):
         errors = self._check(values, rule_type=cr.Rule, **kwargs)
         assert not errors, str(errors)
 
-    def _digest(self):
-        dig = super()._digest()
-        if self.nullable:
-            dig.append('Nullable')
-        return dig
+    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
+        """
+        Check data against field rules of specified rule type
 
-    def comparison_columns(self) -> set:
+        This is the core method used to evaluate data against a subject defined
+        by this class.
+
+        :param data: an object which conforms to the `prepare` method of the
+            class specified in the rule_type parameter
+        :param cix: column index used for error reporting.
+        :param rule_type: a Rule class belonging to one of the submodules in the
+            rules module (e.g. rumydata.rules.cell.Rule). This controls the
+            types of rules that the provided data will be checked against.
+        :return: a list of any errors that were raised while checking the data.
+        """
+
+        # if data is nullable and value is empty, skip all checks
+        if self.nullable and issubclass(rule_type, clr.Rule) and data == '':
+            pass
+        else:
+            e = super()._check(data, rule_type=rule_type)
+            if e:
+                return ex.CellError(cix, errors=e, **kwargs)
+
+    def _comparison_columns(self) -> set:
         """
         Comparison fields report
 
@@ -119,6 +113,12 @@ class Field(BaseSubject):
 
     def __has_rule_type__(self, rule_type):
         return any([issubclass(type(r), rule_type) for r in self.rules])
+
+    def _digest(self):
+        dig = super()._digest()
+        if self.nullable:
+            dig.append('Nullable')
+        return dig
 
 
 class Ignore(Field):
@@ -148,8 +148,8 @@ class Text(Field):
     :param max_length: the maximum number of allowable characters
     :param min_length: (optional) the minimum number of allowable characters
     """
-    def __init__(self, max_length, min_length=None, **kwargs):
 
+    def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
         self.descriptors['Type'] = 'String'
