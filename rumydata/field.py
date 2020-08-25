@@ -1,11 +1,15 @@
 """
-rumydata field/column/element objects
+field/column/element objects
 
 This submodule contains the various field type objects that are used to define
 the fields (i.e. columns, elements) that make up a tabular data set. These field
 objects can be extended by adding additional rules in the rules keyword of the
 fields constructor. Additional modification, including the definition of
 entirely new field types can be achieved by subclassing the Field base class.
+
+All field subclasses pass their keyword arguments to the base Field class. See
+documentation for the base Field for a complete listing of optional keyword
+arguments, including rules extension.
 
 See the rumydata.rules submodule to learn more about the use of rules to extend
 field class behavior.
@@ -16,7 +20,7 @@ from rumydata import exception as ex
 from rumydata.base import BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
-__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice']
+__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore']
 
 
 class Field(BaseSubject):
@@ -25,25 +29,50 @@ class Field(BaseSubject):
 
     This class provides the framework for the definition of field types in this
     package.
+
+    :param nullable: a boolean indicator which controls whether the field
+    can be null (blank). Defaults to False, which will cause errors to
+    be raised when checking empty strings.
+    :param rules: a list of rules to apply to this field during checks.
     """
 
     def __init__(self, nullable=False, rules: list = None):
-        """
-        Base Field constructor
-
-        :param nullable: a boolean indicator which controls whether the field
-            can be null (blank). Defaults to False, which will cause errors to
-            be raised when checking empty strings.
-        :param rules: a list of rules to apply to this field during checks.
-        """
-
         super().__init__(rules)
         self.nullable = nullable
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
 
-    def __check__(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
+    def check_cell(self, value: Union[str, Tuple[str, Dict]], **kwargs):
+        """
+        Cell Rule assertion
+
+        Perform an assertion of the provided cell value against the rules
+        defined for the field. If the value fails the check for any of the
+        rules, the assertion will raise a detailed exception message.
+
+        :param value: a cell value, either a string or a tuple of a string
+            and a dictionary, to be checked.
+        """
+
+        errors = self._check(value, rule_type=clr.Rule, **kwargs)
+        assert not errors, str(errors)
+
+    def check_column(self, values: List[str], **kwargs):
+        """
+        Column Rule assertion
+
+        Perform an assertion of the provided column values against the rules
+        defined for the field. If the values fail the check for any of the
+        rules, the assertion will raise a detailed exception message.
+
+        :param values: a list of values contained in the column.
+        """
+
+        errors = self._check(values, rule_type=cr.Rule, **kwargs)
+        assert not errors, str(errors)
+
+    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
         """
         Check data against field rules of specified rule type
 
@@ -63,46 +92,11 @@ class Field(BaseSubject):
         if self.nullable and issubclass(rule_type, clr.Rule) and data == '':
             pass
         else:
-            e = super().__check__(data, rule_type=rule_type)
+            e = super()._check(data, rule_type=rule_type)
             if e:
                 return ex.CellError(cix, errors=e, **kwargs)
 
-    def check_cell(self, value: Union[str, Tuple[str, Dict]], **kwargs):
-        """
-        Cell Rule assertion
-
-        Perform an assertion of the provided cell value against the rules
-        defined for the field. If the value fails the check for any of the
-        rules, the assertion will raise a detailed exception message.
-
-        :param value: a cell value, either a string or a tuple of a string
-            and a dictionary, to be checked.
-        """
-
-        errors = self.__check__(value, rule_type=clr.Rule, **kwargs)
-        assert not errors, str(errors)
-
-    def check_column(self, values: List[str], **kwargs):
-        """
-        Column Rule assertion
-
-        Perform an assertion of the provided column values against the rules
-        defined for the field. If the values fail the check for any of the
-        rules, the assertion will raise a detailed exception message.
-
-        :param values: a list of values contained in the column.
-        """
-
-        errors = self.__check__(values, rule_type=cr.Rule, **kwargs)
-        assert not errors, str(errors)
-
-    def digest(self):
-        dig = super().digest()
-        if self.nullable:
-            dig.append('Nullable')
-        return dig
-
-    def comparison_columns(self) -> set:
+    def _comparison_columns(self) -> set:
         """
         Comparison fields report
 
@@ -120,6 +114,12 @@ class Field(BaseSubject):
     def __has_rule_type__(self, rule_type):
         return any([issubclass(type(r), rule_type) for r in self.rules])
 
+    def _digest(self):
+        dig = super()._digest()
+        if self.nullable:
+            dig.append('Nullable')
+        return dig
+
 
 class Ignore(Field):
     """
@@ -134,11 +134,21 @@ class Ignore(Field):
         self.rules = []
         self.descriptors = {}
 
-    def __check__(self, *args, **kwargs):
+    def _check(self, *args, **kwargs):
         pass
 
 
 class Text(Field):
+    """
+    Text Field
+
+    A field made up entirely of text. This is one of the least restrictive field
+    types, enforcing only a maximum and (optional) minimum length.
+
+    :param max_length: the maximum number of allowable characters
+    :param min_length: (optional) the minimum number of allowable characters
+    """
+
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 

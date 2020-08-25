@@ -2,6 +2,8 @@
 
 ![img](are-you-my-data.jpg)
 
+[![Documentation Status](https://readthedocs.org/projects/rumydata/badge/?version=latest)](https://rumydata.readthedocs.io/en/latest/?badge=latest)
+
 This python package provides a set of tools to solve several of the major challenges
 that arise in the transmission of data. These tools attempt to solve four main
 problems:

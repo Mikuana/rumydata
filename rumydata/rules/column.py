@@ -1,5 +1,5 @@
 """
-rumydata column validation rules
+column validation rules
 
 These rules capture a common, but much more complex use case for data
 validation, when it is necessary to compare the values of a single column across
@@ -23,11 +23,13 @@ from typing import List
 from rumydata import exception as ex
 from rumydata.base import BaseRule
 
+__all__ = ['Unique']
+
 
 class Rule(BaseRule):
     """ Column Rule """
 
-    def prepare(self, data: List[str]) -> tuple:
+    def _prepare(self, data: List[str]) -> tuple:
         return data,
 
 
@@ -36,14 +38,14 @@ class Unique(Rule):
 
     exception_class = ex.DuplicateValueError
 
-    def prepare(self, data: List[str]) -> tuple:
+    def _prepare(self, data: List[str]) -> tuple:
         return [x for x in data if not x == ''],
 
-    def evaluator(self):
+    def _evaluator(self):
         return lambda x: len(x) == len(set(x))
 
-    def exception_msg(self):
-        return self.exception_class(self.explain())
+    def _exception_msg(self):
+        return self.exception_class(self._explain())
 
-    def explain(self):
+    def _explain(self):
         return 'values must be unique'
