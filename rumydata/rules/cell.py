@@ -79,7 +79,7 @@ class NotNull(Rule):
     def _exception_msg(self):
         return self.exception_class(self._explain())
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'cannot be empty/blank'
 
 
@@ -94,7 +94,7 @@ class ExactChar(Rule):
     def _evaluator(self):
         return lambda x: len(x) == self.exact_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must be exactly {str(self.exact_length)} characters'
 
 
@@ -109,7 +109,7 @@ class MinChar(Rule):
     def _evaluator(self):
         return lambda x: len(x) >= self.min_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must be at least {str(self.min_length)} characters'
 
 
@@ -124,7 +124,7 @@ class MaxChar(Rule):
     def _evaluator(self):
         return lambda x: len(x) <= self.max_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must be no more than {str(self.max_length)} characters'
 
 
@@ -162,7 +162,7 @@ class Choice(Rule):
     def _evaluator(self):
         return lambda x: x in self.eval_choices
 
-    def _explain(self):
+    def _explain(self) -> str:
         return (
             f'must be one of {self.choices}'
             f'{" (case insensitive)" if self.case_insensitive else " (case sensitive)"}'
@@ -185,7 +185,7 @@ class MinDigit(Rule):
     def _evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must have at least {str(self.min_length)} digit characters'
 
 
@@ -205,7 +205,7 @@ class MaxDigit(Rule):
     def _evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must have no more than {self.max_length} digit characters'
 
 
@@ -215,9 +215,9 @@ class OnlyNumbers(Rule):
     exception_class = ex.CharacterError
 
     def _evaluator(self):
-        return lambda x: re.fullmatch(r'\d+', x)
+        return lambda x: bool(re.fullmatch(r'\d+', x))
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'must only contain characters 0-9'
 
 
@@ -232,9 +232,9 @@ class NoLeadingZero(Rule):
     exception_class = ex.LeadingZeroError
 
     def _evaluator(self):
-        return lambda x: re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x))
+        return lambda x: bool(re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x)))
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'cannot have a leading zero digit'
 
 
@@ -244,9 +244,15 @@ class CanBeFloat(Rule):
     exception_class = ex.ConversionError
 
     def _evaluator(self):
-        return lambda x: isinstance(float(x), float)
+        def fun(x):
+            try:
+                return isinstance(float(x), float)
+            except ValueError:
+                return False
 
-    def _explain(self):
+        return fun
+
+    def _explain(self) -> str:
         return 'can be coerced into a float value'
 
 
@@ -256,9 +262,15 @@ class CanBeInteger(Rule):
     exception_class = ex.ConversionError
 
     def _evaluator(self):
-        return lambda x: isinstance(int(x), int)
+        def fun(x):
+            try:
+                return isinstance(int(x), int)
+            except ValueError:
+                return False
 
-    def _explain(self):
+        return fun
+
+    def _explain(self) -> str:
         return 'can be coerced into an integer value'
 
 
@@ -273,7 +285,7 @@ class NumericDecimals(Rule):
     def _evaluator(self):
         return lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x)
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
@@ -423,7 +435,7 @@ class CanBeDateIso(DateRule):
     def _evaluator(self):
         return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'can be coerced into a ISO-8601 date'
 
 

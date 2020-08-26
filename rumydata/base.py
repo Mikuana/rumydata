@@ -19,6 +19,9 @@ class BaseRule:
     """
     exception_class = ex.UrNotMyDataError
 
+    def __init__(self):
+        pass
+
     def _prepare(self, data) -> tuple:
         """
         Handle data object for pre-processing prior to evaluation
