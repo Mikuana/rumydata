@@ -119,7 +119,7 @@ def test_min_digit(value: str, expected: bool, length: int):
     (1, '1a', True),
     (2, '111a', False)
 ])
-def test_min_digit(value: str, expected: bool, length: int):
+def test_max_digit(value: str, expected: bool, length: int):
     r = MaxDigit(length)
     assert r._evaluator()(*r._prepare(value)) is expected
 
