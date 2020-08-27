@@ -16,6 +16,7 @@ class Rule(BaseRule):
     """ Header Rule """
 
     def __init__(self, columns):
+        super().__init__()
         self.definition = columns.definition
 
     def _prepare(self, data: List[str]) -> tuple:

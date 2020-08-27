@@ -87,8 +87,10 @@ class ExactChar(Rule):
     """ Cell exact character length Rule """
 
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, exact_length):
+        super().__init__()
         self.exact_length = exact_length
 
     def _evaluator(self):
@@ -102,8 +104,10 @@ class MinChar(Rule):
     """ Cell minimum character length Rule """
 
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, min_length):
+        super().__init__()
         self.min_length = min_length
 
     def _evaluator(self):
@@ -117,8 +121,10 @@ class MaxChar(Rule):
     """ Cell maximum character length Rule """
 
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, max_length):
+        super().__init__()
         self.max_length = max_length
 
     def _evaluator(self):
@@ -144,8 +150,10 @@ class Choice(Rule):
     """ Cell choice Rule """
 
     exception_class = ex.InvalidChoiceError
+    _default_args = (['x'],)
 
     def __init__(self, choices: List[str], case_insensitive=False):
+        super().__init__()
         self.choices = choices
         self.case_insensitive = case_insensitive
         self.eval_choices = [x.lower() for x in choices] if case_insensitive else choices
@@ -178,8 +186,10 @@ class MinDigit(Rule):
     in numeric strings that might contain formatting.
     """
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, min_length):
+        super().__init__()
         self.min_length = min_length
 
     def _evaluator(self):
@@ -198,8 +208,10 @@ class MaxDigit(Rule):
     digits in numeric strings that might contain formatting.
     """
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, max_length):
+        super().__init__()
         self.max_length = max_length
 
     def _evaluator(self):
@@ -280,6 +292,7 @@ class NumericDecimals(Rule):
     exception_class = ex.CurrencyPatternError
 
     def __init__(self, decimals=2):
+        super().__init__()
         self.decimals = decimals
 
     def _evaluator(self):
@@ -294,8 +307,10 @@ class LengthComparison(Rule):
 
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
+    _default_args = ('x',)
 
     def __init__(self, comparison_value):
+        super().__init__()
         self.comparison_value = comparison_value
 
     def _explain(self) -> str:
@@ -357,8 +372,10 @@ class NumericComparison(Rule):
 
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
+    _default_args = ('x',)
 
     def __init__(self, comparison_value):
+        super().__init__()
         self.comparison_value = comparison_value
 
     def _explain(self) -> str:
@@ -416,7 +433,7 @@ class DateRule(Rule):
 
     def __init__(self, **kwargs):
         self.truncate_time = kwargs.pop('truncate_time', False)
-        super().__init__(**kwargs)
+        super().__init__()
 
     def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if self.truncate_time:
@@ -449,6 +466,7 @@ class DateComparison(DateRule):
 
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
+    _default_args = ('2020-01-01',)
 
     def __init__(self, comparison_value, date_format='%Y-%m-%d', **kwargs):
         self.date_format = date_format
@@ -508,8 +526,10 @@ class ColumnComparisonRule(Rule):
     """ Base column comparison Rule """
 
     exception_class = ex.ColumnComparisonError
+    _default_args = ('x',)
 
     def __init__(self, compare_to: str):
+        super().__init__()
         self.compare_to = compare_to
 
     def _prepare(self, data: Tuple[str, Dict]) -> tuple:

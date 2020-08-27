@@ -24,7 +24,7 @@ class Rule(BaseRule):
 class FileExists(Rule):
     """ File exists Rule """
 
-    exception_class = FileNotFoundError
+    exception_class = ex.FileError
 
     def _evaluator(self):
         return lambda x: Path(x).exists()

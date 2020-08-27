@@ -2,49 +2,18 @@ import pytest
 
 from rumydata.exception import UrNotMyDataError
 from rumydata.rules.cell import *
+from rumydata.rules.cell import Rule
 
 
-@pytest.mark.parametrize('rule, args', [
-    (NotNull, ()),
-    (ExactChar, (1,)),
-    (MinChar, (1,)),
-    (MaxChar, (1,)),
-    (AsciiChar, ()),
-    (Choice, (['x'],)),
-    (MinDigit, (1,)),
-    (MaxDigit, (1,)),
-    (OnlyNumbers, ()),
-    (NoLeadingZero, ()),
-    (CanBeFloat, ()),
-    (CanBeInteger, ()),
-    (NumericDecimals, ()),
-    (LengthComparison, (1,)),
-    (LengthGT, (1,)),
-    (LengthGTE, (1,)),
-    (LengthET, (1,)),
-    (LengthLTE, (1,)),
-    (LengthLT, (1,)),
-    (NumericComparison, (1,)),
-    (NumericGT, (1,)),
-    (NumericGTE, (1,)),
-    (NumericET, (1,)),
-    (NumericLTE, (1,)),
-    (NumericLT, (1,)),
-    (CanBeDateIso, ()),
-    (DateComparison, ('1901-01-01',)),
-    (DateGT, ('1901-01-01',)),
-    (DateGTE, ('1901-01-01',)),
-    (DateET, ('1901-01-01',)),
-    (DateLTE, ('1901-01-01',)),
-    (DateLT, ('1901-01-01',)),
-    (GreaterThanColumn, ('x',)),
+@pytest.mark.parametrize('rule', [
+    (x,) for x in Rule.__subclasses__()
 ])
-def test_rule_returns(rule, args: tuple):
+def test_rule_returns(rule):
     """
     Ensure that all covered rules return the expected types from their private
     methods.
     """
-    r = rule(*args)
+    r = rule(*rule._default_args)
     assert issubclass(r.exception_class, UrNotMyDataError)
     assert issubclass(type(r._exception_msg()), UrNotMyDataError)
     assert isinstance(r._explain(), str)
