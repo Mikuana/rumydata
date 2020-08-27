@@ -21,6 +21,13 @@ def test_rule_exception(rule):
 
 
 @pytest.mark.parametrize('rule', [x for x in recurse_subclasses(BaseRule)])
+def test_rule_exception_message(rule):
+    """ All rule exceptions are returned as UrNotMyData subclass """
+    exc = rule(*rule._default_args)._exception_msg()
+    assert issubclass(type(exc), rule.exception_class)
+
+
+@pytest.mark.parametrize('rule', [x for x in recurse_subclasses(BaseRule)])
 def test_rule_default_args(rule):
     """ All rule default arguments are a tuple """
     assert isinstance(rule._default_args, tuple)

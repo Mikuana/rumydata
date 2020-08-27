@@ -37,8 +37,10 @@ class FileNameMatchesPattern(Rule):
     """ File name matches regex pattern Rule """
 
     exception_class = ex.FilePatternError
+    _default_args = (re.compile(r'x'),)
 
     def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
+        super().__init__()
         self.patterns = [pattern] if isinstance(pattern, re.Pattern) else pattern
 
     def _evaluator(self):
@@ -50,9 +52,12 @@ class FileNameMatchesPattern(Rule):
 
 class FileNameMatchesOnePattern(Rule):
     """ File name matches exactly one pattern Rule """
+    
     exception_class = ex.UrNotMyDataError
+    _default_args = (re.compile(r'x'),)
 
     def __init__(self, patterns: list):
+        super().__init__()
         self.patterns = patterns
 
     def _evaluator(self):
