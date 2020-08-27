@@ -158,7 +158,7 @@ class Choice(Rule):
         self.case_insensitive = case_insensitive
         self.eval_choices = [x.lower() for x in choices] if case_insensitive else choices
 
-    def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
+    def _prepare(self, data: Union[List[str], Tuple[str, Dict]]) -> tuple:
         if self.case_insensitive:
             if isinstance(data, str):
                 data = data.lower(),

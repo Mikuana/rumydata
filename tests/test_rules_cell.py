@@ -86,14 +86,16 @@ def test_ascii_char(value: str, expected: bool):
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
-@pytest.mark.parametrize('choice,value,expected', [
-    (['x'], 'x', True),
-    (['x'], 'y', False),
-    (['x', 'y'], 'y', True)
+@pytest.mark.parametrize('choice,data,expected,kwargs', [
+    (['x'], 'x', True, {}),
+    (['x'], 'y', False, {}),
+    (['x', 'y'], 'y', True, {}),
+    (['x'], ('x', {}), True, {}),
+    (['X'], ('x', {}), True, dict(case_insensitive=True))
 ])
-def test_choice(value: str, expected: bool, choice: list):
-    r = Choice(choice)
-    assert r._evaluator()(*r._prepare(value)) is expected
+def test_choice(data, expected: bool, choice: list, kwargs):
+    r = Choice(choice, **kwargs)
+    assert r._evaluator()(*r._prepare(data)) is expected
 
 
 @pytest.mark.parametrize('length,value,expected', [
@@ -293,16 +295,20 @@ def test_numeric_lt(comparison: float, value: str, expected: bool):
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
-@pytest.mark.parametrize('value,expected', [
-    ('2020-01-01', True),
-    ('2020/01/01', False),
-    ('1901-01-01', True),
-    ('19010101', False),
-    ('9999-99-99', False),
-    ('2020-13-01', False)
+@pytest.mark.parametrize('value,expected,kwargs', [
+    ('2020-01-01', True, {}),
+    ('2020/01/01', False, {}),
+    ('1901-01-01', True, {}),
+    ('19010101', False, {}),
+    ('9999-99-99', False, {}),
+    ('2020-13-01', False, {}),
+    ('2020-01-01', True, dict(truncate_time=True)),
+    ('2020-01-01 00:00:00', True, dict(truncate_time=True)),
+    (('2020-01-01 00:00:00', {}), True, dict(truncate_time=True)),
+    ('2020-01-01 00:00:01', False, dict(truncate_time=True))
 ])
-def test_can_be_date_iso(value: str, expected: bool):
-    r = CanBeDateIso()
+def test_can_be_date_iso(value: str, expected: bool, kwargs: dict):
+    r = CanBeDateIso(**kwargs)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -323,7 +329,7 @@ def test_date_gt(comparison: str, value: str, expected: bool):
     ('2020-01-01', '2020-01-32', False),
     ('2020-01-01', '2019-12-31', False)
 ])
-def test_date_gt(comparison: str, value: str, expected: bool):
+def test_date_gte(comparison: str, value: str, expected: bool):
     r = DateGTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
