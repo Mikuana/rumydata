@@ -23,8 +23,8 @@ __all__ = [
     'CanBeInteger', 'NumericDecimals', 'LengthComparison', 'LengthGT',
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
-    'DateRule', 'CanBeDateIso', 'DateComparison', 'DateGT', 'DateGTE', 'DateET',
-    'DateLTE', 'DateLT', 'ColumnComparisonRule', 'GreaterThanColumn',
+    'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
+    'DateLT', 'GreaterThanColumn',
     'make_static_cell_rule'
 ]
 
@@ -291,12 +291,13 @@ class NumericDecimals(Rule):
 
     exception_class = ex.CurrencyPatternError
 
-    def __init__(self, decimals=2):
+    def __init__(self, max_decimals=2):
         super().__init__()
-        self.decimals = decimals
+        self.decimals = max_decimals
 
     def _evaluator(self):
-        return lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x)
+        pat = re.compile(r'-?\d+(\.\d{1,' + str(self.decimals) + '})?')
+        return lambda x: bool(pat.fullmatch(x))
 
     def _explain(self) -> str:
         return f'cannot have more than {self.decimals} digits after the decimal point'
@@ -450,13 +451,19 @@ class CanBeDateIso(DateRule):
     """ Can be ISO-8601 date Rule """
 
     def _evaluator(self):
-        return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
+        def func(x):
+            try:
+                return isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
+            except ValueError:
+                return False
+
+        return func
 
     def _explain(self) -> str:
         return 'can be coerced into a ISO-8601 date'
 
 
-class DateComparison(DateRule):
+class DateComparisonRule(DateRule):
     """
     Base date comparison Rule
 
@@ -477,49 +484,79 @@ class DateComparison(DateRule):
         return f'{self.comparison_language} {str(self.comparison_value)}'
 
 
-class DateGT(DateComparison):
+class DateGT(DateComparisonRule):
     """ Date greater than comparison Rule """
 
     comparison_language = 'greater than'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) > self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) > self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateGTE(DateComparison):
+class DateGTE(DateComparisonRule):
     """ Date greater than or equal to comparison """
 
     comparison_language = 'greater than or equal to'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) >= self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) >= self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateET(DateComparison):
+class DateET(DateComparisonRule):
     """ Date equal to comparison Rule """
 
     comparison_language = 'equal to'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) == self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) == self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateLTE(DateComparison):
+class DateLTE(DateComparisonRule):
     """ Date less than or equal to comparison Rule """
 
     comparison_language = 'less than or equal to'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) <= self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) <= self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateLT(DateComparison):
+class DateLT(DateComparisonRule):
     """ Date less than comparison Rule """
 
     comparison_language = 'less than'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) < self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
 class ColumnComparisonRule(Rule):
