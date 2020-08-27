@@ -1,22 +1,33 @@
 import pytest
 
-from rumydata.exception import UrNotMyDataError
 from rumydata.rules.cell import *
 from rumydata.rules.cell import Rule
 
 
-@pytest.mark.parametrize('rule', [
-    (x,) for x in Rule.__subclasses__()
-])
-def test_rule_returns(rule):
+def recurse_subclasses(class_to_recurse):
+    def generator(x):
+        for y in x.__subclasses__():
+            for z in generator(y):
+                yield z
+        yield x
+
+    return list(generator(class_to_recurse))
+
+
+@pytest.mark.parametrize('rule', recurse_subclasses(Rule))
+def test_rule_prepare(rule):
     """
-    Ensure that all covered rules return the expected types from their private
-    methods.
+    All cell preparation must accept a tuple of a value and a dictionary with
+    comparison values that may be required.
     """
     r = rule(*rule._default_args)
-    assert issubclass(r.exception_class, UrNotMyDataError)
-    assert issubclass(type(r._exception_msg()), UrNotMyDataError)
-    assert isinstance(r._explain(), str)
+    assert isinstance(r._prepare(('1', {'x': '0'})), tuple)
+
+
+@pytest.mark.parametrize('rule', recurse_subclasses(Rule))
+def test_rule_evaluator_callable(rule):
+    """ All rules must return a callable function """
+    assert callable(rule(*rule._default_args)._evaluator())
 
 
 @pytest.mark.parametrize('value,expected', [

@@ -129,7 +129,8 @@ def empty_rows(rows, directory):
 
 
 def test_file_not_exists(basic):
-    assert File(rumydata.table.Layout(basic)).__has_error__('abc123.csv', FileNotFoundError)
+    assert File(rumydata.table.Layout(basic)).\
+        __has_error__('abc123.csv', ex.FileError)
 
 
 @pytest.mark.parametrize('value,kwargs', [
