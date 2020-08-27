@@ -37,3 +37,9 @@ def test_rule_default_args(rule):
 def test_rule_explain(rule):
     """ All rule explanations return a string  """
     assert isinstance(rule(*rule._default_args)._explain(), str)
+
+
+def test_base_prepare():
+    r = BaseRule()._prepare('x')
+    assert isinstance(r, tuple)
+    assert r[0] == 'x'
