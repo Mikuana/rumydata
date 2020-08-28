@@ -96,6 +96,8 @@ class BaseSubject:
     and reporting errors in a way that can be easily collected.
     """
 
+    _default_args = tuple()  # a default set of positional args for testing
+
     def __init__(self, rules: List[BaseRule] = None):
         """
         Base subject constructor
@@ -139,7 +141,7 @@ class BaseSubject:
                 )
         return errors
 
-    def __list_errors__(self, value, **kwargs) -> List[ex.UrNotMyDataError]:
+    def _list_errors(self, value, **kwargs) -> List[ex.UrNotMyDataError]:
         """
         Flatten nested errors into a list
 
@@ -151,7 +153,7 @@ class BaseSubject:
         """
         return list(self._flatten_exceptions(self._check(value, **kwargs)))
 
-    def __has_error__(self, value, error, **kwargs) -> bool:
+    def _has_error(self, value, error, **kwargs) -> bool:
         """
         Check flattened errors for a specific exception type
 
@@ -164,7 +166,7 @@ class BaseSubject:
         :return: a boolean indicator of whether the specified error type was
             returned in the nested structure when checking the provided value.
         """
-        return error in [x.__class__ for x in self.__list_errors__(value, **kwargs)]
+        return error in [x.__class__ for x in self._list_errors(value, **kwargs)]
 
     def _digest(self) -> List[str]:
         """

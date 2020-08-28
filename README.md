@@ -2,6 +2,8 @@
 
 ![img](are-you-my-data.jpg)
 
+
+[![PyPI](https://img.shields.io/pypi/v/rumydata)](https://pypi.org/project/rumydata/)
 [![Documentation Status](https://readthedocs.org/projects/rumydata/badge/?version=latest)](https://rumydata.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/Mikuana/rumydata/branch/main/graph/badge.svg)](https://codecov.io/gh/Mikuana/rumydata)
 

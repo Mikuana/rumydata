@@ -111,7 +111,7 @@ class Field(BaseSubject):
                 compares.add(r.compare_to)
         return compares
 
-    def __has_rule_type__(self, rule_type):
+    def _has_rule_type(self, rule_type):
         return any([issubclass(type(r), rule_type) for r in self.rules])
 
     def _digest(self):
@@ -131,6 +131,7 @@ class Ignore(Field):
 
     # noinspection PyMissingConstructor
     def __init__(self):
+        self.nullable = True
         self.rules = []
         self.descriptors = {}
 
@@ -148,6 +149,8 @@ class Text(Field):
     :param max_length: the maximum number of allowable characters
     :param min_length: (optional) the minimum number of allowable characters
     """
+
+    _default_args = (1,)
 
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
@@ -184,6 +187,9 @@ class Date(Field):
 
 
 class Currency(Field):
+
+    _default_args = (5,)
+
     def __init__(self, significant_digits: int, **kwargs):
         super().__init__(**kwargs)
 
@@ -196,6 +202,9 @@ class Currency(Field):
 
 
 class Digit(Field):
+
+    _default_args = (1,)
+
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -212,6 +221,9 @@ class Digit(Field):
 
 
 class Integer(Field):
+
+    _default_args = (1,)
+
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
@@ -229,6 +241,9 @@ class Integer(Field):
 
 
 class Choice(Field):
+
+    _default_args = (['x'],)
+
     def __init__(self, valid_values: list, case_insensitive=False, **kwargs):
         super().__init__(**kwargs)
 
