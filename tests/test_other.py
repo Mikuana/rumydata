@@ -15,7 +15,7 @@ import rumydata.rules.cell
 import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
-from rumydata.rules import header as hr, row as rr, column as cr
+from rumydata.rules import column as cr
 from rumydata.table import File
 
 
@@ -130,35 +130,6 @@ def empty_rows(rows, directory):
 def test_file_not_exists(basic):
     assert File(rumydata.table.Layout(basic)). \
         _has_error('abc123.csv', ex.FileError)
-
-
-def test_row_good(basic):
-    assert not rumydata.table.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
-
-
-@pytest.mark.parametrize('value,err', [
-    ([1, 2, 3, 4, 5], ex.RowLengthError),
-    ([1, 2, 3], ex.RowLengthError)
-])
-def test_row_bad(basic, value, err):
-    assert rumydata.table.Layout(basic)._has_error(value, err, rule_type=rr.Rule)
-
-
-def test_header_good(basic):
-    assert not rumydata.table.Layout(basic).check_header(['col1', 'col2', 'col3', 'col4'])
-
-
-@pytest.mark.parametrize('value,err', [
-    (['col1', 'col2'], ex.MissingColumnError),
-    (['col1', 'col2', 'col2'], ex.DuplicateColumnError),
-    (['col1', 'col2', 'col5'], ex.UnexpectedColumnError)
-])
-def test_header_bad(basic, value, err):
-    assert rumydata.table.Layout(basic)._has_error(value, err, rule_type=hr.Rule)
-
-
-def test_header_skip(basic):
-    assert not rumydata.table.Layout(basic, skip_header=True).check_header(['col1', 'col2', 'col4'])
 
 
 def test_file_good(basic_good, basic):
