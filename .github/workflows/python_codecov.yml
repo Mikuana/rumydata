@@ -1,14 +1,14 @@
 name: Codecov testing
 on: [push]
+
 jobs:
-  run:
-    runs-on: ${{ matrix.os }}
+  build:
+    runs-on: ubuntu-latest
     strategy:
+      max-parallel: 4
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-    env:
-      OS: ${{ matrix.os }}
-      PYTHON: '3.7'
+        python-version: [3.7]
+
     steps:
       - uses: actions/checkout@master
       - name: Setup Python
@@ -17,8 +17,7 @@ jobs:
           python-version: 3.7
       - name: Generate coverage report
         run: |
-          pip install pytest
-          pip install pytest-cov
-          python setup.py test --cov=./ --cov-report=xml
+          pip install -e .[Testing]
+          pytest --cov=./ --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
