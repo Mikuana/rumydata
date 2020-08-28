@@ -18,6 +18,10 @@ class BaseRule:
     the rule types contained in the rules submodule.
     """
     exception_class = ex.UrNotMyDataError
+    _default_args = tuple()  # a default set of positional args for testing
+
+    def __init__(self):
+        pass
 
     def _prepare(self, data) -> tuple:
         """

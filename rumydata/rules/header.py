@@ -5,17 +5,24 @@ These rules are applied to header rows and are generally not intended to be
 used directly. These rules ensure that the headers are named as expected, is
 not missing any names, or containing any extras.
 """
-
+from collections import namedtuple
 from typing import List
 
 from rumydata import exception as ex
 from rumydata.base import BaseRule
 
+# this named tuple is here to allow for setting the default argument without
+# needing to import the Layout class, which results in a circular import
+_default_thing = namedtuple('DefaultDict', ['definition'])
+
 
 class Rule(BaseRule):
     """ Header Rule """
 
+    _default_args = (_default_thing({}),)
+
     def __init__(self, columns):
+        super().__init__()
         self.definition = columns.definition
 
     def _prepare(self, data: List[str]) -> tuple:

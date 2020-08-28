@@ -23,8 +23,8 @@ __all__ = [
     'CanBeInteger', 'NumericDecimals', 'LengthComparison', 'LengthGT',
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
-    'DateRule', 'CanBeDateIso', 'DateComparison', 'DateGT', 'DateGTE', 'DateET',
-    'DateLTE', 'DateLT', 'ColumnComparisonRule', 'GreaterThanColumn',
+    'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
+    'DateLT', 'GreaterThanColumn',
     'make_static_cell_rule'
 ]
 
@@ -79,7 +79,7 @@ class NotNull(Rule):
     def _exception_msg(self):
         return self.exception_class(self._explain())
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'cannot be empty/blank'
 
 
@@ -87,14 +87,16 @@ class ExactChar(Rule):
     """ Cell exact character length Rule """
 
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, exact_length):
+        super().__init__()
         self.exact_length = exact_length
 
     def _evaluator(self):
         return lambda x: len(x) == self.exact_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must be exactly {str(self.exact_length)} characters'
 
 
@@ -102,14 +104,16 @@ class MinChar(Rule):
     """ Cell minimum character length Rule """
 
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, min_length):
+        super().__init__()
         self.min_length = min_length
 
     def _evaluator(self):
         return lambda x: len(x) >= self.min_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must be at least {str(self.min_length)} characters'
 
 
@@ -117,14 +121,16 @@ class MaxChar(Rule):
     """ Cell maximum character length Rule """
 
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, max_length):
+        super().__init__()
         self.max_length = max_length
 
     def _evaluator(self):
         return lambda x: len(x) <= self.max_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must be no more than {str(self.max_length)} characters'
 
 
@@ -144,13 +150,15 @@ class Choice(Rule):
     """ Cell choice Rule """
 
     exception_class = ex.InvalidChoiceError
+    _default_args = (['x'],)
 
     def __init__(self, choices: List[str], case_insensitive=False):
+        super().__init__()
         self.choices = choices
         self.case_insensitive = case_insensitive
         self.eval_choices = [x.lower() for x in choices] if case_insensitive else choices
 
-    def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
+    def _prepare(self, data: Union[List[str], Tuple[str, Dict]]) -> tuple:
         if self.case_insensitive:
             if isinstance(data, str):
                 data = data.lower(),
@@ -162,7 +170,7 @@ class Choice(Rule):
     def _evaluator(self):
         return lambda x: x in self.eval_choices
 
-    def _explain(self):
+    def _explain(self) -> str:
         return (
             f'must be one of {self.choices}'
             f'{" (case insensitive)" if self.case_insensitive else " (case sensitive)"}'
@@ -178,14 +186,16 @@ class MinDigit(Rule):
     in numeric strings that might contain formatting.
     """
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, min_length):
+        super().__init__()
         self.min_length = min_length
 
     def _evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must have at least {str(self.min_length)} digit characters'
 
 
@@ -198,14 +208,16 @@ class MaxDigit(Rule):
     digits in numeric strings that might contain formatting.
     """
     exception_class = ex.LengthError
+    _default_args = (1,)
 
     def __init__(self, max_length):
+        super().__init__()
         self.max_length = max_length
 
     def _evaluator(self):
         return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'must have no more than {self.max_length} digit characters'
 
 
@@ -215,9 +227,9 @@ class OnlyNumbers(Rule):
     exception_class = ex.CharacterError
 
     def _evaluator(self):
-        return lambda x: re.fullmatch(r'\d+', x)
+        return lambda x: bool(re.fullmatch(r'\d+', x))
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'must only contain characters 0-9'
 
 
@@ -232,9 +244,9 @@ class NoLeadingZero(Rule):
     exception_class = ex.LeadingZeroError
 
     def _evaluator(self):
-        return lambda x: re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x))
+        return lambda x: bool(re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x)))
 
-    def _explain(self):
+    def _explain(self) -> str:
         return 'cannot have a leading zero digit'
 
 
@@ -244,9 +256,15 @@ class CanBeFloat(Rule):
     exception_class = ex.ConversionError
 
     def _evaluator(self):
-        return lambda x: isinstance(float(x), float)
+        def fun(x):
+            try:
+                return isinstance(float(x), float)
+            except ValueError:
+                return False
 
-    def _explain(self):
+        return fun
+
+    def _explain(self) -> str:
         return 'can be coerced into a float value'
 
 
@@ -256,9 +274,15 @@ class CanBeInteger(Rule):
     exception_class = ex.ConversionError
 
     def _evaluator(self):
-        return lambda x: isinstance(int(x), int)
+        def fun(x):
+            try:
+                return isinstance(int(x), int)
+            except ValueError:
+                return False
 
-    def _explain(self):
+        return fun
+
+    def _explain(self) -> str:
         return 'can be coerced into an integer value'
 
 
@@ -267,13 +291,15 @@ class NumericDecimals(Rule):
 
     exception_class = ex.CurrencyPatternError
 
-    def __init__(self, decimals=2):
-        self.decimals = decimals
+    def __init__(self, max_decimals=2):
+        super().__init__()
+        self.decimals = max_decimals
 
     def _evaluator(self):
-        return lambda x: re.fullmatch(r'-?\d+(\.\d{1,2})?', x)
+        pat = re.compile(r'-?\d+(\.\d{1,' + str(self.decimals) + '})?')
+        return lambda x: bool(pat.fullmatch(x))
 
-    def _explain(self):
+    def _explain(self) -> str:
         return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
@@ -282,8 +308,10 @@ class LengthComparison(Rule):
 
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
+    _default_args = ('x',)
 
     def __init__(self, comparison_value):
+        super().__init__()
         self.comparison_value = comparison_value
 
     def _explain(self) -> str:
@@ -345,8 +373,10 @@ class NumericComparison(Rule):
 
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
+    _default_args = ('x',)
 
     def __init__(self, comparison_value):
+        super().__init__()
         self.comparison_value = comparison_value
 
     def _explain(self) -> str:
@@ -404,7 +434,7 @@ class DateRule(Rule):
 
     def __init__(self, **kwargs):
         self.truncate_time = kwargs.pop('truncate_time', False)
-        super().__init__(**kwargs)
+        super().__init__()
 
     def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if self.truncate_time:
@@ -421,13 +451,19 @@ class CanBeDateIso(DateRule):
     """ Can be ISO-8601 date Rule """
 
     def _evaluator(self):
-        return lambda x: isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
+        def func(x):
+            try:
+                return isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
+            except ValueError:
+                return False
 
-    def _explain(self):
+        return func
+
+    def _explain(self) -> str:
         return 'can be coerced into a ISO-8601 date'
 
 
-class DateComparison(DateRule):
+class DateComparisonRule(DateRule):
     """
     Base date comparison Rule
 
@@ -437,6 +473,7 @@ class DateComparison(DateRule):
 
     exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
+    _default_args = ('2020-01-01',)
 
     def __init__(self, comparison_value, date_format='%Y-%m-%d', **kwargs):
         self.date_format = date_format
@@ -447,57 +484,89 @@ class DateComparison(DateRule):
         return f'{self.comparison_language} {str(self.comparison_value)}'
 
 
-class DateGT(DateComparison):
+class DateGT(DateComparisonRule):
     """ Date greater than comparison Rule """
 
     comparison_language = 'greater than'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) > self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) > self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateGTE(DateComparison):
+class DateGTE(DateComparisonRule):
     """ Date greater than or equal to comparison """
 
     comparison_language = 'greater than or equal to'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) >= self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) >= self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateET(DateComparison):
+class DateET(DateComparisonRule):
     """ Date equal to comparison Rule """
 
     comparison_language = 'equal to'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) == self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) == self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateLTE(DateComparison):
+class DateLTE(DateComparisonRule):
     """ Date less than or equal to comparison Rule """
 
     comparison_language = 'less than or equal to'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) <= self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) <= self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
-class DateLT(DateComparison):
+class DateLT(DateComparisonRule):
     """ Date less than comparison Rule """
 
     comparison_language = 'less than'
 
     def _evaluator(self):
-        return lambda x: datetime.strptime(x, self.date_format) < self.comparison_value
+        def func(x):
+            try:
+                return datetime.strptime(x, self.date_format) < self.comparison_value
+            except ValueError:
+                return False
+
+        return func
 
 
 class ColumnComparisonRule(Rule):
     """ Base column comparison Rule """
 
     exception_class = ex.ColumnComparisonError
+    _default_args = ('x',)
 
     def __init__(self, compare_to: str):
+        super().__init__()
         self.compare_to = compare_to
 
     def _prepare(self, data: Tuple[str, Dict]) -> tuple:
