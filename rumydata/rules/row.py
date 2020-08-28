@@ -25,8 +25,10 @@ class RowLengthLTE(Rule):
     """ Row length less than or equal to Rule """
 
     exception_class = ex.RowLengthError
+    _default_args = (1,)
 
     def __init__(self, columns_length):
+        super().__init__()
         self.columns_length = columns_length
 
     def _evaluator(self):
@@ -40,8 +42,10 @@ class RowLengthGTE(Rule):
     """ Row greater than or equal to Rule """
 
     exception_class = ex.RowLengthError
+    _default_args = (1,)
 
     def __init__(self, columns_length):
+        super().__init__()
         self.columns_length = columns_length
 
     def _evaluator(self):

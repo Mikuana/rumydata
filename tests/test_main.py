@@ -12,12 +12,12 @@ from pathlib import Path
 import pytest
 from openpyxl import Workbook
 
-import rumydata.file
 import rumydata.rules.cell
+import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
-from rumydata.file import File
 from rumydata.rules import header as hr, row as rr, column as cr
+from rumydata.table import File
 
 
 @pytest.fixture()
@@ -32,7 +32,7 @@ def basic() -> dict:
 
 @pytest.fixture()
 def minimal_layout():
-    return rumydata.file.Layout(dict(x=rumydata.field.Digit(1)))
+    return rumydata.table.Layout(dict(x=rumydata.field.Digit(1)))
 
 
 @pytest.fixture()
@@ -41,7 +41,7 @@ def tmpdir():
         yield Path(d)
 
 
-def write_row(directory, columns: rumydata.file.Layout, row, rows=False):
+def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
     p = Path(directory, str(uuid.uuid4()))
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
@@ -129,7 +129,8 @@ def empty_rows(rows, directory):
 
 
 def test_file_not_exists(basic):
-    assert File(rumydata.file.Layout(basic)).__has_error__('abc123.csv', FileNotFoundError)
+    assert File(rumydata.table.Layout(basic)).\
+        __has_error__('abc123.csv', ex.FileError)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -286,7 +287,7 @@ def test_choice_bad(value, choices, kwargs, err):
 
 
 def test_row_good(basic):
-    assert not rumydata.file.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
+    assert not rumydata.table.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -294,11 +295,11 @@ def test_row_good(basic):
     ([1, 2, 3], ex.RowLengthError)
 ])
 def test_row_bad(basic, value, err):
-    assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=rr.Rule)
+    assert rumydata.table.Layout(basic).__has_error__(value, err, rule_type=rr.Rule)
 
 
 def test_header_good(basic):
-    assert not rumydata.file.Layout(basic).check_header(['col1', 'col2', 'col3', 'col4'])
+    assert not rumydata.table.Layout(basic).check_header(['col1', 'col2', 'col3', 'col4'])
 
 
 @pytest.mark.parametrize('value,err', [
@@ -307,31 +308,31 @@ def test_header_good(basic):
     (['col1', 'col2', 'col5'], ex.UnexpectedColumnError)
 ])
 def test_header_bad(basic, value, err):
-    assert rumydata.file.Layout(basic).__has_error__(value, err, rule_type=hr.Rule)
+    assert rumydata.table.Layout(basic).__has_error__(value, err, rule_type=hr.Rule)
 
 
 def test_header_skip(basic):
-    assert not rumydata.file.Layout(basic, skip_header=True).check_header(['col1', 'col2', 'col4'])
+    assert not rumydata.table.Layout(basic, skip_header=True).check_header(['col1', 'col2', 'col4'])
 
 
 def test_file_good(basic_good, basic):
-    assert not File(rumydata.file.Layout(basic)).check(basic_good)
+    assert not File(rumydata.table.Layout(basic)).check(basic_good)
 
 
 def test_file_excel_good(basic_good_excel, basic):
-    assert not File(rumydata.file.Layout(basic), file_type='excel').check(basic_good_excel)
+    assert not File(rumydata.table.Layout(basic), file_type='excel').check(basic_good_excel)
 
 
 def test_file_row_skip_good(basic_row_skip_good, basic):
-    assert not File(rumydata.file.Layout(basic), skip_rows=2).check(basic_row_skip_good)
+    assert not File(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
 
 def test_layout_good(basic, basic_good):
-    assert not File(rumydata.file.Layout(basic)).check(basic_good)
+    assert not File(rumydata.table.Layout(basic)).check(basic_good)
 
 
 def test_readme_example(readme_layout, readme_data):
-    assert File(rumydata.file.Layout(readme_layout)).__has_error__(readme_data, ex.InvalidChoiceError)
+    assert File(rumydata.table.Layout(readme_layout)).__has_error__(readme_data, ex.InvalidChoiceError)
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -341,7 +342,7 @@ def test_readme_example(readme_layout, readme_data):
     (int(1e5), 100),
 ])
 def test_has_max_error(tmpdir, rows, me):
-    fields = rumydata.file.Layout({'x': field.Field()})
+    fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
     assert File(fields, max_errors=me).__has_error__(file, ex.MaxExceededError)
 
@@ -353,7 +354,7 @@ def test_has_max_error(tmpdir, rows, me):
     (100, int(1e5)),
 ])
 def test_missing_max_error(tmpdir, rows, me):
-    fields = rumydata.file.Layout({'x': field.Field()})
+    fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
     assert not File(fields, max_errors=me).__has_error__(file, ex.MaxExceededError)
 
@@ -390,7 +391,7 @@ def test_column_compare_rule_bad():
 
 
 def test_column_compare_row_good():
-    fields = rumydata.file.Layout({
+    fields = rumydata.table.Layout({
         'a': rumydata.field.Integer(1, rules=[rumydata.rules.cell.GreaterThanColumn('b')]),
         'b': rumydata.field.Integer(1)
     })
@@ -401,7 +402,7 @@ def test_column_compare_row_good():
     (rumydata.rules.cell.GreaterThanColumn('x'), ['2', '3']),
 ])
 def test_column_compare_file_good(tmpdir, compare_rule, row):
-    cols = rumydata.file.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
+    cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
     assert not File(cols).check(write_row(tmpdir, cols, row))
 
 
@@ -409,18 +410,18 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
     (rumydata.rules.cell.GreaterThanColumn('x'), ['1', '1']),
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
-    cols = rumydata.file.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
+    cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
     assert File(cols).__has_error__(write_row(tmpdir, cols, row), ex.ColumnComparisonError)
 
 
 def test_unique_bad(tmpdir):
-    cols = rumydata.file.Layout({'x': field.Field(rules=[cr.Unique()])})
+    cols = rumydata.table.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
     assert File(cols).__has_error__(f, ex.DuplicateValueError)
 
 
 def test_unique_good(tmpdir):
-    cols = rumydata.file.Layout({'x': field.Field(rules=[cr.Unique()])})
+    cols = rumydata.table.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
     assert not File(cols).check(f)
 
@@ -431,12 +432,12 @@ def test_unique_good(tmpdir):
     (['', ''], dict(empty_row_ok=True))
 ])
 def test_empty_row_good(row, kwargs):
-    lay = rumydata.file.Layout({'x': field.Integer(1), 'y': field.Integer(2)}, **kwargs)
+    lay = rumydata.table.Layout({'x': field.Integer(1), 'y': field.Integer(2)}, **kwargs)
     assert not lay.check_row(row)
 
 
 def test_empty_row_file_good(tmpdir):
-    cols = rumydata.file.Layout({'x': field.Field()}, empty_row_ok=True)
+    cols = rumydata.table.Layout({'x': field.Field()}, empty_row_ok=True)
     f = write_row(tmpdir, cols, [['1'], ['2'], ['']], rows=True)
     assert not File(cols).check(f)
 
@@ -457,7 +458,7 @@ def test_ignore_cell(cell):
 ])
 def test_ignore_row(row):
     """ Test that ignore rows count as empty for the purpose of accepting empty rows """
-    lay = rumydata.file.Layout(
+    lay = rumydata.table.Layout(
         {'x': field.Ignore(), 'y': field.Integer(1)}, empty_row_ok=True
     )
     assert not lay.check_row(row)
