@@ -30,11 +30,6 @@ def basic() -> dict:
 
 
 @pytest.fixture()
-def minimal_layout():
-    return rumydata.table.Layout(dict(x=rumydata.field.Digit(1)))
-
-
-@pytest.fixture()
 def tmpdir():
     with tempfile.TemporaryDirectory() as d:
         yield Path(d)
@@ -105,16 +100,6 @@ def readme_data(tmpdir):
         "ghi,a,1"
     ]))
     yield p.as_posix()
-
-
-def minimal_bad(rows, directory):
-    p = Path(directory, str(uuid.uuid4()))
-    with p.open('w') as f:
-        w = csv.writer(f)
-        w.writerow(['x'])
-        for i in range(rows):
-            w.writerow(['12'])
-    return p
 
 
 def empty_rows(rows, directory):
