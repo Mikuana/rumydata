@@ -17,13 +17,13 @@ field class behavior.
 from typing import Union, Tuple, Dict, List
 
 from rumydata import exception as ex
-from rumydata.base import BaseSubject
+from rumydata._base import _BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
 __all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore']
 
 
-class Field(BaseSubject):
+class Field(_BaseSubject):
     """
     Base Field class
 

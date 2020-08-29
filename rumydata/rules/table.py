@@ -11,10 +11,10 @@ from pathlib import Path
 from typing import Union, List
 
 from rumydata import exception as ex
-from rumydata.base import BaseRule
+from rumydata._base import _BaseRule
 
 
-class Rule(BaseRule):
+class Rule(_BaseRule):
     """ File Rule """
 
     def _prepare(self, data: Union[str, Path]) -> tuple:
@@ -24,7 +24,7 @@ class Rule(BaseRule):
 class FileExists(Rule):
     """ File exists Rule """
 
-    exception_class = ex.FileError
+    _exception_class = ex.FileError
 
     def _evaluator(self):
         return lambda x: Path(x).exists()
@@ -36,7 +36,7 @@ class FileExists(Rule):
 class FileNameMatchesPattern(Rule):
     """ File name matches regex pattern Rule """
 
-    exception_class = ex.FilePatternError
+    _exception_class = ex.FilePatternError
     _default_args = (re.compile(r'x'),)
 
     def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):
@@ -53,7 +53,7 @@ class FileNameMatchesPattern(Rule):
 class FileNameMatchesOnePattern(Rule):
     """ File name matches exactly one pattern Rule """
     
-    exception_class = ex.UrNotMyDataError
+    _exception_class = ex.UrNotMyDataError
     _default_args = (re.compile(r'x'),)
 
     def __init__(self, patterns: list):
