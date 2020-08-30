@@ -1,6 +1,9 @@
 Table
 =============
 
+.. automodule:: rumydata.table
+
+
 Layout
 ######
 
