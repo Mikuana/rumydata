@@ -4,7 +4,7 @@
 
 
 [![PyPI](https://img.shields.io/pypi/v/rumydata)](https://pypi.org/project/rumydata/)
-[![Documentation Status](https://readthedocs.org/projects/rumydata/badge/?version=latest)](https://rumydata.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/rumydata/badge/?version=stable)](https://rumydata.readthedocs.io/en/stable/?badge=stable)
 [![codecov](https://codecov.io/gh/Mikuana/rumydata/branch/main/graph/badge.svg)](https://codecov.io/gh/Mikuana/rumydata)
 
 This python package provides a set of tools to solve several of the major challenges
