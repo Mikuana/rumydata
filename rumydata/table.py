@@ -26,7 +26,7 @@ class Layout(_BaseSubject):
         1. to generate technical documentation for the tabular data set
         2. to use in concert with a File object to validate the contents
 
-    :param layout: dictionary of column names with DataType definitions
+    :param _definition: dictionary of column names with DataType definitions
     :param skip_header: (optional) a boolean control to skip validation of
         the header in the file. Defaults to False.
     :param empty_row_ok: (optional) a boolean control to skip validation of
@@ -36,14 +36,14 @@ class Layout(_BaseSubject):
         in the technical digest.
     """
 
-    def __init__(self, layout: Dict[str, field.Field], **kwargs):
+    def __init__(self, _definition: Dict[str, field.Field], **kwargs):
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
 
         super().__init__(**kwargs)
 
-        self.layout = layout
-        self.field_count = len(layout)
+        self.layout = _definition
+        self.field_count = len(_definition)
         self._title = kwargs.get('title')
 
         self.rules.extend([

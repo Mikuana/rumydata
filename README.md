@@ -49,7 +49,7 @@ Let's say Alice wants Bob to send her data. Alice will define her data in a
 from rumydata import Layout
 from rumydata.field import Text, Integer, Choice
 
-layout = Layout(layout={
+layout = Layout(_definition={
     'col1': Text(8),
     'col2': Choice(['x', 'y', 'z']),
     'col3': Integer(1)
