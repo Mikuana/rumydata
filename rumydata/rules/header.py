@@ -9,21 +9,21 @@ from collections import namedtuple
 from typing import List
 
 from rumydata import exception as ex
-from rumydata.base import BaseRule
+from rumydata._base import _BaseRule
 
 # this named tuple is here to allow for setting the default argument without
 # needing to import the Layout class, which results in a circular import
-_default_thing = namedtuple('DefaultDict', ['definition'])
+_default_thing = namedtuple('DefaultDict', ['layout'])
 
 
-class Rule(BaseRule):
+class Rule(_BaseRule):
     """ Header Rule """
 
     _default_args = (_default_thing({}),)
 
     def __init__(self, columns):
         super().__init__()
-        self.definition = columns.definition
+        self.definition = columns.layout
 
     def _prepare(self, data: List[str]) -> tuple:
         return data,
@@ -32,7 +32,7 @@ class Rule(BaseRule):
 class NoExtra(Rule):
     """ No extra header elements Rule """
 
-    exception_class = ex.UnexpectedColumnError
+    _exception_class = ex.UnexpectedColumnError
 
     def _evaluator(self):
         return lambda x: all([y in self.definition for y in x])
@@ -44,7 +44,7 @@ class NoExtra(Rule):
 class NoMissing(Rule):
     """ No missing header elements Rule """
 
-    exception_class = ex.MissingColumnError
+    _exception_class = ex.MissingColumnError
 
     def _evaluator(self):
         return lambda x: all([y in x for y in self.definition])
@@ -55,7 +55,7 @@ class NoMissing(Rule):
 
 class NoDuplicate(Rule):
     """ No duplicate header elements Rule """
-    exception_class = ex.DuplicateColumnError
+    _exception_class = ex.DuplicateColumnError
 
     def _evaluator(self):
         return lambda x: len(x) == len(set(x))
@@ -67,7 +67,7 @@ class NoDuplicate(Rule):
 class ColumnOrder(Rule):
     """ Fixed header element order Rule """
 
-    exception_class = ex.DataError
+    _exception_class = ex.DataError
 
     def _evaluator(self):
         return lambda x: x == list(self.definition)

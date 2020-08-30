@@ -17,13 +17,13 @@ field class behavior.
 from typing import Union, Tuple, Dict, List
 
 from rumydata import exception as ex
-from rumydata.base import BaseSubject
+from rumydata._base import _BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
 __all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore']
 
 
-class Field(BaseSubject):
+class Field(_BaseSubject):
     """
     Base Field class
 
@@ -166,6 +166,19 @@ class Text(Field):
 
 
 class Date(Field):
+    """
+    Date field
+
+    A date value formatted in ISO-8601 (YYYY-MM-DD). Rules can be applied to
+    restrict minimum and maximum date. If your date string includes, or might
+    include an empty timestamp (00:00:00), the truncate_time parameter can be
+    used to remove this empty timestamp prior to validation, preventing it from
+    causing failure.
+
+    :param min_date: the minimum date value allowed
+    :param max_date: the maximum date value allowed
+    """
+
     def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
         rule_kwargs = {
             'truncate_time': kwargs.pop('truncate_time', False)
@@ -187,6 +200,15 @@ class Date(Field):
 
 
 class Currency(Field):
+    """
+    Currency field
+
+    A numeric field which represents a currency value. Defaults to a maximum
+    of two decimal points.
+
+    :param significant_digits: an integer which specifies the maximum number of
+        decimals that are allowed in the value.
+    """
 
     _default_args = (5,)
 
@@ -202,6 +224,16 @@ class Currency(Field):
 
 
 class Digit(Field):
+    """
+    Digit field
+
+    A value made up entirely of digits (numbers). The main difference between
+    this field and an Integer, is that this field will allow leading zeroes
+    (e.g 0123), while an Integer would not.
+
+    :param max_length: the maximum number of digits
+    :param min_length: (optional) the minimum number of digits
+    """
 
     _default_args = (1,)
 
@@ -221,6 +253,14 @@ class Digit(Field):
 
 
 class Integer(Field):
+    """
+    Integer field
+
+    A value made up entirely of digits (numbers). A whole number.
+
+    :param max_length: the maximum number of digits
+    :param min_length: (optional) the minimum number of digits
+    """
 
     _default_args = (1,)
 
@@ -241,6 +281,15 @@ class Integer(Field):
 
 
 class Choice(Field):
+    """
+    Choice field
+
+    A field with one of a pre-defined set of values.
+
+    :param valid_values: a list of values which are considered valid
+    :param case_insensitive: a boolean control which defaults to False, making
+        the check of valid values case sensitive.
+    """
 
     _default_args = (['x'],)
 

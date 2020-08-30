@@ -39,7 +39,7 @@ def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
     p = Path(directory, str(uuid.uuid4()))
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
-        writer.writerow(list(columns.definition))
+        writer.writerow(list(columns.layout))
         if rows:
             for r in row:
                 writer.writerow(r)

@@ -10,14 +10,14 @@ from typing import List, Union
 from rumydata import exception as ex
 
 
-class BaseRule:
+class _BaseRule:
     """
     Base class for defining data type rules.
 
     This class contains the default methods that can be used to stub out all of
     the rule types contained in the rules submodule.
     """
-    exception_class = ex.UrNotMyDataError
+    _exception_class: ex.UrNotMyDataError = ex.UrNotMyDataError
     _default_args = tuple()  # a default set of positional args for testing
 
     def __init__(self):
@@ -68,11 +68,11 @@ class BaseRule:
         """
         Validation exception message
 
-        Generates an exception from the exception_class property with a
+        Generates an exception from the _exception_class property with a
         sanitized error message that explicitly avoids showing the specific data
         that failed the validation.
         """
-        return self.exception_class(self._explain())
+        return self._exception_class(self._explain())
 
     def _explain(self) -> str:
         """
@@ -87,7 +87,7 @@ class BaseRule:
         return "default rule explanation"
 
 
-class BaseSubject:
+class _BaseSubject:
     """
     Base class for defining data subjects.
 
@@ -98,7 +98,7 @@ class BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[BaseRule] = None):
+    def __init__(self, rules: List[_BaseRule] = None):
         """
         Base subject constructor
 
@@ -136,7 +136,7 @@ class BaseSubject:
                     if not e:
                         errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
-                errors.append(r.exception_class(
+                errors.append(r._exception_class(
                     f'raised {e.__class__.__name__} while checking if value {r._explain()}')
                 )
         return errors
@@ -207,7 +207,7 @@ class BaseSubject:
                 yield cls._flatten_exceptions(el)
         elif issubclass(error.__class__, ex.UrNotMyDataError):
             yield error
-            for el in error.errors:
+            for el in error._errors:
                 for x in cls._flatten_exceptions(el):
                     yield x
         else:

@@ -26,9 +26,10 @@ For most users, the recommended method to install is via pip::
     pip install rumydata
 
 This package requires python version 3.7 or higher. By default there are no
-third-party package dependencies. However, if you want to validate the contents
-of Microsoft Excel files `.xls`, you will need to install the `openpyxl` package
-as well.
+third-party package dependencies. However, some extras are available.
+
+**Excel** support Excel spreadsheet file validation::
+    pip install rumydata[Excel]
 
 
 .. toctree::

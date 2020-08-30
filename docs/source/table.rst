@@ -1,14 +1,17 @@
 Table
 =============
 
+.. automodule:: rumydata.table
+
+
 Layout
 ######
 
-.. autoclass:: rumydata.file.Layout
+.. autoclass:: rumydata.table.Layout
     :members:
 
 File
 ####
 
-.. autoclass:: rumydata.file.File
+.. autoclass:: rumydata.table.File
     :members:

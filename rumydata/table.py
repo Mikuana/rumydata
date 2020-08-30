@@ -10,11 +10,11 @@ from typing import Union, Dict, List
 
 from rumydata import exception as ex
 from rumydata import field
-from rumydata.base import BaseSubject
+from rumydata._base import _BaseSubject
 from rumydata.rules import table, column as cr, header as hr, row as rr, cell as clr
 
 
-class Layout(BaseSubject):
+class Layout(_BaseSubject):
     """
     Table Layout Class
 
@@ -26,7 +26,7 @@ class Layout(BaseSubject):
         1. to generate technical documentation for the tabular data set
         2. to use in concert with a File object to validate the contents
 
-    :param definition: dictionary of column names with DataType definitions
+    :param _definition: dictionary of column names with DataType definitions
     :param skip_header: (optional) a boolean control to skip validation of
         the header in the file. Defaults to False.
     :param empty_row_ok: (optional) a boolean control to skip validation of
@@ -36,40 +36,34 @@ class Layout(BaseSubject):
         in the technical digest.
     """
 
-    def __init__(self, definition: Dict[str, field.Field], **kwargs):
+    def __init__(self, _definition: Dict[str, field.Field], **kwargs):
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
 
         super().__init__(**kwargs)
 
-        self.definition = definition
-        self.length = len(definition)
-        self.title = kwargs.get('title')
+        self.layout = _definition
+        self.field_count = len(_definition)
+        self._title = kwargs.get('title')
 
         self.rules.extend([
             hr.ColumnOrder(self),
             hr.NoExtra(self),
             hr.NoDuplicate(self),
             hr.NoMissing(self),
-            rr.RowLengthLTE(self.length),
-            rr.RowLengthGTE(self.length)
+            rr.RowLengthLTE(self.field_count),
+            rr.RowLengthGTE(self.field_count)
         ])
 
-    def markdown_digest(self) -> str:
+    def documentation(self):
         """
-        Layout Markdown digest
+        Technical documentation
 
-        This method returns text in Markdown format, which provides a detailed
-        technical specification for each field in the Layout.
+        Generates detailed specification of the defined layout.
 
         :return: a Markdown formatted string describing the layout
         """
-        fields = f'# {self.title}' + '\n\n' if self.title else ''
-        fields += '\n'.join([
-            f' - **{k}**' + ''.join(['\n   - ' + x for x in v._digest()])
-            for k, v in self.definition.items()
-        ])
-        return fields
+        return self._markdown_digest()
 
     def check_header(self, row: List[str], rix=0):
         """
@@ -100,8 +94,24 @@ class Layout(BaseSubject):
         errors = self._check(row, rule_type=rr.Rule, rix=rix)
         assert not errors, str(errors)
 
+    def _markdown_digest(self) -> str:
+        """
+        Layout Markdown digest
+
+        This method returns text in Markdown format, which provides a detailed
+        technical specification for each field in the Layout.
+
+        :return: a Markdown formatted string describing the layout
+        """
+        fields = f'# {self._title}' + '\n\n' if self._title else ''
+        fields += '\n'.join([
+            f' - **{k}**' + ''.join(['\n   - ' + x for x in v._digest()])
+            for k, v in self.layout.items()
+        ])
+        return fields
+
     def _digest(self):
-        return [[f'Name: {k}', *v._digest()] for k, v in self.definition.items()]
+        return [[f'Name: {k}', *v._digest()] for k, v in self.layout.items()]
 
     def _check(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
@@ -113,14 +123,14 @@ class Layout(BaseSubject):
             return ex.RowError(rix or -1, errors=e)
 
         if rule_type == rr.Rule:
-            row = dict(zip(self.definition.keys(), row))
-            ignore = {k: isinstance(v, field.Ignore) for k, v in self.definition.items()}
+            row = dict(zip(self.layout.keys(), row))
+            ignore = {k: isinstance(v, field.Ignore) for k, v in self.layout.items()}
             # if empty row is okay, and all fields are either empty, or Ignore class
             if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
                 return
 
             for cix, (name, val) in enumerate(row.items()):
-                t = self.definition[name]
+                t = self.layout[name]
                 comp = {k: row[k] for k in t._comparison_columns()}
                 check_args = dict(
                     data=(val, comp), rule_type=clr.Rule,
@@ -145,12 +155,12 @@ class Layout(BaseSubject):
         :return: a set of the columns that will need to be compared.
         """
         compares = set()
-        for v in self.definition.values():
+        for v in self.layout.values():
             compares.update(v._comparison_columns())
         return compares
 
 
-class File(BaseSubject):
+class File(_BaseSubject):
     """
     File class
 
@@ -221,11 +231,11 @@ class File(BaseSubject):
             return ex.FileError(file=filepath, errors=e)
 
         column_cache = {
-            k: [] for k, v in self.layout.definition.items()
+            k: [] for k, v in self.layout.layout.items()
             if v._has_rule_type(cr.Rule)
         }
         column_cache_map = {
-            k: list(self.layout.definition.keys()).index(k)
+            k: list(self.layout.layout.keys()).index(k)
             for k in column_cache.keys()
         }
 
@@ -264,7 +274,7 @@ class File(BaseSubject):
                         column_cache[k].append(row[ix])
 
         for k, v in column_cache.items():
-            ce = self.layout.definition[k]._check(v, rule_type=cr.Rule)
+            ce = self.layout.layout[k]._check(v, rule_type=cr.Rule)
             if ce:
                 e.append(ce)
         if e:
