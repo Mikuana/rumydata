@@ -110,9 +110,6 @@ class Layout(_BaseSubject):
         ])
         return fields
 
-    def _digest(self):
-        return [[f'Name: {k}', *v._digest()] for k, v in self.layout.items()]
-
     def _check(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
             return
@@ -141,23 +138,6 @@ class Layout(_BaseSubject):
                     e.append(ce)
             if e:
                 return ex.RowError(rix, errors=e)
-
-    def _comparison_columns(self) -> set:
-        """
-        Comparison fields report
-
-        A method to report all columns that will need to be compared while
-        checking rules. This works by checking the equivalent method for each
-        field in the layout. This makes it convenient to know which values in
-        a row need to be stored in a dictionary for possible comparison in each
-        cell.
-
-        :return: a set of the columns that will need to be compared.
-        """
-        compares = set()
-        for v in self.layout.values():
-            compares.update(v._comparison_columns())
-        return compares
 
 
 class File(_BaseSubject):
@@ -201,7 +181,7 @@ class File(_BaseSubject):
             x = {x: kwargs.pop(x, None) for x in ['sheet']}
             self.excel_kwargs = {k: v for k, v in x.items() if v}
         else:
-            raise Exception(f'Invalid file type: {self.file_type}')
+            raise TypeError(f'Invalid file type: {self.file_type}')
 
         self.skip_rows = kwargs.pop('skip_rows', 0)
 
@@ -255,6 +235,7 @@ class File(_BaseSubject):
                 def row_handler(r):  # convert values to strings and replace None with empty
                     return [str(x or '') for x in r]
 
+            max_error_rule = table.MaxError(self.max_errors)
             for rix, row in enumerate(generator):
                 if rix < self.skip_rows:
                     continue
@@ -266,15 +247,16 @@ class File(_BaseSubject):
                     if rix == 0:  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
-                        m = f"max of {str(self.max_errors)} row errors exceeded"
-                        e.append(ex.MaxExceededError(m))
+                        e.append(max_error_rule._exception_msg())
                         break
                 if rix > 0:
                     for k, ix in column_cache_map.items():
                         column_cache[k].append(row[ix])
 
         for k, v in column_cache.items():
-            ce = self.layout.layout[k]._check(v, rule_type=cr.Rule)
+            ce = self.layout.layout[k]._check(
+                v, cix=column_cache_map[k], rule_type=cr.Rule, name=k
+            )
             if ce:
                 e.append(ce)
         if e:

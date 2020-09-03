@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import pytest
 
-from rumydata import exception as ex, field, rules
+from rumydata import field, rules
 
 
 def recurse_subclasses(class_to_recurse):
@@ -50,13 +50,13 @@ def test_text_good(value, kwargs):
     assert not field.Text(**kwargs).check_cell(value)
 
 
-@pytest.mark.parametrize('value,kwargs,err', [
-    ('', dict(max_length=1), ex.NullValueError),
-    ('xxx', dict(max_length=2), ex.LengthError),
-    ('x', dict(max_length=80, min_length=2), ex.LengthError),
+@pytest.mark.parametrize('value,kwargs,rule', [
+    ('', dict(max_length=1), rules.cell.NotNull),
+    ('xxx', dict(max_length=2), rules.cell.MaxChar),
+    ('x', dict(max_length=80, min_length=2), rules.cell.MinChar),
 ])
-def test_text_bad(value, kwargs, err):
-    assert field.Text(**kwargs)._has_error(value, err)
+def test_text_bad(value, kwargs, rule):
+    assert field.Text(**kwargs)._has_error(value, rule.rule_exception())
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -71,19 +71,19 @@ def test_date_good(value, kwargs):
     assert not field.Date(**kwargs).check_cell(value)
 
 
-@pytest.mark.parametrize('value,err,kwargs', [
-    ('', ex.NullValueError, {}),
-    ('20200101', ex.ConversionError, {}),
-    ('9999-99-99', ex.ConversionError, {}),
-    ('2020-01-01', ex.ValueComparisonError, dict(min_date='2020-01-02')),
-    ('2020-01-02', ex.ValueComparisonError, dict(max_date='2020-01-01')),
-    ('2020-01-01', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-05', ex.ValueComparisonError, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-01 00:00:00', ex.ConversionError, dict(truncate_time=True)),
-    ('2020-01-01 00:00:01', ex.ConversionError, dict(truncate_time=False))
+@pytest.mark.parametrize('value,rule,kwargs', [
+    ('', rules.cell.NotNull, {}),
+    ('20200101', rules.cell.CanBeDateIso, {}),
+    ('9999-99-99', rules.cell.CanBeDateIso, {}),
+    ('2020-01-01', rules.cell.DateGTE, dict(min_date='2020-01-02')),
+    ('2020-01-02', rules.cell.DateLTE, dict(max_date='2020-01-01')),
+    ('2020-01-01', rules.cell.DateGTE, dict(min_date='2020-01-02', max_date='2020-01-03')),
+    ('2020-01-05', rules.cell.DateLTE, dict(min_date='2020-01-02', max_date='2020-01-03')),
+    ('2020-01-01 00:00:00', rules.cell.CanBeDateIso, dict(truncate_time=True)),
+    ('2020-01-01 00:00:01', rules.cell.CanBeDateIso, dict(truncate_time=False))
 ])
-def test_date_bad(value, err, kwargs):
-    assert field.Date(**kwargs)._has_error(value, err)
+def test_date_bad(value, rule, kwargs):
+    assert field.Date(**kwargs)._has_error(value, rule.rule_exception())
 
 
 @pytest.mark.parametrize('value,sig_dig,kwargs', [
@@ -102,19 +102,19 @@ def test_currency_good(value, sig_dig, kwargs):
     assert not field.Currency(sig_dig, **kwargs).check_cell(value)
 
 
-@pytest.mark.parametrize('value,sig_dig,rules,err', [
-    ('0.00', 5, [rules.cell.NumericLT(0)], ex.ValueComparisonError),
-    ('0.01', 5, [rules.cell.NumericLTE(0)], ex.ValueComparisonError),
-    ('0.01', 5, [rules.cell.NumericET(0)], ex.ValueComparisonError),
-    ('-0.01', 5, [rules.cell.NumericGTE(0)], ex.ValueComparisonError),
-    ('-0.01', 5, [rules.cell.NumericGT(0)], ex.ValueComparisonError),
-    ('', 5, [], ex.NullValueError),
-    ('123.45', 4, [], ex.LengthError),
-    ('123.', 4, [], ex.CurrencyPatternError),
-    ('123.456', 4, [], ex.CurrencyPatternError)
+@pytest.mark.parametrize('value,sig_dig,rules_list,err', [
+    ('0.00', 5, [rules.cell.NumericLT(0)], rules.cell.NumericLT),
+    ('0.01', 5, [rules.cell.NumericLTE(0)], rules.cell.NumericLTE),
+    ('0.01', 5, [rules.cell.NumericET(0)], rules.cell.NumericET),
+    ('-0.01', 5, [rules.cell.NumericGTE(0)], rules.cell.NumericGTE),
+    ('-0.01', 5, [rules.cell.NumericGT(0)], rules.cell.NumericGT),
+    ('', 5, [], rules.cell.NotNull),
+    ('123.45', 4, [], rules.cell.MaxDigit),
+    ('123.', 4, [], rules.cell.NumericDecimals),
+    ('123.456', 4, [], rules.cell.NumericDecimals)
 ])
-def test_currency_bad(value, sig_dig, rules, err):
-    assert field.Currency(sig_dig, rules=rules)._has_error(value, err)
+def test_currency_bad(value, sig_dig, rules_list, err):
+    assert field.Currency(sig_dig, rules=rules_list)._has_error(value, err.rule_exception())
 
 
 @pytest.mark.parametrize('value,max_length, kwargs', [
@@ -129,13 +129,13 @@ def test_digit_good(value, max_length, kwargs):
 
 
 @pytest.mark.parametrize('value,max_length,err,kwargs', [
-    ('-123', 3, ex.CharacterError, {}),
-    ('-123', 3, ex.LengthError, {}),
-    ('1', 2, ex.LengthError, dict(min_length=2)),
-    ('5', 3, ex.LengthError, dict(min_length=2))
+    ('-123', 3, rules.cell.OnlyNumbers, {}),
+    ('-123', 3, rules.cell.MaxChar, {}),
+    ('1', 2, rules.cell.MinChar, dict(min_length=2)),
+    ('123456', 3, rules.cell.MaxChar, dict(min_length=2))
 ])
 def test_digit_bad(value, max_length, err, kwargs):
-    assert field.Digit(max_length, **kwargs)._has_error(value, err)
+    assert field.Digit(max_length, **kwargs)._has_error(value, err.rule_exception())
 
 
 @pytest.mark.parametrize('value,max_length,kwargs', [
@@ -158,19 +158,19 @@ def test_integer_good(value, max_length, kwargs):
 
 
 @pytest.mark.parametrize('value,max_length,kwargs,err', [
-    ('0', 1, dict(rules=[rules.cell.NumericLT(0)]), ex.ValueComparisonError),
-    ('1', 1, dict(rules=[rules.cell.NumericLTE(0)]), ex.ValueComparisonError),
-    ('1', 1, dict(rules=[rules.cell.NumericET(0)]), ex.ValueComparisonError),
-    ('-1', 1, dict(rules=[rules.cell.NumericGTE(0)]), ex.ValueComparisonError),
-    ('0', 1, dict(rules=[rules.cell.NumericGT(0)]), ex.ValueComparisonError),
-    ('', 1, {}, ex.NullValueError),
-    ('1', 2, dict(min_length=2), ex.LengthError),
-    ('111', 2, {}, ex.LengthError),
-    ('00', 2, {}, ex.LeadingZeroError),
-    ('01', 2, {}, ex.LeadingZeroError)
+    ('0', 1, dict(rules=[rules.cell.NumericLT(0)]), rules.cell.NumericLT),
+    ('1', 1, dict(rules=[rules.cell.NumericLTE(0)]), rules.cell.NumericLTE),
+    ('1', 1, dict(rules=[rules.cell.NumericET(0)]), rules.cell.NumericET),
+    ('-1', 1, dict(rules=[rules.cell.NumericGTE(0)]), rules.cell.NumericGTE),
+    ('0', 1, dict(rules=[rules.cell.NumericGT(0)]), rules.cell.NumericGT),
+    ('', 1, {}, rules.cell.NotNull),
+    ('1', 2, dict(min_length=2), rules.cell.MinDigit),
+    ('111', 2, {}, rules.cell.MaxDigit),
+    ('00', 2, {}, rules.cell.NoLeadingZero),
+    ('01', 2, {}, rules.cell.NoLeadingZero)
 ])
 def test_integer_bad(value, max_length, kwargs, err):
-    assert field.Integer(max_length, **kwargs)._has_error(value, err)
+    assert field.Integer(max_length, **kwargs)._has_error(value, err.rule_exception())
 
 
 @pytest.mark.parametrize('value,choices,kwargs', [
@@ -186,11 +186,11 @@ def test_choice_good(value, choices, kwargs):
 
 
 @pytest.mark.parametrize('value,choices,kwargs,err', [
-    ('', ['x'], {}, ex.NullValueError),
-    ('x', ['z'], {}, ex.InvalidChoiceError)
+    ('', ['x'], {}, rules.cell.NotNull),
+    ('x', ['z'], {}, rules.cell.Choice)
 ])
 def test_choice_bad(value, choices, kwargs, err):
-    assert field.Choice(choices, **kwargs)._has_error(value, err)
+    assert field.Choice(choices, **kwargs)._has_error(value, err.rule_exception())
 
 
 @pytest.mark.parametrize('value,func,assertion', [
@@ -203,15 +203,16 @@ def test_static_rules_good(value, func, assertion):
     assert not x.check_cell(value)
 
 
-@pytest.mark.parametrize('value,func,assertion,kwargs', [
-    ('2', lambda x: int(x) % 2 == 1, "must be an even number", {}),
-    ('1', lambda x: int(x) % 2 == 0, "must be an odd number", {}),
-    ('2020-00-01', lambda x: dt.fromisoformat(x), "must be an isodate", {}),
-    ('', lambda x: 1 / 0, "custom exception", dict(exception=ZeroDivisionError))
+@pytest.mark.parametrize('value,func,assertion', [
+    ('2', lambda x: int(x) % 2 == 1, "must be an even number"),
+    ('1', lambda x: int(x) % 2 == 0, "must be an odd number"),
+    ('2020-00-01', lambda x: dt.fromisoformat(x), "must be an isodate"),
+    ('', lambda x: 1 / 0, "custom exception")
 ])
-def test_static_rules_bad(value, func, assertion, kwargs):
-    x = field.Field(rules=[rules.cell.make_static_cell_rule(func, assertion, **kwargs)])
-    assert x._has_error(value, kwargs.get('exception', ex.UrNotMyDataError))
+def test_static_rules_bad(value, func, assertion):
+    r = rules.cell.make_static_cell_rule(func, assertion)
+    x = field.Field(rules=[r])
+    assert x._has_error(value, r.rule_exception())
 
 
 @pytest.mark.parametrize('cell', [
@@ -230,7 +231,7 @@ def test_column_compare_rule_good():
 
 def test_column_compare_rule_bad():
     x = field.Field(rules=[rules.cell.GreaterThanColumn('x')])
-    assert x._has_error('1', compare={'x': '1'}, error=ex.ColumnComparisonError)
+    assert x._has_error('1', compare={'x': '1'}, error=rules.cell.GreaterThanColumn.rule_exception())
 
 
 def test_column_unique_good():
@@ -240,4 +241,4 @@ def test_column_unique_good():
 
 def test_column_unique_bad():
     x = field.Field(rules=[rules.column.Unique()])
-    assert x._has_error(['2', '2'], ex.DuplicateValueError, rule_type=field.cr.Rule)
+    assert x._has_error(['2', '2'], rules.column.Unique.rule_exception(), rule_type=field.cr.Rule)

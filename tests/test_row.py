@@ -1,6 +1,5 @@
 import pytest
 
-from rumydata import exception as ex
 from rumydata import table, field
 from rumydata.rules import row as rr, header as hr
 
@@ -20,11 +19,11 @@ def test_row_good(basic):
 
 
 @pytest.mark.parametrize('value,err', [
-    ([1, 2, 3, 4, 5], ex.RowLengthError),
-    ([1, 2, 3], ex.RowLengthError)
+    ([1, 2, 3, 4, 5], rr.RowLengthLTE),
+    ([1, 2, 3], rr.RowLengthGTE)
 ])
 def test_row_bad(basic, value, err):
-    assert table.Layout(basic)._has_error(value, err, rule_type=rr.Rule)
+    assert table.Layout(basic)._has_error(value, err.rule_exception(), rule_type=rr.Rule)
 
 
 def test_header_good(basic):
@@ -32,12 +31,12 @@ def test_header_good(basic):
 
 
 @pytest.mark.parametrize('value,err', [
-    (['col1', 'col2'], ex.MissingColumnError),
-    (['col1', 'col2', 'col2'], ex.DuplicateColumnError),
-    (['col1', 'col2', 'col5'], ex.UnexpectedColumnError)
+    (['col1', 'col2'], hr.NoMissing),
+    (['col1', 'col2', 'col2'], hr.NoDuplicate),
+    (['col1', 'col2', 'col5'], hr.NoExtra)
 ])
 def test_header_bad(basic, value, err):
-    assert table.Layout(basic)._has_error(value, err, rule_type=hr.Rule)
+    assert table.Layout(basic)._has_error(value, err.rule_exception(), rule_type=hr.Rule)
 
 
 def test_header_skip(basic):

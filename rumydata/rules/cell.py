@@ -14,7 +14,6 @@ import re
 from datetime import datetime
 from typing import Union, Tuple, Dict, List
 
-from rumydata import exception as ex
 from rumydata._base import _BaseRule
 
 __all__ = [
@@ -39,7 +38,7 @@ class Rule(_BaseRule):
             return data[0],
 
 
-def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rule:
+def make_static_cell_rule(func, assertion) -> Rule:
     """
     Static cell rule factory
 
@@ -51,13 +50,10 @@ def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rul
     :param func: a function which takes a single positional argument
     :param assertion: a string describing the condition which must be met in
         order for the function to return True
-    :param exception: the UrNotMyDataError type exception to return if the
-        function assertion returns false.
     :return: a rumydata.rules.cell.Rule
     """
 
     class FactoryRule(Rule):
-        _exception_class = exception
 
         def _evaluator(self):
             return func
@@ -71,13 +67,8 @@ def make_static_cell_rule(func, assertion, exception=ex.UrNotMyDataError) -> Rul
 class NotNull(Rule):
     """ Cell not null Rule """
 
-    _exception_class = ex.NullValueError
-
     def _evaluator(self):
         return lambda x: x != ''
-
-    def _exception_msg(self):
-        return self._exception_class(self._explain())
 
     def _explain(self) -> str:
         return 'cannot be empty/blank'
@@ -86,7 +77,6 @@ class NotNull(Rule):
 class ExactChar(Rule):
     """ Cell exact character length Rule """
 
-    _exception_class = ex.LengthError
     _default_args = (1,)
 
     def __init__(self, exact_length):
@@ -103,7 +93,6 @@ class ExactChar(Rule):
 class MinChar(Rule):
     """ Cell minimum character length Rule """
 
-    _exception_class = ex.LengthError
     _default_args = (1,)
 
     def __init__(self, min_length):
@@ -120,7 +109,6 @@ class MinChar(Rule):
 class MaxChar(Rule):
     """ Cell maximum character length Rule """
 
-    _exception_class = ex.LengthError
     _default_args = (1,)
 
     def __init__(self, max_length):
@@ -137,8 +125,6 @@ class MaxChar(Rule):
 class AsciiChar(Rule):
     """ Cell contains only ASCII character Rule """
 
-    _exception_class = ex.UrNotMyDataError
-
     def _evaluator(self):
         return lambda x: all(ord(c) < 128 for c in x)
 
@@ -149,7 +135,6 @@ class AsciiChar(Rule):
 class Choice(Rule):
     """ Cell choice Rule """
 
-    _exception_class = ex.InvalidChoiceError
     _default_args = (['x'],)
 
     def __init__(self, choices: List[str], case_insensitive=False):
@@ -185,7 +170,6 @@ class MinDigit(Rule):
     exceeds the specified minimum. Used to evaluate length of significant digits
     in numeric strings that might contain formatting.
     """
-    _exception_class = ex.LengthError
     _default_args = (1,)
 
     def __init__(self, min_length):
@@ -207,7 +191,6 @@ class MaxDigit(Rule):
     or equal to the specified minimum. Used to evaluate length of significant
     digits in numeric strings that might contain formatting.
     """
-    _exception_class = ex.LengthError
     _default_args = (1,)
 
     def __init__(self, max_length):
@@ -224,8 +207,6 @@ class MaxDigit(Rule):
 class OnlyNumbers(Rule):
     """ Cell only digit characters Rule """
 
-    _exception_class = ex.CharacterError
-
     def _evaluator(self):
         return lambda x: bool(re.fullmatch(r'\d+', x))
 
@@ -241,8 +222,6 @@ class NoLeadingZero(Rule):
     A lone zero (0) will not raise an error.
     """
 
-    _exception_class = ex.LeadingZeroError
-
     def _evaluator(self):
         return lambda x: bool(re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x)))
 
@@ -252,8 +231,6 @@ class NoLeadingZero(Rule):
 
 class CanBeFloat(Rule):
     """ Cell can be float Rule """
-
-    _exception_class = ex.ConversionError
 
     def _evaluator(self):
         def fun(x):
@@ -271,8 +248,6 @@ class CanBeFloat(Rule):
 class CanBeInteger(Rule):
     """ Cell can be integer Rule """
 
-    _exception_class = ex.ConversionError
-
     def _evaluator(self):
         def fun(x):
             try:
@@ -289,8 +264,6 @@ class CanBeInteger(Rule):
 class NumericDecimals(Rule):
     """ Cell has maximum decimals Rule """
 
-    _exception_class = ex.CurrencyPatternError
-
     def __init__(self, max_decimals=2):
         super().__init__()
         self.decimals = max_decimals
@@ -306,7 +279,6 @@ class NumericDecimals(Rule):
 class LengthComparison(Rule):
     """ Base length comparison Rule """
 
-    _exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
     _default_args = ('x',)
 
@@ -371,7 +343,6 @@ class NumericComparison(Rule):
     to a float value.
     """
 
-    _exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
     _default_args = ('x',)
 
@@ -430,8 +401,6 @@ class NumericLT(NumericComparison):
 class DateRule(Rule):
     """ Base date Rule """
 
-    _exception_class = ex.ConversionError
-
     def __init__(self, **kwargs):
         self.truncate_time = kwargs.pop('truncate_time', False)
         super().__init__()
@@ -471,7 +440,6 @@ class DateComparisonRule(DateRule):
     to a date using the specified format for the field.
     """
 
-    _exception_class = ex.ValueComparisonError
     comparison_language = 'N/A'
     _default_args = ('2020-01-01',)
 
@@ -562,7 +530,6 @@ class DateLT(DateComparisonRule):
 class ColumnComparisonRule(Rule):
     """ Base column comparison Rule """
 
-    _exception_class = ex.ColumnComparisonError
     _default_args = ('x',)
 
     def __init__(self, compare_to: str):

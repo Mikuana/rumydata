@@ -79,12 +79,7 @@ class UrNotMyDataError(Exception):
 
         depth += 1
         for el in errors:
-            if isinstance(el, list) and not isinstance(el, (str, bytes)):
-                yield cls._flatten_md(el, depth)
-            elif issubclass(el.__class__, UrNotMyDataError):
-                yield el.md(depth)
-            else:
-                yield UrNotMyDataError(el)._md(depth)
+            yield el._md(depth)
 
 
 class FileError(UrNotMyDataError):
@@ -110,8 +105,15 @@ class ColumnError(UrNotMyDataError):
     :param errors: a list of errors contained in the column.
     """
 
-    def __init__(self, msg=None, errors: list = None):
-        super().__init__(msg, errors)
+    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+        message = ''
+        offset = 0 if kwargs.get("zero_index") else 1
+
+        message += f'{str(index + offset)}'
+        if kwargs.get("name"):
+            message += f' ({kwargs.get("name")})'
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
 class RowError(UrNotMyDataError):
@@ -157,95 +159,3 @@ class CellError(UrNotMyDataError):
             message += f' ({kwargs.get("name")})'
         message += f'; {msg}' if msg else ''
         super().__init__(message, errors)
-
-
-class DataError(UrNotMyDataError):
-    pass
-
-
-class DateFormatError(UrNotMyDataError):
-    pass
-
-
-class ConversionError(UrNotMyDataError):
-    pass
-
-
-class CurrencyPatternError(UrNotMyDataError):
-    pass
-
-
-class LengthError(UrNotMyDataError):
-    pass
-
-
-class LeadingZeroError(UrNotMyDataError):
-    pass
-
-
-class InvalidChoiceError(UrNotMyDataError):
-    pass
-
-
-class MissingColumnError(UrNotMyDataError):
-    pass
-
-
-class UnexpectedColumnError(UrNotMyDataError):
-    pass
-
-
-class DuplicateColumnError(UrNotMyDataError):
-    pass
-
-
-class RowLengthError(UrNotMyDataError):
-    pass
-
-
-class NotEnoughFieldsError(UrNotMyDataError):
-    pass
-
-
-class TooManyFieldsError(UrNotMyDataError):
-    pass
-
-
-class ValueComparisonError(UrNotMyDataError):
-    pass
-
-
-class FileUrNotMyDataError(UrNotMyDataError):
-    pass
-
-
-class FilePatternError(UrNotMyDataError):
-    pass
-
-
-class NullValueError(UrNotMyDataError):
-    _message = 'value is blank/null'
-
-
-class MaxExceededError(UrNotMyDataError):
-    pass
-
-
-class ColumnComparisonError(UrNotMyDataError):
-    pass
-
-
-class RowComparisonError(UrNotMyDataError):
-    pass
-
-
-class CharacterError(UrNotMyDataError):
-    pass
-
-
-class DuplicateValueError(UrNotMyDataError):
-    pass
-
-
-class NoRulesDefinedError(UrNotMyDataError):
-    pass
