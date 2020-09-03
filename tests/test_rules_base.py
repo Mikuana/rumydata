@@ -17,7 +17,7 @@ def recurse_subclasses(class_to_recurse):
 @pytest.mark.parametrize('rule', recurse_subclasses(_BaseRule))
 def test_rule_exception(rule):
     """ All rules have a UrNotMyDataError type """
-    assert issubclass(rule.class_exception(), UrNotMyDataError)
+    assert issubclass(rule.rule_exception(), UrNotMyDataError)
 
 
 @pytest.mark.parametrize('rule', recurse_subclasses(_BaseRule))
