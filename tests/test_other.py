@@ -15,7 +15,7 @@ import rumydata.rules.cell
 import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
-from rumydata.rules import column as cr, table as tr
+from rumydata.rules import column as cr, table as tr, header as hr
 from rumydata.table import File
 
 
@@ -125,6 +125,11 @@ def test_file_excel_good(basic_good_excel, basic):
     assert not File(rumydata.table.Layout(basic), file_type='excel').check(basic_good_excel)
 
 
+def test_file_invalid_type(basic):
+    with pytest.raises(TypeError):
+        File(rumydata.table.Layout(basic), file_type='xxx')
+
+
 def test_file_row_skip_good(basic_row_skip_good, basic):
     assert not File(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
@@ -184,6 +189,14 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
     cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
     assert File(cols)._has_error(write_row(tmpdir, cols, row), compare_rule.rule_exception())
+
+
+def test_header_file_bad(tmpdir):
+    cols1 = rumydata.table.Layout({'x': field.Field()})
+    cols2 = rumydata.table.Layout({'y': field.Field()})
+    row = ['1']
+    fp = write_row(tmpdir, cols2, row)
+    assert File(cols1)._has_error(fp, hr.NoMissing.rule_exception())
 
 
 def test_unique_bad(tmpdir):
