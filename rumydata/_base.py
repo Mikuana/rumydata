@@ -23,8 +23,8 @@ class _BaseRule:
         pass
 
     @classmethod
-    def rule_exception(cls):
-        return type(f'{cls.__name__}Error', (ex.UrNotMyDataError,), {})
+    def _exception_class(cls):
+        return type(f'{cls.__name__}Error', ex.UrNotMyDataError)
 
     def _prepare(self, data) -> tuple:
         """
@@ -71,11 +71,11 @@ class _BaseRule:
         """
         Validation exception message
 
-        Generates an exception from the rule_exception method with a
+        Generates an exception from the _exception_class property with a
         sanitized error message that explicitly avoids showing the specific data
         that failed the validation.
         """
-        return self.rule_exception()(self._explain())
+        return self._exception_class()(self._explain())
 
     def _explain(self) -> str:
         """
@@ -112,7 +112,7 @@ class _BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def _check(self, data, rule_type) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
+    def _check(self, data, rule_type) -> Union[List[ex.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -127,6 +127,9 @@ class _BaseSubject:
         :return: a list of any errors that were raised while checking the data.
         """
         errors = []
+        if not self.rules:
+            return [ex.NoRulesDefinedError()]
+
         for r in self.rules:
             # noinspection PyBroadException
             try:
@@ -136,7 +139,7 @@ class _BaseSubject:
                     if not e:
                         errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
-                errors.append(r.rule_exception()(
+                errors.append(r._exception_class(
                     f'raised {e.__class__.__name__} while checking if value {r._explain()}')
                 )
         return errors
@@ -155,7 +158,6 @@ class _BaseSubject:
 
     def _has_error(self, value, error, **kwargs) -> bool:
         """
-
         Check flattened errors for a specific exception type
 
         This method is a convenience wrapper for testing which determines if the
@@ -167,8 +169,7 @@ class _BaseSubject:
         :return: a boolean indicator of whether the specified error type was
             returned in the nested structure when checking the provided value.
         """
-        # errors must be checked by name since they are generated dynamically for each rule and
-        return error.__name__ in [type(x).__name__ for x in self._list_errors(value, **kwargs)]
+        return error in [x.__class__ for x in self._list_errors(value, **kwargs)]
 
     def _digest(self) -> List[str]:
         """
@@ -204,7 +205,13 @@ class _BaseSubject:
         checking to see if any of those errors contain additional errors, then
         continuing to recurse until all errors have been yielded.
         """
-        yield error
-        for el in error._errors:
-            for x in cls._flatten_exceptions(el):
-                yield x
+        if isinstance(error, list):
+            for el in error:
+                yield cls._flatten_exceptions(el)
+        elif issubclass(error.__class__, ex.UrNotMyDataError):
+            yield error
+            for el in error._errors:
+                for x in cls._flatten_exceptions(el):
+                    yield x
+        else:
+            yield error

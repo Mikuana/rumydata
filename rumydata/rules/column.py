@@ -42,7 +42,7 @@ class Unique(Rule):
         return lambda x: len(x) == len(set(x))
 
     def _exception_msg(self):
-        return self.rule_exception()(self._explain())
+        return self._exception_class()(self._explain())
 
     def _explain(self):
         return 'values must be unique'

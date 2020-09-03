@@ -23,7 +23,7 @@ def test_row_good(basic):
     ([1, 2, 3], rr.RowLengthGTE)
 ])
 def test_row_bad(basic, value, err):
-    assert table.Layout(basic)._has_error(value, err.rule_exception(), rule_type=rr.Rule)
+    assert table.Layout(basic)._has_error(value, err._exception_class(), rule_type=rr.Rule)
 
 
 def test_header_good(basic):
@@ -36,7 +36,7 @@ def test_header_good(basic):
     (['col1', 'col2', 'col5'], hr.NoExtra)
 ])
 def test_header_bad(basic, value, err):
-    assert table.Layout(basic)._has_error(value, err.rule_exception(), rule_type=hr.Rule)
+    assert table.Layout(basic)._has_error(value, err._exception_class(), rule_type=hr.Rule)
 
 
 def test_header_skip(basic):
