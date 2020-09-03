@@ -112,7 +112,7 @@ class _BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def _check(self, data, rule_type) -> Union[List[ex.UrNotMyDataError], None]:
+    def _check(self, data, rule_type) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -155,6 +155,7 @@ class _BaseSubject:
 
     def _has_error(self, value, error, **kwargs) -> bool:
         """
+
         Check flattened errors for a specific exception type
 
         This method is a convenience wrapper for testing which determines if the
@@ -203,8 +204,7 @@ class _BaseSubject:
         checking to see if any of those errors contain additional errors, then
         continuing to recurse until all errors have been yielded.
         """
-        if issubclass(error.__class__, ex.UrNotMyDataError):
-            yield error
-            for el in error._errors:
-                for x in cls._flatten_exceptions(el):
-                    yield x
+        yield error
+        for el in error._errors:
+            for x in cls._flatten_exceptions(el):
+                yield x
