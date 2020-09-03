@@ -110,9 +110,6 @@ class Layout(_BaseSubject):
         ])
         return fields
 
-    def _digest(self):
-        return [[f'Name: {k}', *v._digest()] for k, v in self.layout.items()]
-
     def _check(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
             return
