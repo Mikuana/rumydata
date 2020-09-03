@@ -139,23 +139,6 @@ class Layout(_BaseSubject):
             if e:
                 return ex.RowError(rix, errors=e)
 
-    def _comparison_columns(self) -> set:
-        """
-        Comparison fields report
-
-        A method to report all columns that will need to be compared while
-        checking rules. This works by checking the equivalent method for each
-        field in the layout. This makes it convenient to know which values in
-        a row need to be stored in a dictionary for possible comparison in each
-        cell.
-
-        :return: a set of the columns that will need to be compared.
-        """
-        compares = set()
-        for v in self.layout.values():
-            compares.update(v._comparison_columns())
-        return compares
-
 
 class File(_BaseSubject):
     """
