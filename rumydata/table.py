@@ -181,7 +181,7 @@ class File(_BaseSubject):
             x = {x: kwargs.pop(x, None) for x in ['sheet']}
             self.excel_kwargs = {k: v for k, v in x.items() if v}
         else:
-            raise Exception(f'Invalid file type: {self.file_type}')
+            raise TypeError(f'Invalid file type: {self.file_type}')
 
         self.skip_rows = kwargs.pop('skip_rows', 0)
 
