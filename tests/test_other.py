@@ -134,7 +134,7 @@ def test_layout_good(basic, basic_good):
 
 
 def test_readme_example(readme_layout, readme_data):
-    rex = rumydata.rules.cell.Choice.class_exception()
+    rex = rumydata.rules.cell.Choice.rule_exception()
     assert File(rumydata.table.Layout(readme_layout))._has_error(readme_data, rex)
 
 
@@ -147,7 +147,7 @@ def test_readme_example(readme_layout, readme_data):
 def test_has_max_error(tmpdir, rows, me):
     fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
-    assert File(fields, max_errors=me)._has_error(file, tr.MaxError.class_exception())
+    assert File(fields, max_errors=me)._has_error(file, tr.MaxError.rule_exception())
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -159,7 +159,7 @@ def test_has_max_error(tmpdir, rows, me):
 def test_missing_max_error(tmpdir, rows, me):
     fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
-    assert not File(fields, max_errors=me)._has_error(file, tr.MaxError.class_exception())
+    assert not File(fields, max_errors=me)._has_error(file, tr.MaxError.rule_exception())
 
 
 def test_column_compare_row_good():
@@ -183,13 +183,13 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
     cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
-    assert File(cols)._has_error(write_row(tmpdir, cols, row), compare_rule.class_exception())
+    assert File(cols)._has_error(write_row(tmpdir, cols, row), compare_rule.rule_exception())
 
 
 def test_unique_bad(tmpdir):
     cols = rumydata.table.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
-    assert File(cols)._has_error(f, cr.Unique.class_exception())
+    assert File(cols)._has_error(f, cr.Unique.rule_exception())
 
 
 def test_unique_good(tmpdir):

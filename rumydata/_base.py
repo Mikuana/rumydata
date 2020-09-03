@@ -23,7 +23,7 @@ class _BaseRule:
         pass
 
     @classmethod
-    def class_exception(cls):
+    def rule_exception(cls):
         return type(f'{cls.__name__}Error', (ex.UrNotMyDataError,), {})
 
     def _prepare(self, data) -> tuple:
@@ -71,11 +71,11 @@ class _BaseRule:
         """
         Validation exception message
 
-        Generates an exception from the class_exception method with a
+        Generates an exception from the rule_exception method with a
         sanitized error message that explicitly avoids showing the specific data
         that failed the validation.
         """
-        return self.class_exception()(self._explain())
+        return self.rule_exception()(self._explain())
 
     def _explain(self) -> str:
         """
@@ -139,7 +139,7 @@ class _BaseSubject:
                     if not e:
                         errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
-                errors.append(r.class_exception()(
+                errors.append(r.rule_exception()(
                     f'raised {e.__class__.__name__} while checking if value {r._explain()}')
                 )
         return errors
