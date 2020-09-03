@@ -31,7 +31,6 @@ the `openpyxl` package.
 
 from rumydata import field
 from rumydata import rules
-from rumydata.menu import menu
 from rumydata.table import Layout, File
 
-__version__ = '0.3.0'
+__version__ = '0.2.0'
