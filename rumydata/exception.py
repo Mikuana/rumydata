@@ -105,8 +105,15 @@ class ColumnError(UrNotMyDataError):
     :param errors: a list of errors contained in the column.
     """
 
-    def __init__(self, msg=None, errors: list = None):
-        super().__init__(msg, errors)
+    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+        message = ''
+        offset = 0 if kwargs.get("zero_index") else 1
+
+        message += f'{str(index + offset)}'
+        if kwargs.get("name"):
+            message += f' ({kwargs.get("name")})'
+        message += f'; {msg}' if msg else ''
+        super().__init__(message, errors)
 
 
 class RowError(UrNotMyDataError):
