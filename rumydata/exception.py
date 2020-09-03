@@ -1,10 +1,14 @@
 """
-Exception module
+rumydata exception module
 
 This module contains specialized Exception classes which allow for aggregation
-of all errors identified in a subject. These exceptions provide the structure to
-collect multiple exceptions at varying levels within a validation process, and
-display them in a meaningful way.
+of all errors identified in a subject.
+
+The majority of exceptions in this module are simple subclasses of the
+UrNotMyDataError exception, which do nothing except rename the class. These
+renames allow for more meaningful exception names to be associated with rules,
+and allow for more specific checking of particular errors (especially useful
+during testing).
 """
 
 
@@ -75,7 +79,12 @@ class UrNotMyDataError(Exception):
 
         depth += 1
         for el in errors:
-            yield el._md(depth)
+            if isinstance(el, list) and not isinstance(el, (str, bytes)):
+                yield cls._flatten_md(el, depth)
+            elif issubclass(el.__class__, UrNotMyDataError):
+                yield el._md(depth)
+            else:
+                yield UrNotMyDataError(el)._md(depth)
 
 
 class FileError(UrNotMyDataError):
@@ -101,15 +110,8 @@ class ColumnError(UrNotMyDataError):
     :param errors: a list of errors contained in the column.
     """
 
-    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
-        message = ''
-        offset = 0 if kwargs.get("zero_index") else 1
-
-        message += f'{str(index + offset)}'
-        if kwargs.get("name"):
-            message += f' ({kwargs.get("name")})'
-        message += f'; {msg}' if msg else ''
-        super().__init__(message, errors)
+    def __init__(self, msg=None, errors: list = None):
+        super().__init__(msg, errors)
 
 
 class RowError(UrNotMyDataError):
