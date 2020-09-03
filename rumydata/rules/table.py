@@ -36,7 +36,6 @@ class FileExists(Rule):
 class FileNameMatchesPattern(Rule):
     """ File name matches regex pattern Rule """
 
-    _exception_class = ex.FilePatternError
     _default_args = (re.compile(r'x'),)
 
     def __init__(self, pattern: Union[re.Pattern, List[re.Pattern]]):

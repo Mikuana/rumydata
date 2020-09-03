@@ -20,7 +20,6 @@ potential to introduce performance impacts.
 
 from typing import List
 
-from rumydata import exception as ex
 from rumydata._base import _BaseRule
 
 __all__ = ['Unique']
@@ -36,8 +35,6 @@ class Rule(_BaseRule):
 class Unique(Rule):
     """ Column values unique Rule """
 
-    _exception_class = ex.DuplicateValueError
-
     def _prepare(self, data: List[str]) -> tuple:
         return [x for x in data if not x == ''],
 
@@ -45,7 +42,7 @@ class Unique(Rule):
         return lambda x: len(x) == len(set(x))
 
     def _exception_msg(self):
-        return self._exception_class(self._explain())
+        return self._exception_class()(self._explain())
 
     def _explain(self):
         return 'values must be unique'

@@ -8,14 +8,11 @@ the expected number of values, before attempting to validate individual cells.
 
 from typing import List
 
-from rumydata import exception as ex
 from rumydata._base import _BaseRule
 
 
 class Rule(_BaseRule):
     """ Row Rule """
-
-    _exception_class = ex.RowComparisonError
 
     def _prepare(self, data: List[str]) -> tuple:
         return data,
@@ -24,7 +21,6 @@ class Rule(_BaseRule):
 class RowLengthLTE(Rule):
     """ Row length less than or equal to Rule """
 
-    _exception_class = ex.RowLengthError
     _default_args = (1,)
 
     def __init__(self, columns_length):
@@ -41,7 +37,6 @@ class RowLengthLTE(Rule):
 class RowLengthGTE(Rule):
     """ Row greater than or equal to Rule """
 
-    _exception_class = ex.RowLengthError
     _default_args = (1,)
 
     def __init__(self, columns_length):

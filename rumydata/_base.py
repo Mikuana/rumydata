@@ -17,11 +17,14 @@ class _BaseRule:
     This class contains the default methods that can be used to stub out all of
     the rule types contained in the rules submodule.
     """
-    _exception_class: ex.UrNotMyDataError = ex.UrNotMyDataError
     _default_args = tuple()  # a default set of positional args for testing
 
     def __init__(self):
         pass
+
+    @classmethod
+    def _exception_class(cls):
+        return type(f'{cls.__name__}Error', ex.UrNotMyDataError)
 
     def _prepare(self, data) -> tuple:
         """
@@ -72,7 +75,7 @@ class _BaseRule:
         sanitized error message that explicitly avoids showing the specific data
         that failed the validation.
         """
-        return self._exception_class(self._explain())
+        return self._exception_class()(self._explain())
 
     def _explain(self) -> str:
         """
