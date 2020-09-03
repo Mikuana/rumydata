@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from rumydata.field import Integer
+from rumydata.field import Integer, Field
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, File
 
@@ -43,3 +43,10 @@ def test_exception_message_structure(tmpdir):
         print(ae)
         print(msg)
         assert str(ae).endswith(msg)
+
+
+def test_documentation():
+    """ An equally silly test of documentation output """
+    layout = Layout({'x': Field()})
+    expected = ' - **x**\n   - cannot be empty/blank'
+    assert layout.documentation() == expected
