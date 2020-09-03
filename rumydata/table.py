@@ -255,6 +255,7 @@ class File(_BaseSubject):
                 def row_handler(r):  # convert values to strings and replace None with empty
                     return [str(x or '') for x in r]
 
+            max_error_rule = table.MaxError(self.max_errors)
             for rix, row in enumerate(generator):
                 if rix < self.skip_rows:
                     continue
@@ -266,8 +267,7 @@ class File(_BaseSubject):
                     if rix == 0:  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
-                        m = f"max of {str(self.max_errors)} row errors exceeded"
-                        e.append(ex.MaxExceededError(m))
+                        e.append(max_error_rule._exception_msg())
                         break
                 if rix > 0:
                     for k, ix in column_cache_map.items():

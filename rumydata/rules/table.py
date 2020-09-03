@@ -10,7 +10,6 @@ import re
 from pathlib import Path
 from typing import Union, List
 
-from rumydata import exception as ex
 from rumydata._base import _BaseRule
 
 
@@ -23,8 +22,6 @@ class Rule(_BaseRule):
 
 class FileExists(Rule):
     """ File exists Rule """
-
-    _exception_class = ex.FileError
 
     def _evaluator(self):
         return lambda x: Path(x).exists()
@@ -51,8 +48,7 @@ class FileNameMatchesPattern(Rule):
 
 class FileNameMatchesOnePattern(Rule):
     """ File name matches exactly one pattern Rule """
-    
-    _exception_class = ex.UrNotMyDataError
+
     _default_args = (re.compile(r'x'),)
 
     def __init__(self, patterns: list):
@@ -66,3 +62,16 @@ class FileNameMatchesOnePattern(Rule):
 
     def _explain(self) -> str:
         return 'files cannot match multiple patterns provided in the layout'
+
+
+class MaxError(Rule):
+    """ Row errors returned while checking file do not exceed a limit """
+
+    _default_args = (1,)
+
+    def __init__(self, max_row_errors):
+        super().__init__()
+        self.max_row_errors = max_row_errors
+
+    def _explain(self) -> str:
+        return f'files returned row errors than allowed: {self.max_row_errors}'

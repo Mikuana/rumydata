@@ -82,7 +82,7 @@ class UrNotMyDataError(Exception):
             if isinstance(el, list) and not isinstance(el, (str, bytes)):
                 yield cls._flatten_md(el, depth)
             elif issubclass(el.__class__, UrNotMyDataError):
-                yield el.md(depth)
+                yield el._md(depth)
             else:
                 yield UrNotMyDataError(el)._md(depth)
 

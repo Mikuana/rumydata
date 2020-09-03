@@ -15,7 +15,7 @@ import rumydata.rules.cell
 import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
-from rumydata.rules import column as cr
+from rumydata.rules import column as cr, table as tr
 from rumydata.table import File
 
 
@@ -134,7 +134,8 @@ def test_layout_good(basic, basic_good):
 
 
 def test_readme_example(readme_layout, readme_data):
-    assert File(rumydata.table.Layout(readme_layout))._has_error(readme_data, ex.InvalidChoiceError)
+    rex = rumydata.rules.cell.Choice.class_exception()
+    assert File(rumydata.table.Layout(readme_layout))._has_error(readme_data, rex)
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -146,7 +147,7 @@ def test_readme_example(readme_layout, readme_data):
 def test_has_max_error(tmpdir, rows, me):
     fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
-    assert File(fields, max_errors=me)._has_error(file, ex.MaxExceededError)
+    assert File(fields, max_errors=me)._has_error(file, tr.MaxError.class_exception())
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -158,7 +159,7 @@ def test_has_max_error(tmpdir, rows, me):
 def test_missing_max_error(tmpdir, rows, me):
     fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
-    assert not File(fields, max_errors=me)._has_error(file, ex.MaxExceededError)
+    assert not File(fields, max_errors=me)._has_error(file, tr.MaxError.class_exception())
 
 
 def test_column_compare_row_good():
@@ -182,13 +183,13 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
     cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
-    assert File(cols)._has_error(write_row(tmpdir, cols, row), ex.ColumnComparisonError)
+    assert File(cols)._has_error(write_row(tmpdir, cols, row), compare_rule.class_exception())
 
 
 def test_unique_bad(tmpdir):
     cols = rumydata.table.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
-    assert File(cols)._has_error(f, ex.DuplicateValueError)
+    assert File(cols)._has_error(f, cr.Unique.class_exception())
 
 
 def test_unique_good(tmpdir):
