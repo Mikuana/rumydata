@@ -72,7 +72,7 @@ class Field(_BaseSubject):
         errors = self._check(values, rule_type=cr.Rule, **kwargs)
         assert not errors, str(errors)
 
-    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, None]:
+    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
         """
         Check data against field rules of specified rule type
 
@@ -89,12 +89,15 @@ class Field(_BaseSubject):
         """
 
         # if data is nullable and value is empty, skip all checks
-        if self.nullable and issubclass(rule_type, clr.Rule) and data == '':
+        if self.nullable and rule_type == clr.Rule and data == '':
             pass
         else:
             e = super()._check(data, rule_type=rule_type)
             if e:
-                return ex.CellError(cix, errors=e, **kwargs)
+                if rule_type == cr.Rule:
+                    return ex.ColumnError(cix, errors=e, **kwargs)
+                else:
+                    return ex.CellError(cix, errors=e, **kwargs)
 
     def _comparison_columns(self) -> set:
         """

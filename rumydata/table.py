@@ -274,7 +274,9 @@ class File(_BaseSubject):
                         column_cache[k].append(row[ix])
 
         for k, v in column_cache.items():
-            ce = self.layout.layout[k]._check(v, rule_type=cr.Rule)
+            ce = self.layout.layout[k]._check(
+                v, cix=column_cache_map[k], rule_type=cr.Rule, name=k
+            )
             if ce:
                 e.append(ce)
         if e:
