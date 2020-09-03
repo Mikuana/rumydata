@@ -127,9 +127,6 @@ class _BaseSubject:
         :return: a list of any errors that were raised while checking the data.
         """
         errors = []
-        if not self.rules:
-            return [ex.UrNotMyDataError("No rules defined")]
-
         for r in self.rules:
             # noinspection PyBroadException
             try:
