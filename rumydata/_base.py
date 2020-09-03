@@ -203,13 +203,8 @@ class _BaseSubject:
         checking to see if any of those errors contain additional errors, then
         continuing to recurse until all errors have been yielded.
         """
-        if isinstance(error, list):
-            for el in error:
-                yield cls._flatten_exceptions(el)
-        elif issubclass(error.__class__, ex.UrNotMyDataError):
+        if issubclass(error.__class__, ex.UrNotMyDataError):
             yield error
             for el in error._errors:
                 for x in cls._flatten_exceptions(el):
                     yield x
-        else:
-            yield error
