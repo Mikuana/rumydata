@@ -30,7 +30,7 @@ setuptools.setup(
     extras_require={
         'Excel': ['openpyxl'],
         'HTML': ['markdown'],
-        'Testing': ['pytest', 'pytest-cov', 'openpyxl']
+        'Testing': ['pytest', 'pytest-cov', 'openpyxl', 'markdown']
     },
     packages=setuptools.find_packages()
 )

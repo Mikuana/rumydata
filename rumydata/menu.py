@@ -14,7 +14,8 @@ def menu(layout: Layout):
 
     print("What would you like to do with this table layout?")
     choice = _select_option(options)
-    choice[0](layout, **choice[1])
+    routine = choice[0](layout, **choice[1])
+    return routine.result
 
 
 class _DocGen:
@@ -30,6 +31,7 @@ class _DocGen:
         self.ext = ext
         self.output = output
         self.generate_doc()
+        self.result = 'completed'
 
     def generate_doc(self):
         output_kwargs = {}
