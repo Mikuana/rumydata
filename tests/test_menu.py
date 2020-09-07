@@ -10,7 +10,7 @@ from rumydata.menu import menu
 from rumydata.table import Layout
 
 
-def mock_no_md(*args, **kwargs):
+def mock_no_md(*args):
     """ force exception on markdown module import """
     if args[0] == 'markdown':
         raise ModuleNotFoundError

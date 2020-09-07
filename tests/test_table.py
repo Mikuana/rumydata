@@ -50,3 +50,17 @@ def test_documentation():
     layout = Layout({'x': Field()})
     expected = ' - **x**\n   - cannot be empty/blank'
     assert layout.documentation() == expected
+
+
+@pytest.mark.parametrize('choice, valid', [
+    ('md', True),
+    ('html', True),
+    ('yyz', False)
+])
+def test_documentation_types(choice, valid):
+    layout = Layout({'x': Field()})
+    if valid:
+        assert isinstance(layout.documentation(format=choice), str)
+    else:
+        with pytest.raises(TypeError):
+            layout.documentation(format=choice)
