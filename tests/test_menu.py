@@ -1,4 +1,7 @@
-from unittest.mock import patch, DEFAULT
+import tempfile
+from pathlib import Path
+from unittest.mock import DEFAULT
+from uuid import uuid4
 
 import pytest
 
@@ -7,53 +10,92 @@ from rumydata.menu import menu
 from rumydata.table import Layout
 
 
+def mock_no_md(*args, **kwargs):
+    """ force exception on markdown module import """
+    if args[0] == 'markdown':
+        raise ModuleNotFoundError
+    else:
+        return DEFAULT
+
+
+@pytest.fixture()
+def tmpdir():
+    with tempfile.TemporaryDirectory() as d:
+        yield Path(d)
+
+
 @pytest.mark.parametrize('choice', ['0', 'View Documentation'])
-def test_menu_view_documentation(choice):
+@pytest.mark.parametrize('no_md,ext', [(False, 'html'), (True, 'md')])
+def test_view_documentation(choice, ext, no_md, mocker):
+    """
+    View Documentation option opens a browser with generated documentation. When
+    the markdown module is available, this is shown in HTML, otherwise displayed
+    as a raw .md text file.
+    """
+    if no_md:
+        mocker.patch(
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+        )
+
+    mocker.patch('webbrowser.open')
+    mocker.patch('builtins.print')
+    mocker.patch('builtins.input', return_value=choice)
+
     expected = dict(
-        layout=Layout({'x': Integer(1)}),
-        extension='html', output='open'
+        extension=ext, output='open', layout=Layout({'x': Integer(1)})
     )
-    with patch('webbrowser.open'):  # don't open browser during testing
-        with patch('builtins.print'):  # don't print during testing
-            with patch('builtins.input', return_value=choice):
-                ret = menu(expected['layout'])
-                for k, v in expected.items():
-                    assert ret[k] == v
+    ret = menu(expected['layout'])
+    for k, v in expected.items():
+        assert ret[k] == v
 
 
-@pytest.mark.parametrize('choice', ['0', 'View Documentation'])
-def test_menu_view_documentation_no_html(choice):
-    """
-    When the markdown module is not available for HTML conversion, the output
-    should be in raw markdown format.
-    """
+@pytest.mark.parametrize('no_md', [False, True])
+@pytest.mark.parametrize('choice,expected', [
+    (['1', '0', '0'], dict(extension='md')),
+    (['Generate Documentation', 'markdown', 'print'], dict(extension='md')),
+    (['Generate Documentation', 'html', 'print'], dict(extension='html')),
+])
+def test_generate_documentation_print(choice, expected: dict, no_md, mocker):
+    if no_md:
+        mocker.patch(
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+        )
+        expected['extension'] = 'md'
 
-    def no_md(*args, **kwargs):
-        if args[0] == 'markdown':
-            raise ModuleNotFoundError
-        else:
-            return DEFAULT
+    mocker.patch('webbrowser.open')
+    mocker.patch('builtins.print')
+    mocker.patch('builtins.input', side_effect=choice)
 
-    lay = Layout({'x': Integer(1)})
-    expected = dict(extension='md', output='open', layout=lay)
-    with patch('builtins.__import__', wraps=__import__, side_effect=no_md):
-        with patch('webbrowser.open'):  # don't open browser during testing
-            with patch('builtins.print'):  # don't print during testing
-                with patch('builtins.input', return_value=choice):
-                    ret = menu(lay)
-                    for k, v in expected.items():
-                        assert ret[k] == v
+    expected['output'] = 'print'
+    expected['layout'] = Layout({'x': Integer(1)})
 
-# @pytest.mark.parametrize('sequence', [
-#     (['0']),
-#     (['View Documentation'])
-# ])
-# def test_menu_generate_documentation(sequence):
-#     lay = Layout({'x': Integer(1)})
-#     expected = dict(extension='html', output='open', layout=lay)
-#     with patch('webbrowser.open'):  # don't open browser during testing
-#         with patch('builtins.print'):  # don't print during testing
-#             with patch('builtins.input', side_effect=sequence):
-#                 ret = menu(lay)
-#                 for k, v in expected.items():
-#                     assert ret[k] == v
+    ret = menu(expected['layout'])
+    for k, v in expected.items():
+        assert ret[k] == v
+
+
+@pytest.mark.parametrize('no_md', [False, True])
+@pytest.mark.parametrize('choice,expected', [
+    (['1', '0', '1'], dict(extension='md')),
+    (['Generate Documentation', 'markdown', 'save to file'], dict(extension='md')),
+    (['Generate Documentation', 'html', 'save to file'], dict(extension='html')),
+])
+def test_generate_documentation_save(choice, expected: dict, no_md, tmpdir, mocker):
+    if no_md:
+        mocker.patch(
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+        )
+        expected['extension'] = 'md'
+
+    mocker.patch('webbrowser.open')
+    mocker.patch('builtins.print')
+
+    p = Path(tmpdir, uuid4().hex[:5])
+    mocker.patch('builtins.input', side_effect=choice + [p.as_posix()])
+
+    expected['output'] = 'save to file'
+    expected['layout'] = Layout({'x': Integer(1)})
+
+    ret = menu(expected['layout'])
+    for k, v in expected.items():
+        assert ret[k] == v
