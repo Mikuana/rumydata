@@ -60,7 +60,7 @@ def test_documentation():
 def test_documentation_types(choice, valid):
     layout = Layout({'x': Field()})
     if valid:
-        assert isinstance(layout.documentation(format=choice), str)
+        assert isinstance(layout.documentation(doc_type=choice), str)
     else:
         with pytest.raises(TypeError):
-            layout.documentation(format=choice)
+            layout.documentation(doc_type=choice)

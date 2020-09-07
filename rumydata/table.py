@@ -55,23 +55,23 @@ class Layout(_BaseSubject):
             rr.RowLengthGTE(self.field_count)
         ])
 
-    def documentation(self, format='md'):
+    def documentation(self, doc_type='md'):
         """
         Technical documentation
 
         Generates detailed specification of the defined layout.
 
-        :param format: format of returned technical documentation
+        :param doc_type: format of returned technical documentation
 
         :return: a Markdown formatted string describing the layout
         """
-        if format == 'md':
+        if doc_type == 'md':
             return self._markdown_digest()
-        elif format == 'html':
+        elif doc_type == 'html':
             import markdown
             return markdown.markdown(self._markdown_digest(), tab_length=2)
         else:
-            raise TypeError(f"Invalid format type: {format}")
+            raise TypeError(f"Invalid format type: {doc_type}")
 
     def check_header(self, row: List[str], rix=0):
         """

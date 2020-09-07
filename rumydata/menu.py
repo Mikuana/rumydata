@@ -51,7 +51,7 @@ class _DocGen:
                 print('markdown module not available; switching to raw md')
                 self.ext = 'md'
 
-        documentation = self.layout.documentation(format=self.ext)
+        documentation = self.layout.documentation(doc_type=self.ext)
 
         if self.output:
             choice = self.output_options[self.output]
