@@ -31,7 +31,12 @@ class _DocGen:
         self.ext = ext
         self.output = output
         self.generate_doc()
-        self.result = 'completed'
+        self.result = dict(
+            completed=True,
+            layout=self.layout,
+            extension=self.ext,
+            output=self.output
+        )
 
     def generate_doc(self):
         output_kwargs = {}
@@ -89,9 +94,18 @@ def _validate_file():
 def _select_option(options: dict):
     for ix, (k, v) in enumerate(options.items()):
         print(f'[{str(ix)}] {k}')
-    choice = int(input("Choose an option (by number): "))
+    choice = input("Choose an option by number or name: ")
     print('')
-    return list(options.values())[choice]
+
+    try:
+        choice = int(choice)
+    except ValueError:
+        pass
+
+    if isinstance(choice, int):
+        return list(options.values())[choice]
+    else:
+        return options[choice]
 
 
 if __name__ == '__main__':
