@@ -7,6 +7,8 @@ from warnings import warn
 
 from rumydata.table import Layout, File
 
+__all__ = ['menu']
+
 _format_options = {'markdown': 'md', 'html': 'html'}
 
 
