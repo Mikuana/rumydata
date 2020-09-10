@@ -24,6 +24,7 @@ def tmpdir():
         yield Path(d)
 
 
+# noinspection DuplicatedCode
 @pytest.mark.parametrize('choice', ['0', 'View Documentation'])
 @pytest.mark.parametrize('no_md,ext', [(False, 'html'), (True, 'md')])
 def test_view_documentation(choice, ext, no_md, mocker):
@@ -47,6 +48,7 @@ def test_view_documentation(choice, ext, no_md, mocker):
         assert ret[k] == v
 
 
+# noinspection DuplicatedCode
 @pytest.mark.parametrize('choice', ['2', 'View Validation'])
 @pytest.mark.parametrize('no_md,ext', [(False, 'html'), (True, 'md')])
 @pytest.mark.parametrize('valid_file', [False, True])
