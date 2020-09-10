@@ -55,15 +55,23 @@ class Layout(_BaseSubject):
             rr.RowLengthGTE(self.field_count)
         ])
 
-    def documentation(self):
+    def documentation(self, doc_type='md'):
         """
         Technical documentation
 
         Generates detailed specification of the defined layout.
 
+        :param doc_type: format of returned technical documentation
+
         :return: a Markdown formatted string describing the layout
         """
-        return self._markdown_digest()
+        if doc_type == 'md':
+            return self._markdown_digest()
+        elif doc_type == 'html':
+            import markdown
+            return markdown.markdown(self._markdown_digest(), tab_length=2)
+        else:
+            raise TypeError(f"Invalid format type: {doc_type}")
 
     def check_header(self, row: List[str], rix=0):
         """
@@ -192,7 +200,7 @@ class File(_BaseSubject):
             table.FileExists()
         ])
 
-    def check(self, file_path: Union[str, Path]) -> None:
+    def check(self, file_path: Union[str, Path], doc_type: str = None):
         """
         File check method
 
@@ -200,9 +208,28 @@ class File(_BaseSubject):
 
         :param file_path: a file path provided as a string, or a pathlib Path
             object.
+        :param doc_type: the type of output to return with exception details,
+            rather than raising an exception. Valid options are ['md', 'html']
         """
         errors = self._check(file_path)
-        assert not errors, str(errors)
+        try:
+            assert not errors, str(errors)
+            msg = f"Validated file successfully: {Path(file_path).as_posix()}"
+        except AssertionError as ae:
+            if not doc_type:
+                raise ae
+            else:
+                msg = str(ae)
+
+        if not doc_type:
+            return
+        elif doc_type == 'md':
+            return msg
+        elif doc_type == 'html':
+            import markdown
+            return markdown.markdown(msg, tab_length=2)
+        else:
+            raise TypeError(f"Invalid doc type: {doc_type}")
 
     def _check(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath
