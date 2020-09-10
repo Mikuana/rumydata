@@ -200,7 +200,7 @@ class File(_BaseSubject):
             table.FileExists()
         ])
 
-    def check(self, file_path: Union[str, Path]) -> None:
+    def check(self, file_path: Union[str, Path], doc_type: str = None):
         """
         File check method
 
@@ -208,9 +208,23 @@ class File(_BaseSubject):
 
         :param file_path: a file path provided as a string, or a pathlib Path
             object.
+        :param doc_type: the type of output to return with exception details,
+            rather than raising an exception. Valid options are ['md', 'html']
         """
         errors = self._check(file_path)
-        assert not errors, str(errors)
+        try:
+            assert not errors, str(errors)
+        except AssertionError as ae:
+            if doc_type:
+                if doc_type == 'md':
+                    return str(ae)
+                elif doc_type == 'html':
+                    import markdown
+                    return markdown.markdown(str(ae), tab_length=2)
+                else:
+                    raise TypeError(f"Invalid format type: {doc_type}")
+            else:
+                raise ae
 
     def _check(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath

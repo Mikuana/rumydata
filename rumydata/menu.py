@@ -1,85 +1,107 @@
 import webbrowser
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from time import sleep
+from typing import Tuple
+from warnings import warn
 
-from rumydata.table import Layout
+from rumydata.table import Layout, File
 
 
 def menu(layout: Layout):
     options = {
-        'View Documentation': (_DocGen, dict(ext='html', output='open')),
-        'Generate Documentation': (_DocGen, {}),
+        'View Documentation': (_documentation, dict(ext='html', output='open')),
+        'Generate Documentation': (_documentation, {}),
+        'View Validation': (_validation, dict(ext='html', output='open')),
+        'Generate Validation': (_validation, {})
     }
 
-    print("What would you like to do with this table layout?")
+    print("What to do with this layout?")
     choice = _select_option(options)[0]
-    routine = choice[0](layout, **choice[1])
-    return routine.result
+    return choice[0](layout, **choice[1])
 
 
-class _DocGen:
-    def __init__(self, layout: Layout, ext: str = None, output: str = None):
-        self.format_options = {'markdown': 'md', 'html': 'html'}
-        self.output_options = {
-            'print': print,
-            'save to file': self.save_doc,
-            'open': self.open_browser
-        }
+def _documentation(layout: Layout, ext: str = None, output: str = None) -> dict:
+    """ Run Layout documentation through menu """
+    return _doc_out(*_doc_gen(layout, ext), output)
 
-        self.layout = layout
-        self.ext = ext
-        self.output = output
-        self.generate_doc()
-        self.result = dict(
-            completed=True,
-            layout=self.layout,
-            extension=self.ext,
-            output=self.output
-        )
 
-    def generate_doc(self):
-        output_kwargs = {}
+def _validation(layout: Layout, ext: str = None, output: str = None) -> dict:
+    return _doc_out(*_file_check(layout, ext), output)
 
-        if not self.ext:
-            print("How would you like to format the documentation?")
-            self.ext = _select_option(self.format_options)[0]
 
-        if self.ext == 'html':
-            try:  # check if markdown to html conversion is available
-                import markdown
-            except ModuleNotFoundError:  # if not, show markdown directly
-                print('markdown module not available; switching to raw md')
-                self.ext = 'md'
+def _file_check(layout: Layout, ext) -> Tuple[str, str]:
+    format_options = {'markdown': 'md', 'html': 'html'}
+    if not ext:
+        print("How to format the documentation?")
+        ext = _select_option(format_options)[0]
 
-        documentation = self.layout.documentation(doc_type=self.ext)
+    if ext == 'html':
+        try:  # check if markdown to html conversion is available
+            __import__('markdown')
+        except ModuleNotFoundError:
+            warn('markdown module not available; falling back to raw md')
+            ext = 'md'
 
-        if self.output:
-            choice = self.output_options[self.output]
-        else:
-            print("How would you like to output the documentation?")
-            choice, self.output = _select_option(self.output_options)
+    p = input('What is the file path to validate?\n > ')
+    errors = File(layout).check(p, doc_type=ext)
+    if errors:
+        return errors, ext
+    else:
+        return f"Validated file successfully: \n> {p}", ext
 
-        if choice is self.open_browser:
-            output_kwargs['ext'] = self.ext
 
-        choice(documentation, **output_kwargs)
+def _doc_gen(layout: Layout, extension: str = None) -> Tuple[str, str]:
+    """ Generate documentation from a layout """
+    format_options = {'markdown': 'md', 'html': 'html'}
+    if not extension:
+        print("How to format the documentation?")
+        extension = _select_option(format_options)[0]
 
-    @staticmethod
-    def save_doc(doc: str):
-        ip = input('What path would you like to save the documentation to?\n > ')
-        p = Path(ip)
-        print(f"Writing to {p.absolute().as_posix()}")
+    if extension == 'html':
+        try:  # check if markdown to html conversion is available
+            __import__('markdown')
+        except ModuleNotFoundError:
+            warn('markdown module not available; falling back to raw md')
+            extension = 'md'
+
+    return layout.documentation(doc_type=extension), extension
+
+
+def _doc_out(document: str, extension: str = None, output: str = None):
+    summary = dict(document=document, extension=extension)
+    output_options = {'print': print, 'open': _open_doc, 'save': _save_doc}
+
+    if output:
+        choice = output_options[output]
+    else:
+        print("How to output the results?")
+        choice, output = _select_option(output_options)
+
+    summary['output'] = output
+
+    output_kwargs = dict(ext=extension) if choice is _open_doc else {}
+    choice(document, **output_kwargs)
+    return summary
+
+
+def _save_doc(doc: str):
+    ip = input('What path to save the file?\n > ')
+    p = Path(ip)
+    print(f"Writing to {p.absolute().as_posix()}")
+    p.write_text(doc)
+
+
+def _open_doc(doc: str, ext: str):
+    with TemporaryDirectory() as td:
+        p = Path(td, f'documentation.{ext}')
         p.write_text(doc)
-
-    @staticmethod
-    def open_browser(doc: str, ext: str):
-        with TemporaryDirectory() as td:
-            p = Path(td, f'documentation.{ext}')
-            p.write_text(doc)
-            if p.suffix == '.html':
-                webbrowser.open(f'file:///{p.as_posix()}')
-            else:
-                webbrowser.open(p.as_posix())
+        if p.suffix == '.html':
+            url = f'file:///{p.as_posix()}'
+        else:
+            url = p.as_posix()
+        webbrowser.open(url)
+        sleep(0.1)
 
 
 def _select_option(options: dict):
