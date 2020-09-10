@@ -1,14 +1,10 @@
 """
-rumydata exception module
+Exception module
 
 This module contains specialized Exception classes which allow for aggregation
-of all errors identified in a subject.
-
-The majority of exceptions in this module are simple subclasses of the
-UrNotMyDataError exception, which do nothing except rename the class. These
-renames allow for more meaningful exception names to be associated with rules,
-and allow for more specific checking of particular errors (especially useful
-during testing).
+of all errors identified in a subject. These exceptions provide the structure to
+collect multiple exceptions at varying levels within a validation process, and
+display them in a meaningful way.
 """
 
 
