@@ -33,4 +33,4 @@ from rumydata import field
 from rumydata import rules
 from rumydata.table import Layout, File
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
