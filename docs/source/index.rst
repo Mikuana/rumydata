@@ -36,10 +36,12 @@ third-party package dependencies. However, some extras are available.
    :maxdepth: 2
    :caption: Contents:
 
+   example
    table
    field
    rules
-   example
+   exceptions
+   menu
 
 
 Indices and tables

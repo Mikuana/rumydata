@@ -101,6 +101,30 @@ open source, pure-python package, with no hard dependencies. In other words,
 the code that defines the data is extremely **portable**.
 
 Instead of sending the technical documentation (which is even longer than the
-script), Alice can instead send Bob the script. With it, Bob can generate the
+script), Alice could instead send Bob the script. With it, Bob can generate the
 documentation himself, and validate the data himself, before sending it to
-Alice. This skips several rounds of back-and-forth communication in the process.
+Alice. This skips several rounds of back-and-forth communication in the process
+
+This is made simple through the use of the `menu` function, which takes a layout
+object and presents it in a straightforward user interface::
+
+    # alice_validation.py
+    from rumydata import Layout, menu
+    from rumydata.field import Text, Integer, Choice
+
+    layout = Layout(definition={
+        'col1': Text(8),
+        'col2': Choice(['x', 'y', 'z']),
+        'col3': Integer(1)
+    })
+
+    menu(layout)
+
+Assuming that Bob already has python 3.7+ installed, once he receives the script
+`alice_validation.py`, all he needs to do is install this package via pip, then
+execute this script with the command::
+
+    python alice_validation.py
+
+From there, Bob will be walked through the rest of the documentation generation
+and file validation process by the interface.
