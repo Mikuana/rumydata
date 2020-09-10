@@ -64,3 +64,24 @@ def test_documentation_types(choice, valid):
     else:
         with pytest.raises(TypeError):
             layout.documentation(doc_type=choice)
+
+
+@pytest.mark.parametrize('choice, valid', [
+    ('md', True),
+    ('html', True),
+    ('yyz', False)
+])
+@pytest.mark.parametrize('valid_file', [False, True])
+def test_file_output_types(choice, valid, valid_file, tmpdir):
+    layout = Layout({'x': Integer(1)})
+    p = Path(tmpdir, 'test_file_output_types.csv')
+    if valid_file:
+        p.write_text('x\n1\n')
+    else:
+        p.write_text('x\nx\n')
+
+    if valid:
+        assert isinstance(File(layout).check(p, choice), str)
+    else:
+        with pytest.raises(TypeError):
+            File(layout).check(p, choice)

@@ -214,17 +214,22 @@ class File(_BaseSubject):
         errors = self._check(file_path)
         try:
             assert not errors, str(errors)
+            msg = f"Validated file successfully: {Path(file_path).as_posix()}"
         except AssertionError as ae:
-            if doc_type:
-                if doc_type == 'md':
-                    return str(ae)
-                elif doc_type == 'html':
-                    import markdown
-                    return markdown.markdown(str(ae), tab_length=2)
-                else:
-                    raise TypeError(f"Invalid format type: {doc_type}")
-            else:
+            if not doc_type:
                 raise ae
+            else:
+                msg = str(ae)
+
+        if not doc_type:
+            return
+        elif doc_type == 'md':
+            return msg
+        elif doc_type == 'html':
+            import markdown
+            return markdown.markdown(msg, tab_length=2)
+        else:
+            raise TypeError(f"Invalid doc type: {doc_type}")
 
     def _check(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath

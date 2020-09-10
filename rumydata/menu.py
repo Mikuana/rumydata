@@ -7,6 +7,8 @@ from warnings import warn
 
 from rumydata.table import Layout, File
 
+_format_options = {'markdown': 'md', 'html': 'html'}
+
 
 def menu(layout: Layout):
     options = {
@@ -31,10 +33,9 @@ def _validation(layout: Layout, ext: str = None, output: str = None) -> dict:
 
 
 def _file_check(layout: Layout, ext) -> Tuple[str, str]:
-    format_options = {'markdown': 'md', 'html': 'html'}
     if not ext:
         print("How to format the documentation?")
-        ext = _select_option(format_options)[0]
+        ext = _select_option(_format_options)[0]
 
     if ext == 'html':
         try:  # check if markdown to html conversion is available
@@ -47,16 +48,14 @@ def _file_check(layout: Layout, ext) -> Tuple[str, str]:
     errors = File(layout).check(p, doc_type=ext)
     if errors:
         return errors, ext
-    else:
-        return f"Validated file successfully: \n> {p}", ext
 
 
 def _doc_gen(layout: Layout, extension: str = None) -> Tuple[str, str]:
     """ Generate documentation from a layout """
-    format_options = {'markdown': 'md', 'html': 'html'}
+
     if not extension:
         print("How to format the documentation?")
-        extension = _select_option(format_options)[0]
+        extension = _select_option(_format_options)[0]
 
     if extension == 'html':
         try:  # check if markdown to html conversion is available
