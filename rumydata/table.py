@@ -221,7 +221,7 @@ class _BaseFile(_BaseSubject):
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super()._check(p, rule_type=table.Rule)  # check files-based rules first
         if e:
-            return ex.FileError(file=filepath.as_posix(), errors=e)
+            return ex.FileError(file=p.as_posix(), errors=e)
 
         column_cache = {
             k: [] for k, v in self.layout.layout.items()
@@ -233,7 +233,7 @@ class _BaseFile(_BaseSubject):
         }
 
         max_error_rule = table.MaxError(self.max_errors)
-        with self._rows(filepath) as generator:
+        with self._rows(p) as generator:
             for rix, row in enumerate(generator):
                 if rix < self.skip_rows:
                     continue
