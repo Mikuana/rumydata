@@ -1,12 +1,21 @@
 import tempfile
 from pathlib import Path
+from unittest.mock import DEFAULT
 from uuid import uuid4
 
 import pytest
 
 from rumydata.field import Integer, Field
 from rumydata.rules.column import Unique
-from rumydata.table import Layout, CsvFile, ExcelFile
+from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
+
+
+def mock_no_xl(*args):
+    """ force exception on markdown module import """
+    if args[0] == 'openpyxl':
+        raise ModuleNotFoundError
+    else:
+        return DEFAULT
 
 
 @pytest.fixture()
@@ -85,3 +94,15 @@ def test_file_output_types(choice, valid, valid_file, tmpdir):
     else:
         with pytest.raises(TypeError):
             CsvFile(layout).check(p, choice)
+
+
+def test_no_excel(mocker):
+    mocker.patch(
+        'builtins.__import__', wraps=__import__, side_effect=mock_no_xl
+    )
+    with pytest.raises(ModuleNotFoundError):
+        ExcelFile(Layout({'x': Integer(1)}))
+
+
+def test_base_file_stubs():
+    assert not _BaseFile(Layout({'x': Integer(1)}))._rows(Path('x'))
