@@ -11,7 +11,7 @@ from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 
 
 def mock_no_xl(*args):
-    """ force exception on markdown module import """
+    """ force exception on openpyxl module import """
     if args[0] == 'openpyxl':
         raise ModuleNotFoundError
     else:
