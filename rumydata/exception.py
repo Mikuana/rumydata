@@ -8,6 +8,32 @@ display them in a meaningful way.
 """
 
 
+def debug():
+    """
+    Exception debug mode control
+
+    A switch to control exception message sanitation. This is a static
+    function which will always return False. In order to enable debug mode, you
+    must monkey patch this function using the mock library. This is made to
+    intentionally be inconvenient in order to prevent accidental disclosure of
+    data in exception logs through overuse of the debug mode.
+
+    This method is used at runtime by the base _check method. In order to enable
+    debugging, you must include a patch statement before calling a check. It is
+    recommended that you do this with a context handler to ensure appropriate
+    behavior of the patch.
+
+    example::
+
+        from unittest.mock import patch
+        from rumydata import field
+
+        with patch('rumydata.exception.debug', return_value=True):
+            field.Integer(1).check_cell(None)
+    """
+    return False
+
+
 class UrNotMyDataError(Exception):
     """
     Base exception class for rumydata package
