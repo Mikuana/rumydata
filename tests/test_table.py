@@ -96,14 +96,10 @@ def test_file_output_types(choice, valid, valid_file, tmpdir):
             CsvFile(layout).check(p, choice)
 
 
-@pytest.mark.parametrize('no_xl', [False, True])
-def test_no_excel(no_xl, mocker):
-    if no_xl:
-        mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_xl)
-        with pytest.raises(ModuleNotFoundError):
-            ExcelFile(Layout({'x': Integer(1)}))
-    else:
-        assert ExcelFile(Layout({'x': Integer(1)}))
+def test_no_excel(mocker):
+    mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_xl)
+    with pytest.raises(ModuleNotFoundError):
+        ExcelFile(Layout({'x': Integer(1)}))
 
 
 def test_base_file_stubs():
