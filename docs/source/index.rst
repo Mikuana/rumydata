@@ -1,4 +1,4 @@
-Are you my data? (rumydata)
+Are you my data?
 ===========================
 
 This python package provides a set of tools to solve several of the major challenges
@@ -8,7 +8,7 @@ problems:
  1. defining exactly what your data should be
  2. communicating that definition to others (so they can send you data)
  3. validating the data that you receive
- 4. not disclosing the data on accident
+ 4. not disclosing the data on accident when there are errors
 
 These problems are solved with the following feature sets in this package:
 
@@ -36,6 +36,7 @@ third-party package dependencies. However, some extras are available.
    :maxdepth: 2
    :caption: Contents:
 
+   self
    example
    table
    field
