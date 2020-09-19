@@ -1,6 +1,5 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import DEFAULT
 from uuid import uuid4
 
 import pytest
@@ -8,14 +7,7 @@ import pytest
 from rumydata.field import Integer
 from rumydata.menu import menu
 from rumydata.table import Layout
-
-
-def mock_no_md(*args):
-    """ force exception on markdown module import """
-    if args[0] == 'markdown':
-        raise ModuleNotFoundError
-    else:
-        return DEFAULT
+from tests.utils import mock_no_module
 
 
 @pytest.fixture()
@@ -35,7 +27,7 @@ def test_view_documentation(choice, ext, no_md, mocker):
     """
     if no_md:
         mocker.patch(
-            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_module('markdown')
         )
 
     mocker.patch('webbrowser.open')
@@ -60,7 +52,7 @@ def test_view_validation(choice, ext, no_md, valid_file, tmpdir, mocker):
     """
     if no_md:
         mocker.patch(
-            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_module('markdown')
         )
     if valid_file:
         p = Path(tmpdir, 'file.csv')
@@ -92,7 +84,7 @@ def test_view_validation(choice, ext, no_md, valid_file, tmpdir, mocker):
 def test_generate_print(choice, expected: dict, no_md, mocker):
     if no_md:
         mocker.patch(
-            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_module('markdown')
         )
         expected['extension'] = 'md'
 
@@ -119,7 +111,7 @@ def test_generate_print(choice, expected: dict, no_md, mocker):
 def test_generate_save(choice, expected: dict, no_md, tmpdir, mocker):
     if no_md:
         mocker.patch(
-            'builtins.__import__', wraps=__import__, side_effect=mock_no_md
+            'builtins.__import__', wraps=__import__, side_effect=mock_no_module('markdown')
         )
         expected['extension'] = 'md'
 

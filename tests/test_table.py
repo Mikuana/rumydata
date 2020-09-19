@@ -1,6 +1,5 @@
 import tempfile
 from pathlib import Path
-from unittest.mock import DEFAULT
 from uuid import uuid4
 
 import pytest
@@ -8,14 +7,7 @@ import pytest
 from rumydata.field import Integer, Field
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
-
-
-def mock_no_xl(*args):
-    """ force exception on openpyxl module import """
-    if args[0] == 'openpyxl':
-        raise ModuleNotFoundError
-    else:
-        return DEFAULT
+from tests.utils import mock_no_module
 
 
 @pytest.fixture()
@@ -97,7 +89,7 @@ def test_file_output_types(choice, valid, valid_file, tmpdir):
 
 
 def test_no_excel(mocker):
-    mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_xl)
+    mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_module('openpyxl'))
     with pytest.raises(ModuleNotFoundError):
         ExcelFile(Layout({'x': Integer(1)}))
 
