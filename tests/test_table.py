@@ -6,7 +6,8 @@ import pytest
 
 from rumydata.field import Integer, Field
 from rumydata.rules.column import Unique
-from rumydata.table import Layout, File
+from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
+from tests.utils import mock_no_module
 
 
 @pytest.fixture()
@@ -38,7 +39,7 @@ def test_exception_message_structure(tmpdir):
     msg = '\n'.join(msg)
     lay = Layout({'c1': Integer(1, rules=[Unique()]), 'c2': Integer(1)})
     try:
-        File(lay).check(p)
+        CsvFile(lay).check(p)
     except AssertionError as ae:
         print(ae)
         print(msg)
@@ -81,7 +82,17 @@ def test_file_output_types(choice, valid, valid_file, tmpdir):
         p.write_text('x\nx\n')
 
     if valid:
-        assert isinstance(File(layout).check(p, choice), str)
+        assert isinstance(CsvFile(layout).check(p, choice), str)
     else:
         with pytest.raises(TypeError):
-            File(layout).check(p, choice)
+            CsvFile(layout).check(p, choice)
+
+
+def test_no_excel(mocker):
+    mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_module('openpyxl'))
+    with pytest.raises(ModuleNotFoundError):
+        ExcelFile(Layout({'x': Integer(1)}))
+
+
+def test_base_file_stubs():
+    assert not _BaseFile(Layout({'x': Integer(1)}))._rows(Path('x'))

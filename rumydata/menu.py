@@ -5,7 +5,7 @@ from time import sleep
 from typing import Tuple
 from warnings import warn
 
-from rumydata.table import Layout, File
+from rumydata.table import Layout, CsvFile
 
 __all__ = ['menu']
 
@@ -66,7 +66,7 @@ def _file_check(layout: Layout, ext) -> Tuple[str, str]:
             ext = 'md'
 
     p = input('What is the file path to validate?\n > ')
-    errors = File(layout).check(p, doc_type=ext)
+    errors = CsvFile(layout).check(p, doc_type=ext)
     if errors:
         return errors, ext
 
