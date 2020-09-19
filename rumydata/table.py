@@ -306,9 +306,9 @@ class CsvFile(_BaseFile):
 
 class ExcelFile(_BaseFile):
     """
-    CSV File class
+    Excel File class
 
-    This class provides a way to validate the contents of a file against a
+    This class provides a way to validate the contents of an Excel file against a
     Layout, and report any rule violations that exist. This is the primary
     means of using this package.
 
