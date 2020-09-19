@@ -238,3 +238,19 @@ def test_ignore_row(row):
         {'x': field.Ignore(), 'y': field.Integer(1)}, empty_row_ok=True
     )
     assert not lay.check_row(row)
+
+
+def test_debug_mode(mocker):
+    """ Debug messages should only appear when debug method has been patched """
+    try:
+        # noinspection PyTypeChecker
+        field.Integer(1).check_cell(None)
+    except AssertionError as ae:
+        assert '[DEBUG]' not in str(ae)
+
+    mocker.patch('rumydata.exception.debug', return_value=True)
+    try:
+        # noinspection PyTypeChecker
+        field.Integer(1).check_cell(None)
+    except AssertionError as ae:
+        assert '[DEBUG]' in str(ae)

@@ -67,7 +67,7 @@ class _BaseRule:
         """
         return lambda x: False  # default to failing evaluation if not overwritten
 
-    def _exception_msg(self) -> ex.UrNotMyDataError:
+    def _exception_msg(self, extra='') -> ex.UrNotMyDataError:
         """
         Validation exception message
 
@@ -112,7 +112,7 @@ class _BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def _check(self, data, rule_type) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
+    def _check(self, data, rule_type, debug=False) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -124,6 +124,7 @@ class _BaseSubject:
         :param rule_type: a Rule class belonging to one of the submodules in the
             rules module (e.g. rumydata.rules.cell.Rule). This controls the
             types of rules that the provided data will be checked against.
+        :param debug:
         :return: a list of any errors that were raised while checking the data.
         """
         errors = []
@@ -136,9 +137,10 @@ class _BaseSubject:
                     if not e:
                         errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
-                errors.append(r.rule_exception()(
-                    f'raised {e.__class__.__name__} while checking if value {r._explain()}')
-                )
+                msg = f'raised {e.__class__.__name__} while checking if value {r._explain()}'
+                if ex.debug():
+                    msg += f' [DEBUG]: {str(e)}'
+                errors.append(r.rule_exception()(msg))
         return errors
 
     def _list_errors(self, value, **kwargs) -> List[ex.UrNotMyDataError]:
