@@ -260,10 +260,7 @@ def test_debug_mode_pre_process(mocker):
 def test_debug_mode(mocker):
     """ Debug messages should only appear when debug method has been patched """
 
-    def rex():
-        raise Exception
-
-    r = make_static_cell_rule(rex, 'raise an exception')
+    r = make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
     try:
         # noinspection PyTypeChecker
         field.Field(rules=[r]).check_cell('1')
