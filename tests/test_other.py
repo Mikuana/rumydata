@@ -16,6 +16,7 @@ import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
+from rumydata.rules.cell import make_static_cell_rule
 from rumydata.table import CsvFile, ExcelFile
 
 
@@ -240,17 +241,43 @@ def test_ignore_row(row):
     assert not lay.check_row(row)
 
 
-def test_debug_mode(mocker):
+def test_debug_mode_pre_process(mocker):
     """ Debug messages should only appear when debug method has been patched """
     try:
         # noinspection PyTypeChecker
-        field.Integer(1).check_cell(None)
+        field.Date().check_cell(None)
     except AssertionError as ae:
         assert '[DEBUG]' not in str(ae)
 
     mocker.patch('rumydata.exception.debug', return_value=True)
     try:
         # noinspection PyTypeChecker
-        field.Integer(1).check_cell(None)
+        field.Date().check_cell(None)
     except AssertionError as ae:
         assert '[DEBUG]' in str(ae)
+
+
+def test_debug_mode(mocker):
+    """ Debug messages should only appear when debug method has been patched """
+
+    r = make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
+    try:
+        # noinspection PyTypeChecker
+        field.Field(rules=[r]).check_cell('1')
+    except AssertionError as ae:
+        assert '[DEBUG]' not in str(ae)
+
+    mocker.patch('rumydata.exception.debug', return_value=True)
+    try:
+        # noinspection PyTypeChecker
+        field.Field(rules=[r]).check_cell('1')
+    except AssertionError as ae:
+        assert '[DEBUG]' in str(ae)
+
+
+def test_cell_trim():
+    assert not field.Choice(['x'], strip=True).check_cell(' x ')
+
+
+def test_column_trim():
+    assert not field.Choice(['x'], strip=True).check_column([' x '])

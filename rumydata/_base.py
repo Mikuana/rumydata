@@ -22,13 +22,28 @@ class _BaseRule:
     def __init__(self):
         pass
 
+    @staticmethod
+    def _pre_process(data: tuple) -> tuple:
+        """
+        Handle data object for rule-type processing prior to evaluation
+
+        This processing is meant to be invoked once per check call, rather than
+        once for each rule checked. It handles pre-processing that will apply to
+        all rules.
+
+        :param data: an undefined data object
+        :return: a tuple, which contains some version of the provided data after
+          processing
+        """
+        return data
+
     @classmethod
     def rule_exception(cls):
         return type(f'{cls.__name__}Error', (ex.UrNotMyDataError,), {})
 
     def _prepare(self, data) -> tuple:
         """
-        Handle data object for pre-processing prior to evaluation
+        Handle data object for rule-specific processing prior to evaluation
 
         This method solves two problems that exist in the package.
 
@@ -112,7 +127,7 @@ class _BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def _check(self, data, rule_type, debug=False) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
+    def _check(self, data, rule_type, **kwargs) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -124,10 +139,18 @@ class _BaseSubject:
         :param rule_type: a Rule class belonging to one of the submodules in the
             rules module (e.g. rumydata.rules.cell.Rule). This controls the
             types of rules that the provided data will be checked against.
-        :param debug:
         :return: a list of any errors that were raised while checking the data.
         """
         errors = []
+        if rule_type:
+            try:
+                data = rule_type._pre_process(data, **kwargs)
+            except Exception as e:
+                msg = f'raised {e.__class__.__name__} while preprocessing data'
+                if ex.debug():
+                    msg += f' [DEBUG]: {str(e)}'
+                return [ex.PreProcessingError(msg)]
+
         for r in self.rules:
             # noinspection PyBroadException
             try:
