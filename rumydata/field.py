@@ -34,6 +34,9 @@ class Field(_BaseSubject):
         can be null (blank). Defaults to False, which will cause errors to
         be raised when checking empty strings.
     :param rules: a list of rules to apply to this field during checks.
+    :param strip: (optional) apply pre-processing to values in the field which
+        applies the str.strip method, removing leading and trailing whitespaces,
+        prior to checking rules.
     """
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
