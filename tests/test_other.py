@@ -16,6 +16,7 @@ import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
+from rumydata.rules.cell import make_static_cell_rule
 from rumydata.table import CsvFile, ExcelFile
 
 
@@ -258,16 +259,21 @@ def test_debug_mode_pre_process(mocker):
 
 def test_debug_mode(mocker):
     """ Debug messages should only appear when debug method has been patched """
+
+    def rex():
+        raise Exception
+
+    r = make_static_cell_rule(rex, 'raise an exception')
     try:
         # noinspection PyTypeChecker
-        CsvFile({}).check(1)
+        field.Field(rules=[r]).check_cell('1')
     except AssertionError as ae:
         assert '[DEBUG]' not in str(ae)
 
     mocker.patch('rumydata.exception.debug', return_value=True)
     try:
         # noinspection PyTypeChecker
-        CsvFile({}).check(1)
+        field.Field(rules=[r]).check_cell('1')
     except AssertionError as ae:
         assert '[DEBUG]' in str(ae)
 
