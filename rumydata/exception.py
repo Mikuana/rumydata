@@ -181,3 +181,13 @@ class CellError(UrNotMyDataError):
             message += f' ({kwargs.get("name")})'
         message += f'; {msg}' if msg else ''
         super().__init__(message, errors)
+
+
+class PreProcessingError(UrNotMyDataError):
+    """
+    Data Preprocessing Exception
+
+    Thrown specifically when the data pre-processing step for a subject fails.
+    This is treated differently than the exceptions thrown by all fields, since
+    pre-processing exceptions prevent any further rules from being checked.
+    """

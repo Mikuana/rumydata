@@ -36,9 +36,10 @@ class Field(_BaseSubject):
     :param rules: a list of rules to apply to this field during checks.
     """
 
-    def __init__(self, nullable=False, rules: list = None):
+    def __init__(self, nullable=False, rules: list = None, **kwargs):
         super().__init__(rules)
         self.nullable = nullable
+        self.strip = kwargs.get('strip')
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
@@ -92,7 +93,7 @@ class Field(_BaseSubject):
         if self.nullable and rule_type == clr.Rule and data == '':
             pass
         else:
-            e = super()._check(data, rule_type=rule_type)
+            e = super()._check(data, rule_type=rule_type, strip=self.strip)
             if e:
                 if rule_type == cr.Rule:
                     return ex.ColumnError(cix, errors=e, **kwargs)
