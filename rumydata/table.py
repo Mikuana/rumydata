@@ -31,6 +31,8 @@ class Layout(_BaseSubject):
     :param _definition: dictionary of column names with DataType definitions
     :param skip_header: (optional) a boolean control to skip validation of
         the header in the file. Defaults to False.
+    :param header_mode: (optional) sets the mode for checking the header.
+        Defaults to 'exact', but also accepts 'startswith' and 'contains'.
     :param empty_row_ok: (optional) a boolean control to skip validation of
         any row that is completely empty (i.e. every field is blank).
         Defaults to False.
@@ -41,6 +43,7 @@ class Layout(_BaseSubject):
     def __init__(self, _definition: Dict[str, field.Field], **kwargs):
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
+        self.header_mode = kwargs.pop('header_mode', 'exact')
 
         super().__init__(**kwargs)
 
