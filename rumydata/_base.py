@@ -82,7 +82,7 @@ class _BaseRule:
         """
         return lambda x: False  # default to failing evaluation if not overwritten
 
-    def _exception_msg(self, extra='') -> ex.UrNotMyDataError:
+    def _exception_msg(self) -> ex.UrNotMyDataError:
         """
         Validation exception message
 
