@@ -32,7 +32,9 @@ class Layout(_BaseSubject):
     :param skip_header: (optional) a boolean control to skip validation of
         the header in the file. Defaults to False.
     :param header_mode: (optional) sets the mode for checking the header.
-        Defaults to 'exact', but also accepts 'startswith' and 'contains'.
+        Defaults to 'exact', but also accepts 'startswith' and 'contains'. This
+        allows optional partial matching of header values in a layout to the
+        values obtained in tabular data.
     :param empty_row_ok: (optional) a boolean control to skip validation of
         any row that is completely empty (i.e. every field is blank).
         Defaults to False.
@@ -44,6 +46,10 @@ class Layout(_BaseSubject):
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
         self.header_mode = kwargs.pop('header_mode', 'exact')
+
+        header_modes = ('exact', 'startswith', 'contains')
+        if self.header_mode not in header_modes:
+            raise ValueError(f"header_mode argument invalid. Must be one of: {header_modes}")
 
         super().__init__(**kwargs)
 
