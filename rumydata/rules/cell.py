@@ -31,6 +31,20 @@ __all__ = [
 class Rule(_BaseRule):
     """ Cell Rule """
 
+    @staticmethod
+    def _pre_process(data: Union[str, Tuple[str, Dict]], **kwargs) -> Union[str, Tuple[str, Dict]]:
+        d1 = data if isinstance(data, str) else data[0]
+        d2 = data[1] if isinstance(data, tuple) else {}
+
+        if kwargs.get('strip'):
+            d1 = d1.strip()
+            d2 = {k: v.strip() for k, v in d2.items()}
+
+        if d2:
+            return d1, d2
+        else:
+            return d1
+
     def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if isinstance(data, str):
             return data,

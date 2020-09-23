@@ -10,8 +10,11 @@ Layout
 .. autoclass:: rumydata.table.Layout
     :members:
 
-File
-####
+Files
+#####
 
-.. autoclass:: rumydata.table.File
-    :members:
+.. autoclass:: rumydata.table.CsvFile
+    :members: check
+
+.. autoclass:: rumydata.table.ExcelFile
+    :members: check

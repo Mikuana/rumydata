@@ -28,6 +28,12 @@ __all__ = ['Unique']
 class Rule(_BaseRule):
     """ Column Rule """
 
+    @staticmethod
+    def _pre_process(data: List[str], **kwargs) -> List[str]:
+        if kwargs.get('strip'):
+            data = [d.strip() for d in data]
+        return data
+
     def _prepare(self, data: List[str]) -> tuple:
         return data,
 

@@ -16,7 +16,8 @@ import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
-from rumydata.table import File
+from rumydata.rules.cell import make_static_cell_rule
+from rumydata.table import CsvFile, ExcelFile
 
 
 @pytest.fixture()
@@ -113,34 +114,34 @@ def empty_rows(rows, directory):
 
 
 def test_file_not_exists(basic):
-    assert File(rumydata.table.Layout(basic)). \
+    assert CsvFile(rumydata.table.Layout(basic)). \
         _has_error('abc123.csv', ex.FileError)
 
 
 def test_file_good(basic_good, basic):
-    assert not File(rumydata.table.Layout(basic)).check(basic_good)
+    assert not CsvFile(rumydata.table.Layout(basic)).check(basic_good)
 
 
 def test_file_excel_good(basic_good_excel, basic):
-    assert not File(rumydata.table.Layout(basic), file_type='excel').check(basic_good_excel)
+    assert not ExcelFile(rumydata.table.Layout(basic)).check(basic_good_excel)
 
 
 def test_file_invalid_type(basic):
     with pytest.raises(TypeError):
-        File(rumydata.table.Layout(basic), file_type='xxx')
+        CsvFile(rumydata.table.Layout(basic), file_type='xxx')
 
 
 def test_file_row_skip_good(basic_row_skip_good, basic):
-    assert not File(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
+    assert not CsvFile(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
 
 def test_layout_good(basic, basic_good):
-    assert not File(rumydata.table.Layout(basic)).check(basic_good)
+    assert not CsvFile(rumydata.table.Layout(basic)).check(basic_good)
 
 
 def test_readme_example(readme_layout, readme_data):
     rex = rumydata.rules.cell.Choice.rule_exception()
-    assert File(rumydata.table.Layout(readme_layout))._has_error(readme_data, rex)
+    assert CsvFile(rumydata.table.Layout(readme_layout))._has_error(readme_data, rex)
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -152,7 +153,7 @@ def test_readme_example(readme_layout, readme_data):
 def test_has_max_error(tmpdir, rows, me):
     fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
-    assert File(fields, max_errors=me)._has_error(file, tr.MaxError.rule_exception())
+    assert CsvFile(fields, max_errors=me)._has_error(file, tr.MaxError.rule_exception())
 
 
 @pytest.mark.parametrize('rows,me', [
@@ -164,7 +165,7 @@ def test_has_max_error(tmpdir, rows, me):
 def test_missing_max_error(tmpdir, rows, me):
     fields = rumydata.table.Layout({'x': field.Field()})
     file = empty_rows(rows, tmpdir)
-    assert not File(fields, max_errors=me)._has_error(file, tr.MaxError.rule_exception())
+    assert not CsvFile(fields, max_errors=me)._has_error(file, tr.MaxError.rule_exception())
 
 
 def test_column_compare_row_good():
@@ -180,7 +181,7 @@ def test_column_compare_row_good():
 ])
 def test_column_compare_file_good(tmpdir, compare_rule, row):
     cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
-    assert not File(cols).check(write_row(tmpdir, cols, row))
+    assert not CsvFile(cols).check(write_row(tmpdir, cols, row))
 
 
 @pytest.mark.parametrize('compare_rule,row', [
@@ -188,7 +189,7 @@ def test_column_compare_file_good(tmpdir, compare_rule, row):
 ])
 def test_column_compare_file_bad(tmpdir, compare_rule, row):
     cols = rumydata.table.Layout({'x': field.Field(), 'y': field.Field(rules=[compare_rule])})
-    assert File(cols)._has_error(write_row(tmpdir, cols, row), compare_rule.rule_exception())
+    assert CsvFile(cols)._has_error(write_row(tmpdir, cols, row), compare_rule.rule_exception())
 
 
 def test_header_file_bad(tmpdir):
@@ -196,19 +197,19 @@ def test_header_file_bad(tmpdir):
     cols2 = rumydata.table.Layout({'y': field.Field()})
     row = ['1']
     fp = write_row(tmpdir, cols2, row)
-    assert File(cols1)._has_error(fp, hr.NoMissing.rule_exception())
+    assert CsvFile(cols1)._has_error(fp, hr.NoMissing.rule_exception())
 
 
 def test_unique_bad(tmpdir):
     cols = rumydata.table.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['1'], ['1']], rows=True)
-    assert File(cols)._has_error(f, cr.Unique.rule_exception())
+    assert CsvFile(cols)._has_error(f, cr.Unique.rule_exception())
 
 
 def test_unique_good(tmpdir):
     cols = rumydata.table.Layout({'x': field.Field(rules=[cr.Unique()])})
     f = write_row(tmpdir, cols, [['1'], ['2'], ['3']], rows=True)
-    assert not File(cols).check(f)
+    assert not CsvFile(cols).check(f)
 
 
 @pytest.mark.parametrize('row,kwargs', [
@@ -224,7 +225,7 @@ def test_empty_row_good(row, kwargs):
 def test_empty_row_file_good(tmpdir):
     cols = rumydata.table.Layout({'x': field.Field()}, empty_row_ok=True)
     f = write_row(tmpdir, cols, [['1'], ['2'], ['']], rows=True)
-    assert not File(cols).check(f)
+    assert not CsvFile(cols).check(f)
 
 
 @pytest.mark.parametrize('row', [
@@ -238,3 +239,45 @@ def test_ignore_row(row):
         {'x': field.Ignore(), 'y': field.Integer(1)}, empty_row_ok=True
     )
     assert not lay.check_row(row)
+
+
+def test_debug_mode_pre_process(mocker):
+    """ Debug messages should only appear when debug method has been patched """
+    try:
+        # noinspection PyTypeChecker
+        field.Date().check_cell(None)
+    except AssertionError as ae:
+        assert '[DEBUG]' not in str(ae)
+
+    mocker.patch('rumydata.exception.debug', return_value=True)
+    try:
+        # noinspection PyTypeChecker
+        field.Date().check_cell(None)
+    except AssertionError as ae:
+        assert '[DEBUG]' in str(ae)
+
+
+def test_debug_mode(mocker):
+    """ Debug messages should only appear when debug method has been patched """
+
+    r = make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
+    try:
+        # noinspection PyTypeChecker
+        field.Field(rules=[r]).check_cell('1')
+    except AssertionError as ae:
+        assert '[DEBUG]' not in str(ae)
+
+    mocker.patch('rumydata.exception.debug', return_value=True)
+    try:
+        # noinspection PyTypeChecker
+        field.Field(rules=[r]).check_cell('1')
+    except AssertionError as ae:
+        assert '[DEBUG]' in str(ae)
+
+
+def test_cell_trim():
+    assert not field.Choice(['x'], strip=True).check_cell(' x ')
+
+
+def test_column_trim():
+    assert not field.Choice(['x'], strip=True).check_column([' x '])
