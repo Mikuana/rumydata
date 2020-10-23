@@ -368,3 +368,64 @@ class ExcelFile(_BaseFile):
     @staticmethod
     def _row_handler(row: list) -> List[str]:
         return [str(x or '') for x in row]
+
+
+class ParquetFile(_BaseFile):
+    """
+    Parquet File class
+
+    This class provides a way to validate the contents of a Parquet file against a
+    Layout, and report any rule violations that exist.
+
+    :param layout: a Layout object which defines the fields that make up the
+        data set, along with the various rules that should be applied to
+        each one.
+    :param max_errors: the maximum number of row errors to be
+        collected before halting validation of rows and raising a FileError.
+        This is used to prevent overly verbose (and mostly useless)
+        validation reports from being generated. The error
+        limit can be set to unlimited by providing a value of -1.
+
+    """
+
+    def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
+        try:
+            for mod in ('pandas', 'pyarrow'):
+                __import__('mod')
+        except ModuleNotFoundError:
+            # noinspection PyUnboundLocalVariable
+            raise ModuleNotFoundError(
+                f"{mod} not available for import. You must install it to use {self.__class__.__name__}"
+            )
+
+        x = {x: kwargs.pop(x, None) for x in ['sheet']}
+        self.parquet_kwargs = {k: v for k, v in x.items() if v}
+
+        super().__init__(layout, max_errors=max_errors, **kwargs)
+
+    def _rows(self, file: Path, sheet=None):
+        class Handler:
+            def __init__(self, file_path, **kwargs):
+                self.file_path = file_path
+                self.parquet_kwargs = kwargs
+
+            def __enter__(self) -> Iterable:
+                import pandas as pd
+                df = pd.read_parquet(file)
+
+                def gen():
+                    yield df.columns.to_list()
+                    for x in df.itertuples(index=False):
+                        yield x
+
+                return gen()
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                pass
+
+        return Handler(file, **self.parquet_kwargs)
+
+    @staticmethod
+    def _row_handler(row: list) -> List[str]:
+        import pandas as pd
+        return ['' if pd.isna(x) else str(x) for x in row]
