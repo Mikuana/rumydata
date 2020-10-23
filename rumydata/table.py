@@ -391,7 +391,7 @@ class ParquetFile(_BaseFile):
     def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
         try:
             for mod in ('pandas', 'pyarrow'):
-                __import__('mod')
+                __import__(mod)
         except ModuleNotFoundError:
             # noinspection PyUnboundLocalVariable
             raise ModuleNotFoundError(
