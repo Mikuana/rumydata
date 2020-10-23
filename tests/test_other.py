@@ -19,16 +19,6 @@ from rumydata.rules.cell import make_static_cell_rule
 from rumydata.table import CsvFile, ExcelFile
 
 
-@pytest.fixture()
-def basic() -> dict:
-    return {
-        'col1': rumydata.field.Text(1),
-        'col2': rumydata.field.Integer(1),
-        'col3': rumydata.field.Date(),
-        'col4': field.Choice(['X', 'Y', 'Z'])
-    }
-
-
 def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
     p = Path(directory, str(uuid.uuid4()))
     with p.open('w', newline='') as o:

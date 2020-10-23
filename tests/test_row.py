@@ -1,17 +1,7 @@
 import pytest
 
-from rumydata import table, field
+from rumydata import table
 from rumydata.rules import row as rr, header as hr
-
-
-@pytest.fixture()
-def basic() -> dict:
-    return {
-        'col1': field.Text(1),
-        'col2': field.Integer(1),
-        'col3': field.Date(),
-        'col4': field.Choice(['X', 'Y', 'Z'])
-    }
 
 
 def test_row_good(basic):
