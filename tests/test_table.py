@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,12 +7,6 @@ from rumydata.field import Integer, Field
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 from tests.utils import mock_no_module
-
-
-@pytest.fixture()
-def tmpdir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
 
 
 def test_exception_message_structure(tmpdir):

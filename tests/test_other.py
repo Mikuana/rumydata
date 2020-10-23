@@ -4,7 +4,6 @@ sensible scripts.
 """
 
 import csv
-import tempfile
 import uuid
 from pathlib import Path
 
@@ -28,12 +27,6 @@ def basic() -> dict:
         'col3': rumydata.field.Date(),
         'col4': field.Choice(['X', 'Y', 'Z'])
     }
-
-
-@pytest.fixture()
-def tmpdir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
 
 
 def write_row(directory, columns: rumydata.table.Layout, row, rows=False):

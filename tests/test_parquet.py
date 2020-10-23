@@ -1,4 +1,3 @@
-import tempfile
 from datetime import date
 from pathlib import Path
 
@@ -10,22 +9,6 @@ import rumydata.table
 from rumydata import field
 from rumydata.table import ParquetFile
 from tests.utils import mock_no_module
-
-
-@pytest.fixture()
-def basic() -> dict:
-    return {
-        'col1': rumydata.field.Text(1),
-        'col2': rumydata.field.Integer(1),
-        'col3': rumydata.field.Date(),
-        'col4': field.Choice(['X', 'Y', 'Z'])
-    }
-
-
-@pytest.fixture()
-def tmpdir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
 
 
 @pytest.fixture()
