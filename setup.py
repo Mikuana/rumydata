@@ -29,8 +29,12 @@ setuptools.setup(
     python_requires=">=3.7",
     extras_require={
         'Excel': ['openpyxl'],
+        'Parquet': ['pandas', 'pyarrow'],
         'HTML': ['markdown'],
-        'Testing': ['pytest', 'pytest-mock', 'pytest-cov', 'openpyxl', 'markdown']
+        'Testing': [
+            'pytest', 'pytest-mock', 'pytest-cov', 'openpyxl', 'markdown',
+            'pandas', 'pyarrow'
+        ]
     },
     packages=setuptools.find_packages()
 )

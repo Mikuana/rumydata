@@ -1,4 +1,3 @@
-import tempfile
 from pathlib import Path
 from uuid import uuid4
 
@@ -8,12 +7,6 @@ from rumydata.field import Integer
 from rumydata.menu import menu
 from rumydata.table import Layout
 from tests.utils import mock_no_module
-
-
-@pytest.fixture()
-def tmpdir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
 
 
 # noinspection DuplicatedCode
