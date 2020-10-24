@@ -1,11 +1,17 @@
 import pytest
 
-from rumydata import table
+from rumydata import table, Layout, field
 from rumydata.rules import row as rr, header as hr
 
 
 def test_row_good(basic):
     assert not table.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
+
+
+def test_row_choice(basic):
+    lay = Layout({'c1': field.Choice(['x'], nullable=True)})
+    assert not lay.check_row(['x'])
+    assert not lay.check_row([''])
 
 
 @pytest.mark.parametrize('value,err', [

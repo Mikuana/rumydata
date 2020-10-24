@@ -93,7 +93,8 @@ class Field(_BaseSubject):
         """
 
         # if data is nullable and value is empty, skip all checks
-        if self.nullable and rule_type == clr.Rule and data == '':
+        empty = data[0] == '' if isinstance(data, tuple) else data == ''
+        if self.nullable and rule_type == clr.Rule and empty:
             pass
         else:
             e = super()._check(data, rule_type=rule_type, strip=self.strip)
