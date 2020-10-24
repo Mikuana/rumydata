@@ -28,9 +28,10 @@ For most users, the recommended method to install is via pip::
 This package requires python version 3.7 or higher. By default there are no
 third-party package dependencies. However, some extras are available.
 
-**Excel** support Excel spreadsheet file validation::
+**Excel**::
     pip install rumydata[Excel]
-
+**Parquet**::
+    pip install rumydata[Parquet]
 
 .. toctree::
    :maxdepth: 2

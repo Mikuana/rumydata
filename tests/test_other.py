@@ -4,7 +4,6 @@ sensible scripts.
 """
 
 import csv
-import tempfile
 import uuid
 from pathlib import Path
 
@@ -18,22 +17,6 @@ from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
 from rumydata.rules.cell import make_static_cell_rule
 from rumydata.table import CsvFile, ExcelFile
-
-
-@pytest.fixture()
-def basic() -> dict:
-    return {
-        'col1': rumydata.field.Text(1),
-        'col2': rumydata.field.Integer(1),
-        'col3': rumydata.field.Date(),
-        'col4': field.Choice(['X', 'Y', 'Z'])
-    }
-
-
-@pytest.fixture()
-def tmpdir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
 
 
 def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
