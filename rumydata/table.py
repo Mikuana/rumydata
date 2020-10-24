@@ -13,7 +13,7 @@ from rumydata import field
 from rumydata._base import _BaseSubject
 from rumydata.rules import table, column as cr, header as hr, row as rr, cell as clr
 
-__all__ = ['Layout', 'CsvFile', 'ExcelFile']
+__all__ = ['Layout', 'CsvFile', 'ExcelFile', 'ParquetFile']
 
 
 class Layout(_BaseSubject):
