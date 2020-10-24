@@ -375,7 +375,12 @@ class ParquetFile(_BaseFile):
     Parquet File class
 
     This class provides a way to validate the contents of a Parquet file against a
-    Layout, and report any rule violations that exist.
+    Layout, and report any rule violations that exist. This is accomplished by
+    iterating rows within the file, and converting each to a string. This is incredibly
+    inefficient, but it does mean that validation is applied to values in the file
+    in exactly the same way as occurs with CSV and Excel files.
+
+    Accuracy and consistency is preferred over efficiency in this case.
 
     :param layout: a Layout object which defines the fields that make up the
         data set, along with the various rules that should be applied to
