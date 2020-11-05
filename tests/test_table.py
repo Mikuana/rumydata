@@ -2,11 +2,28 @@ from pathlib import Path
 from uuid import uuid4
 
 import pytest
+from openpyxl import Workbook
 
-from rumydata.field import Integer, Field
+from rumydata.field import Integer, Field, Text
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 from tests.utils import mock_no_module
+
+
+@pytest.fixture
+def wb_sheets(tmpdir):
+    wb = Workbook()
+    ws0 = wb.active
+    ws0.append([''])
+    ws1 = wb.create_sheet('wrong')
+    ws1.append(['x'])
+    ws1.append(['aa'])
+    ws2 = wb.create_sheet('right')
+    ws2.append(['x'])
+    ws2.append(['a'])
+    p = Path(tmpdir, f"{uuid4().hex}.xlsx")
+    wb.save(p)
+    yield p
 
 
 def test_exception_message_structure(tmpdir):
@@ -89,3 +106,14 @@ def test_no_excel(mocker):
 
 def test_base_file_stubs():
     assert not _BaseFile(Layout({'x': Integer(1)}))._rows(Path('x'))
+
+
+def test_excel_wrong_sheet(wb_sheets):
+    lay = Layout({'x': Text(1)})
+    with pytest.raises(AssertionError):
+        ExcelFile(lay, sheet='wrong').check(wb_sheets)
+
+
+def test_excel_right_sheet(wb_sheets):
+    lay = Layout({'x': Text(1)})
+    assert not ExcelFile(lay, sheet='right').check(wb_sheets)
