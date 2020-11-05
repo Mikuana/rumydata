@@ -347,7 +347,8 @@ class ExcelFile(_BaseFile):
 
         super().__init__(layout, skip_rows, max_errors, **kwargs)
 
-    def _rows(self, file: Path, sheet=None):
+    def _rows(self, file: Path):
+
         class Handler:
             def __init__(self, file_path, **kwargs):
                 self.file_path = file_path
@@ -357,7 +358,7 @@ class ExcelFile(_BaseFile):
                 from openpyxl import load_workbook
                 wb = load_workbook(file)
                 sheet_name = self.excel_kwargs.get('sheet')
-                ws = wb.get_sheet_by_name(sheet_name) if sheet else wb.active
+                ws = wb[sheet_name] if sheet_name else wb.active
                 return ws.values
 
             def __exit__(self, exc_type, exc_val, exc_tb):
