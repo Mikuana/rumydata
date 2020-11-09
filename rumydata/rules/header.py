@@ -24,10 +24,8 @@ class Rule(_BaseRule):
         super().__init__()
         self.header_mode = columns.header_mode
         self.definition = columns.layout
-        # TODO figure out reference to empty_cols_ok  
 
     def _prepare(self, data: List[str]) -> tuple:
-        # TODO if self.empty_cols_ok: update incoming tuple to strip off any cells with empty strings, use pop :)
         return data,
 
 
