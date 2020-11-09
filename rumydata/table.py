@@ -46,6 +46,7 @@ class Layout(_BaseSubject):
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
         self.header_mode = kwargs.pop('header_mode', 'exact')
+        self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
 
         header_modes = ('exact', 'startswith', 'contains')
         if self.header_mode not in header_modes:
@@ -247,8 +248,21 @@ class _BaseFile(_BaseSubject):
                 if rix < self.skip_rows:
                     continue
                 row = self._row_handler(row)
-                rt = hr.Rule if rix == (0 + self.skip_rows) else rr.Rule
-                re = self.layout._check(row, rule_type=rt, rix=rix)
+                if rix == (0 + self.skip_rows):
+                    re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
+                    if self.layout.empty_cols_ok:
+                        new_layout = self.layout.layout.copy()
+                        for ix, x in enumerate(row):
+                            if not x:
+                                new_layout[f'empty{str(ix)}'] = field.Text(0, nullable=True)
+                        self.layout.layout.update(new_layout)
+                        self.layout.field_count = len(self.layout.layout)
+                        for rule in self.layout.rules:
+                            if isinstance(rule, rr.RowLengthLTE) or isinstance(rule, rr.RowLengthGTE):
+                                rule.columns_length = self.layout.field_count
+                else:
+                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
+
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
