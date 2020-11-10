@@ -250,16 +250,6 @@ class _BaseFile(_BaseSubject):
                 row = self._row_handler(row)
                 if rix == (0 + self.skip_rows):
                     re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
-                    if self.layout.empty_cols_ok:
-                        new_layout = self.layout.layout.copy()
-                        for ix, x in enumerate(row):
-                            if not x:
-                                new_layout[f'empty{str(ix)}'] = field.Text(0, nullable=True)
-                        self.layout.layout.update(new_layout)
-                        self.layout.field_count = len(self.layout.layout)
-                        for rule in self.layout.rules:
-                            if isinstance(rule, rr.RowLengthLTE) or isinstance(rule, rr.RowLengthGTE):
-                                rule.columns_length = self.layout.field_count
                 else:
                     re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
 

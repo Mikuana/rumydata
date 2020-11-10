@@ -229,7 +229,8 @@ class _BaseSubject:
         checking to see if any of those errors contain additional errors, then
         continuing to recurse until all errors have been yielded.
         """
-        yield error
-        for el in error._errors:
-            for x in cls._flatten_exceptions(el):
-                yield x
+        if error:
+            yield error
+            for el in error._errors:
+                for x in cls._flatten_exceptions(el):
+                    yield x
