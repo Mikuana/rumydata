@@ -4,6 +4,8 @@ from rumydata import table, Layout, field
 from rumydata.rules import row as rr, header as hr
 
 
+
+
 def test_row_good(basic):
     assert not table.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
 
@@ -45,7 +47,9 @@ def test_header_skip(basic):
     (1, ['1'], True)
 ])
 def test_row_length_lte(row_length, row, expected):
-    r = rr.RowLengthLTE(row_length)
+    lay = Layout({})
+    lay.field_count = row_length
+    r = rr.RowLengthLTE(lay)
     assert r._evaluator()(*r._prepare(row)) is expected
 
 
@@ -55,5 +59,20 @@ def test_row_length_lte(row_length, row, expected):
     (1, ['1', '2'], True)
 ])
 def test_row_length_gte(row_length, row, expected):
-    r = rr.RowLengthGTE(row_length)
+    lay = Layout({})
+    lay.field_count = row_length
+    r = rr.RowLengthGTE(lay)
     assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('value,expected,kwargs', [
+    (['col1', 'col2', '', ''], True, {'empty_cols_ok': False}),
+    (['col1', 'col2'], False, {'empty_cols_ok': False}),
+    (['col1', 'col2', '', ''], False, {'empty_cols_ok': True}),
+    (['col1', 'col2'], False, {'empty_cols_ok': True}),
+])
+def test_row_lte_empty_cols(value, expected, kwargs):
+    lay = Layout({'col1': field.Text(1), 'col2': field.Text(1)}, **kwargs)
+    assert lay._has_error(value, rr.RowLengthLTE.rule_exception(), rule_type=rr.Rule) is expected
+
+
