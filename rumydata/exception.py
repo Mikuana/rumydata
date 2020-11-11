@@ -152,7 +152,7 @@ class RowError(UrNotMyDataError):
     """
 
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
-        message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
+        message = f'{str(str(index) + str((0 if kwargs.get("zero_index") else 1)))}'
         message += f'; {msg}' if msg else ''
         super().__init__(message, errors)
 

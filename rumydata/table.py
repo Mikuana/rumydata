@@ -63,8 +63,8 @@ class Layout(_BaseSubject):
             hr.NoExtra(self),
             hr.NoDuplicate(self),
             hr.NoMissing(self),
-            rr.RowLengthLTE(self.field_count),
-            rr.RowLengthGTE(self.field_count)
+            rr.RowLengthLTE(self),
+            rr.RowLengthGTE(self)
         ])
 
     def documentation(self, doc_type='md'):
