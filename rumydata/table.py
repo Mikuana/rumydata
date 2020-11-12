@@ -157,7 +157,7 @@ class Layout(_BaseSubject):
                 if ce:
                     e.append(ce)
             if e:
-                return ex.RowError(rix, errors=e)
+                return ex.RowError(rix if rix else -1, errors=e)
 
 
 class _BaseFile(_BaseSubject):
@@ -255,12 +255,12 @@ class _BaseFile(_BaseSubject):
 
                 if re:
                     e.append(re)
-                    if rix == 0:  # if header error present, stop checking rows
+                    if rix == (0 + self.skip_rows):  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
                         break
-                if rix > 0:
+                if rix > (0 + self.skip_rows):
                     for k, ix in column_cache_map.items():
                         column_cache[k].append(row[ix])
 

@@ -24,25 +24,20 @@ class Rule(_BaseRule):
     def __init__(self, columns):
         super().__init__()
         self.header_mode = columns.header_mode
-        self.layout = columns
         self.definition = columns.layout
-        self.empty_cols_ok = columns.empty_cols_ok
 
     def _prepare(self, data: List[str]) -> tuple:
-        if self.empty_cols_ok:
-            new_layout = self.definition.copy()
-            for ix, x in enumerate(data):
-                if not x:
-                    new_layout[f'empty{str(ix)}'] = field.Text(0, nullable=True)
-            if self.definition != new_layout:
-                self.definition.update(new_layout)
-                self.layout.field_count = len(self.definition)
-                data = list(self.definition)
         return data,
 
 
 class NoExtra(Rule):
     """ No extra header elements Rule """
+
+    def __init__(self, columns):
+        super().__init__(columns)
+        self.header_mode = columns.header_mode
+        self.layout = columns
+        self.empty_cols_ok = columns.empty_cols_ok
 
     def _evaluator(self):
         modes = {
@@ -54,6 +49,16 @@ class NoExtra(Rule):
 
     def _explain(self):
         return 'Header row must not have unexpected columns'
+
+    def _prepare(self, data: List[str]) -> tuple:
+        if self.empty_cols_ok:
+            for ix, x in enumerate(data):
+                if not x:
+                    self.definition[f'empty{str(ix)}'] = field.Text(0, nullable=True)
+            if self.layout.field_count != len(self.definition):
+                self.layout.field_count = len(self.definition)
+            data = list(self.definition)
+        return data,
 
 
 class NoMissing(Rule):
