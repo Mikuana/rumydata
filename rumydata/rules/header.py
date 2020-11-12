@@ -13,13 +13,13 @@ from rumydata import field
 
 # this named tuple is here to allow for setting the default argument without
 # needing to import the Layout class, which results in a circular import
-_default_thing = namedtuple('DefaultDict', ['layout', 'header_mode'])
+_default_thing = namedtuple('DefaultDict', ['layout', 'header_mode', 'empty_cols_ok'])
 
 
 class Rule(_BaseRule):
     """ Header Rule """
 
-    _default_args = (_default_thing({}, 'exact'),)
+    _default_args = (_default_thing({}, 'exact', False),)
 
     def __init__(self, columns):
         super().__init__()

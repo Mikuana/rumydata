@@ -7,9 +7,14 @@ the expected number of values, before attempting to validate individual cells.
 """
 
 from typing import List
+from collections import namedtuple
 
 from rumydata import field
 from rumydata._base import _BaseRule
+
+# this named tuple is here to allow for setting the default argument without
+# needing to import the Layout class, which results in a circular import
+_default_thing = namedtuple('DefaultDict', ['lay', 'empty_cols_ok', 'field_count', 'layout'])
 
 
 class Rule(_BaseRule):
@@ -24,7 +29,7 @@ class Rule(_BaseRule):
 
 class RowLength(Rule):
     """ Generic Row length Rule """
-    _default_args = (1,)
+    _default_args = (_default_thing({}, False, 1, {}),)
 
     def __init__(self, layout):
         super().__init__()
@@ -48,8 +53,6 @@ class RowLength(Rule):
 class RowLengthLTE(RowLength):
     """ Row length less than or equal to Rule """
 
-    _default_args = (1,)
-
     def _evaluator(self):
         return lambda x: len(x) <= self.columns_length
 
@@ -59,8 +62,6 @@ class RowLengthLTE(RowLength):
 
 class RowLengthGTE(RowLength):
     """ Row greater than or equal to Rule """
-
-    _default_args = (1,)
 
     def _evaluator(self):
         return lambda x: len(x) >= self.columns_length
