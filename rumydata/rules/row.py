@@ -15,6 +15,17 @@ from rumydata._base import _BaseRule
 class Rule(_BaseRule):
     """ Row Rule """
 
+    def __init__(self):
+        super().__init__()
+
+    def _prepare(self, data: List[str]) -> tuple:
+        return data,
+
+
+class RowLength(Rule):
+    """ Generic Row length Rule """
+    _default_args = (1,)
+
     def __init__(self, layout):
         super().__init__()
         self.empty_cols_ok = layout.empty_cols_ok
@@ -34,7 +45,7 @@ class Rule(_BaseRule):
         return data,
 
 
-class RowLengthLTE(Rule):
+class RowLengthLTE(RowLength):
     """ Row length less than or equal to Rule """
 
     _default_args = (1,)
@@ -46,7 +57,7 @@ class RowLengthLTE(Rule):
         return f'row length must be equal to {str(self.columns_length)}, not greater'
 
 
-class RowLengthGTE(Rule):
+class RowLengthGTE(RowLength):
     """ Row greater than or equal to Rule """
 
     _default_args = (1,)
