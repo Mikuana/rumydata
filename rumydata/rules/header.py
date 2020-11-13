@@ -33,7 +33,7 @@ class Rule(_BaseRule):
         if self.empty_cols_ok:
             for ix, x in enumerate(data):
                 if not x:
-                    self.definition[f'empty{str(ix)}'] = field.Text(0, nullable=True)
+                    self.definition[f'empty{str(ix)}'] = field.Ignore()
                     data[ix] = f'empty{str(ix)}'
             if self.layout.field_count != len(self.definition):
                 self.layout.field_count = len(self.definition)

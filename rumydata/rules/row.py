@@ -39,14 +39,8 @@ class RowLength(Rule):
 
     def _prepare(self, data: List[str]) -> tuple:
         if self.empty_cols_ok:
-            new_layout = self.definition.copy()
-            for ix, x in enumerate(data):
-                if not x:
-                    new_layout[f'empty{str(ix)}'] = field.Text(0, nullable=True)
-            if self.definition != new_layout:
-                self.definition.update(new_layout)
-                self.columns_length = len(self.definition)
-                data = list(self.definition)
+            if self.columns_length != len(data):
+                self.columns_length = len(data)
         return data,
 
 
