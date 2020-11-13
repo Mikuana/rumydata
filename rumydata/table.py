@@ -54,7 +54,6 @@ class Layout(_BaseSubject):
         super().__init__(**kwargs)
 
         self.layout = _definition
-        self.field_count = len(_definition)
         self._title = kwargs.get('title')
 
         self.rules.extend([
@@ -62,9 +61,12 @@ class Layout(_BaseSubject):
             hr.NoExtra(self),
             hr.NoDuplicate(self),
             hr.NoMissing(self),
-            rr.RowLengthLTE(self.field_count),
-            rr.RowLengthGTE(self.field_count)
+            rr.RowLengthLTE(self.field_count()),
+            rr.RowLengthGTE(self.field_count())
         ])
+
+    def field_count(self):
+        return len(self.layout)
 
     def documentation(self, doc_type='md'):
         """
