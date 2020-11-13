@@ -1,6 +1,6 @@
 import pytest
 
-from rumydata.field import Field
+from rumydata.field import Field, Text
 from rumydata.rules.header import *
 from rumydata.table import Layout
 
@@ -67,3 +67,14 @@ def test_column_order(value, expected, kwargs):
 def test_invalid_header_mode():
     with pytest.raises(ValueError):
         Layout({}, header_mode='x')
+
+
+@pytest.mark.parametrize('value,expected,kwargs', [
+    (['col1', 'col2', '', ''], True, {'empty_cols_ok': False}),
+    (['col1', 'col2'], False, {'empty_cols_ok': False}),
+    (['col1', 'col2', '', ''], False, {'empty_cols_ok': True}),
+    (['col1', 'col2'], False, {'empty_cols_ok': True}),
+])
+def test_header_empty_cols(value, expected, kwargs):
+    lay = Layout({'col1': Text(1), 'col2': Text(1)}, **kwargs)
+    assert lay._has_error(value, NoExtra.rule_exception(), rule_type=Rule) is expected
