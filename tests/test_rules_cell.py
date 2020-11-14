@@ -378,16 +378,36 @@ def test_greater_than_column(compared: str, data, expected: bool):
 
 
 @pytest.mark.parametrize('compare,row,expected', [
-    ('col_b', ('', {'col_b': ''}), False),
-    ('col_b', ('test', {'col_b': ''}), False),
+    ('col_b', ('', {'col_b': ''}), True),
+    ('col_b', ('test', {'col_b': ''}), True),
+    ('col_b', ('test', {'col_b': 'test'}), True),
+    ('col_b', ('', {'col_b': 'test'}), False),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': 'test'}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': 'test', 'col_c': 'test'}), True),
+    (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': ''}), False),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': 'test'}), False),
+    (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': 'test'}), False)
+])
+def test_not_null_if_compare(compare, row, expected):
+    r = NotNullIfCompare(compare)
+    assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('compare,row,expected', [
+    ('col_b', ('', {'col_b': ''}), True),
+    ('col_b', ('test', {'col_b': ''}), True),
     ('col_b', ('test', {'col_b': 'test'}), False),
     ('col_b', ('', {'col_b': 'test'}), True),
-    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': ''}), False),
-    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': ''}), False),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': 'test'}), False),
+    (['col_b', 'col_c'], ('test', {'col_b': 'test', 'col_c': 'test'}), False),
     (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': ''}), True),
     (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': 'test'}), True),
     (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': 'test'}), True)
 ])
-def test_not_null_if_compare(compare, row, expected):
-    r = NotNullIfCompare(compare)
-    assert r.dependent_col_value_exists(row) is expected
+def test_null_if_compare(compare, row, expected):
+    r = NullIfCompare(compare)
+    assert r._evaluator()(*r._prepare(row)) is expected

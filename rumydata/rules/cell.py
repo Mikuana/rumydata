@@ -23,7 +23,8 @@ __all__ = [
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
-    'DateLT', 'GreaterThanColumn', 'NotNullIfCompare',
+    'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'NullIfCompare', 'MustBeNullUnless', 'GreaterThanOrEqualColumn',
+    'VariableNullability',
     'make_static_cell_rule'
 ]
 
@@ -579,8 +580,14 @@ class VariableNullability(ColumnComparisonRule):
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
 
-    def dependent_col_value_exists(self, data):
+    def _prepare(self, data: Tuple[str, Dict]) -> tuple:
         return data
+
+    def dependent_col_pass(self, data):
+        return data
+
+    def _evaluator(self):
+        return lambda x, y: self.dependent_col_pass((x, y))
 
 
 class NotNullIfCompare(VariableNullability):
@@ -588,7 +595,7 @@ class NotNullIfCompare(VariableNullability):
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
 
-    def dependent_col_value_exists(self, data):
+    def dependent_col_pass(self, data):
         """
         Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
         compare_to contains a value when the incoming data is empty
@@ -600,9 +607,9 @@ class NotNullIfCompare(VariableNullability):
         elif isinstance(self.compare_to, list):
             empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
         if not empty_compare and empty_val:
-            return True
-        else:
             return False
+        else:
+            return True
 
     def _explain(self) -> str:
         compare_msg = ''
@@ -618,7 +625,7 @@ class NullIfCompare(VariableNullability):
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
 
-    def dependent_col_value_exists(self, data):
+    def dependent_col_pass(self, data):
         """
         Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
         compare_to contains a value when the incoming data is empty
@@ -630,9 +637,9 @@ class NullIfCompare(VariableNullability):
         elif isinstance(self.compare_to, list):
             populated_val = any([v for k, v in data[1].items() if k in self.compare_to]) not in ['', False]
         if populated_val and not empty_val:
-            return True
-        else:
             return False
+        else:
+            return True
 
     def _explain(self) -> str:
         compare_msg = ''
@@ -648,7 +655,7 @@ class MustBeNullUnless(VariableNullability):
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
 
-    def dependent_col_value_exists(self, data):
+    def dependent_col_pass(self, data):
         """
         Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
         compare_to contains a value when the incoming data is empty
@@ -660,9 +667,9 @@ class MustBeNullUnless(VariableNullability):
         elif isinstance(self.compare_to, list):
             empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
         if empty_compare and not empty_val:
-            return True
-        else:
             return False
+        else:
+            return True
 
     def _explain(self) -> str:
         compare_msg = ''
