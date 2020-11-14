@@ -242,3 +242,10 @@ def test_column_unique_good():
 def test_column_unique_bad():
     x = field.Field(rules=[rules.column.Unique()])
     assert x._has_error(['2', '2'], rules.column.Unique.rule_exception(), rule_type=field.cr.Rule)
+
+
+def test_empty_field():
+    empty = field.Empty()
+    assert not empty.check_cell('')
+    with pytest.raises(AssertionError):
+        assert empty.check_cell('1')

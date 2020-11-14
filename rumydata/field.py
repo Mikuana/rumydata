@@ -20,7 +20,7 @@ from rumydata import exception as ex
 from rumydata._base import _BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
-__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore']
+__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore', 'Empty']
 
 
 class Field(_BaseSubject):
@@ -145,6 +145,19 @@ class Ignore(Field):
 
     def _check(self, *args, **kwargs):
         pass
+
+
+class Empty(Field):
+    """
+    Empty Field
+
+    A field which must be entirely empty/blank/null. This differs from the Ignore
+    field in that it will raise errors if any values are found.
+    """
+
+    def __init__(self):
+        super().__init__(nullable=True)
+        self.rules.append(clr.MaxChar(0))
 
 
 class Text(Field):
