@@ -16,7 +16,7 @@ from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
 from rumydata.rules.cell import make_static_cell_rule
-from rumydata.table import CsvFile, ExcelFile
+from rumydata.table import CsvFile, ExcelFile, Layout
 
 
 def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
@@ -34,11 +34,21 @@ def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
 
 @pytest.fixture()
 def basic_good(tmpdir):
-    p = Path(tmpdir, 'good.csv')
+    p = Path(tmpdir, uuid.uuid4().hex)
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
         writer.writerow(['col1', 'col2', 'col3', 'col4'])
         writer.writerow(['A', '1', '2020-01-01', 'X'])
+    yield p.as_posix()
+
+
+@pytest.fixture()
+def basic_good_with_empty(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    with p.open('w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerow(['col1', 'col2', 'col3', '', 'col4'])
+        writer.writerow(['A', '1', '2020-01-01', '', 'X'])
     yield p.as_posix()
 
 
@@ -264,3 +274,13 @@ def test_cell_trim():
 
 def test_column_trim():
     assert not field.Choice(['x'], strip=True).check_column([' x '])
+
+
+def test_empty_column_good(basic, basic_good, basic_good_with_empty):
+    assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_empty)
+    assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good)
+
+
+def test_empty_column_bad(basic, basic_good_with_empty):
+    with pytest.raises(AssertionError):
+        assert CsvFile(Layout(basic, empty_cols_ok=False)).check(basic_good_with_empty)

@@ -245,7 +245,7 @@ def test_column_unique_bad():
 
 
 def test_empty_field():
-    empty = field.Text(0, nullable=True)  # TODO: add an Empty field type to replace this
+    empty = field.Empty()
     assert not empty.check_cell('')
     with pytest.raises(AssertionError):
         assert empty.check_cell('1')
