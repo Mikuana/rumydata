@@ -12,21 +12,25 @@ from rumydata._base import _BaseRule
 
 # this named tuple is here to allow for setting the default argument without
 # needing to import the Layout class, which results in a circular import
-_default_thing = namedtuple('DefaultDict', ['layout', 'header_mode'])
+_default_thing = namedtuple('DefaultDict', ['layout', 'header_mode', 'empty_cols_ok'])
 
 
 class Rule(_BaseRule):
     """ Header Rule """
 
-    _default_args = (_default_thing({}, 'exact'),)
+    _default_args = (_default_thing({}, 'exact', False),)
 
     def __init__(self, columns):
         super().__init__()
         self.header_mode = columns.header_mode
         self.definition = columns.layout
+        self.empty_cols_ok = columns.empty_cols_ok
 
     def _prepare(self, data: List[str]) -> tuple:
-        return data,
+        if self.empty_cols_ok:
+            return [x for x in data if x != ''],
+        else:
+            return data,
 
 
 class NoExtra(Rule):

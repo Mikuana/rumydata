@@ -3,10 +3,10 @@ table submodule
 
 This submodule contains the File class, and it's closely related Layout class.
 """
-
 import csv
 from pathlib import Path
 from typing import Union, Dict, List, Iterable
+from uuid import uuid4
 
 from rumydata import exception as ex
 from rumydata import field
@@ -46,6 +46,7 @@ class Layout(_BaseSubject):
         self.skip_header = kwargs.pop('skip_header', False)
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
         self.header_mode = kwargs.pop('header_mode', 'exact')
+        self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
 
         header_modes = ('exact', 'startswith', 'contains')
         if self.header_mode not in header_modes:
@@ -249,8 +250,29 @@ class _BaseFile(_BaseSubject):
                 if rix < self.skip_rows:
                     continue
                 row = self._row_handler(row)
-                rt = hr.Rule if rix == (0 + self.skip_rows) else rr.Rule
-                re = self.layout._check(row, rule_type=rt, rix=rix)
+                if rix == (0 + self.skip_rows):  # if header
+                    re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
+                    if self.layout.empty_cols_ok:
+                        # remap layout positions with Empty columns wherever header is empty
+                        empties = [ix for ix, i in enumerate(row) if i == '']
+                        bumps = {k: ix for ix, k in enumerate(self.layout.layout.keys())}
+
+                        for i in empties:
+                            for k, v in bumps.items():
+                                if v >= i:
+                                    bumps[k] += 1
+
+                        bumps = {v: k for k, v in bumps.items()}
+                        bumps = [bumps.get(i, f"empty_{uuid4().hex[:5]}") for i in range(len(row))]
+                        self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
+
+                        for ix, rule in enumerate(self.layout.rules):  # update row length rules
+                            if isinstance(rule, (rr.RowLengthLTE, rr.RowLengthGTE)):
+                                self.layout.rules[ix].columns_length = self.layout.field_count()
+
+                else:
+                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
+
                 if re:
                     e.append(re)
                     if rix == 0:  # if header error present, stop checking rows
