@@ -562,3 +562,20 @@ class GreaterThanColumn(ColumnComparisonRule):
 
     def _explain(self) -> str:
         return f"must be greater than column '{self.compare_to}'"
+
+
+class NullIfCompare(ColumnComparisonRule):
+
+    def dependent_col_value_exists(self, data):
+        """ Checks the incoming data value against the rule's compare_to attribute, returning True if the compare_to
+        contains a value when the incoming data is empty
+        """
+        empty_val = data[0] == ''
+        empty_compare = data[1][self.compare_to] == ''
+        if not empty_compare and empty_val:
+            return True
+        else:
+            return False
+
+    def _explain(self) -> str:
+        return f"cannot be empty if '{self.compare_to}' contains a value"

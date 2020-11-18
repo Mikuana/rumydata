@@ -96,6 +96,14 @@ class Field(_BaseSubject):
         empty = data[0] == '' if isinstance(data, tuple) else data == ''
         if self.nullable and rule_type == clr.Rule and empty:
             pass
+
+        elif any([isinstance(x, clr.NullIfCompare) for x in self.rules]):
+            for rule in [x for x in self.rules if isinstance(x, clr.NullIfCompare)]:
+                if rule.dependent_col_value_exists(data):
+                    errors = [rule._exception_msg()]
+                    return ex.CellError(cix, errors=errors, **kwargs)
+                else:
+                    pass
         else:
             e = super()._check(data, rule_type=rule_type, strip=self.strip)
             if e:
