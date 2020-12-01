@@ -97,8 +97,8 @@ class Field(_BaseSubject):
         if self.nullable and rule_type == clr.Rule and empty:
             pass
 
-        elif any([isinstance(x, clr.NullIfCompare) for x in self.rules]):
-            for rule in [x for x in self.rules if isinstance(x, clr.NullIfCompare)]:
+        elif any([isinstance(x, clr.NotNullIfCompare) for x in self.rules]):
+            for rule in [x for x in self.rules if isinstance(x, clr.NotNullIfCompare)]:
                 if rule.dependent_col_value_exists(data):
                     errors = [rule._exception_msg()]
                     return ex.CellError(cix, errors=errors, **kwargs)

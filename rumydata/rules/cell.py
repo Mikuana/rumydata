@@ -23,7 +23,7 @@ __all__ = [
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
-    'DateLT', 'GreaterThanColumn',
+    'DateLT', 'GreaterThanColumn', 'NotNullIfCompare',
     'make_static_cell_rule'
 ]
 
@@ -564,14 +564,15 @@ class GreaterThanColumn(ColumnComparisonRule):
         return f"must be greater than column '{self.compare_to}'"
 
 
-class NullIfCompare(ColumnComparisonRule):
+class NotNullIfCompare(ColumnComparisonRule):
 
     def dependent_col_value_exists(self, data):
-        """ Checks the incoming data value against the rule's compare_to attribute, returning True if the compare_to
-        contains a value when the incoming data is empty
         """
-        empty_val = data[0] == ''
-        empty_compare = data[1][self.compare_to] == ''
+        Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
+        compare_to contains a value when the incoming data is empty
+        """
+        empty_val = data[0] in ['', False]
+        empty_compare = data[1][self.compare_to] in ['', False]
         if not empty_compare and empty_val:
             return True
         else:

@@ -375,3 +375,14 @@ def test_date_lt(comparison: str, value: str, expected: bool):
 def test_greater_than_column(compared: str, data, expected: bool):
     r = GreaterThanColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
+
+
+@pytest.mark.parametrize('compare,row,expected', [
+    ('col_b', ('', {'col_b': ''}), False),
+    ('col_b', ('test', {'col_b': ''}), False),
+    ('col_b', ('test', {'col_b': 'test'}), False),
+    ('col_b', ('', {'col_b': 'test'}), True)
+])
+def test_not_null_if_compare(compare, row, expected):
+    r = NotNullIfCompare(compare)
+    assert r.dependent_col_value_exists(row) is expected
