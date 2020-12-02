@@ -564,6 +564,16 @@ class GreaterThanColumn(ColumnComparisonRule):
         return f"must be greater than column '{self.compare_to}'"
 
 
+class GreaterThanOrEqualColumn(ColumnComparisonRule):
+    """ Greater than compared column Rule """
+
+    def _evaluator(self):
+        return lambda x, y: x >= y
+
+    def _explain(self) -> str:
+        return f"must be greater than or equal to column '{self.compare_to}'"
+
+
 class NotNullIfCompare(ColumnComparisonRule):
 
     def __init__(self, compare_to: [str, List]):
@@ -579,7 +589,7 @@ class NotNullIfCompare(ColumnComparisonRule):
         if isinstance(self.compare_to, str):
             empty_compare = data[1][self.compare_to] in ['', False]
         elif isinstance(self.compare_to, list):
-            empty_compare = any(data[1].values()) in ['', False]
+            empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
         if not empty_compare and empty_val:
             return True
         else:

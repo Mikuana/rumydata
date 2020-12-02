@@ -105,7 +105,7 @@ class Field(_BaseSubject):
                         return ex.CellError(cix, errors=errors, **kwargs)
                     else:
                         pass
-                elif not isinstance(rule, (clr.NotNullIfCompare, clr.NullIfCompare)):
+                elif not isinstance(rule, (clr.NotNullIfCompare, clr.NullIfCompare)) and not empty:
                     e = super()._check(data, rule_type=rule_type, strip=self.strip)
                     if e:
                         if rule_type == cr.Rule:
