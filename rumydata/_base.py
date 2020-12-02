@@ -7,8 +7,7 @@ package. This is not intended for use by end-users.
 
 from typing import List, Union
 
-from rumydata import exception as ex
-
+import rumydata
 
 class _BaseRule:
     """
@@ -39,7 +38,7 @@ class _BaseRule:
 
     @classmethod
     def rule_exception(cls):
-        return type(f'{cls.__name__}Error', (ex.UrNotMyDataError,), {})
+        return type(f'{cls.__name__}Error', (rumydata.exception.UrNotMyDataError,), {})
 
     def _prepare(self, data) -> tuple:
         """
@@ -82,7 +81,7 @@ class _BaseRule:
         """
         return lambda x: False  # default to failing evaluation if not overwritten
 
-    def _exception_msg(self) -> ex.UrNotMyDataError:
+    def _exception_msg(self) -> rumydata.exception.UrNotMyDataError:
         """
         Validation exception message
 
@@ -127,7 +126,7 @@ class _BaseSubject:
         self.rules = rules or []
         self.descriptors = {}
 
-    def _check(self, data, rule_type, **kwargs) -> Union[ex.UrNotMyDataError, List[ex.UrNotMyDataError], None]:
+    def _check(self, data, rule_type, **kwargs) -> Union[rumydata.exception.UrNotMyDataError, List[rumydata.exception.UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -147,11 +146,11 @@ class _BaseSubject:
                 data = rule_type._pre_process(data, **kwargs)
             except Exception as e:
                 msg = f'raised {e.__class__.__name__} while preprocessing data'
-                if ex.debug():
+                if rumydata.exception.debug():
                     msg += f' [DEBUG]: {str(e)}'
-                return [ex.PreProcessingError(msg)]
+                return [rumydata.exception.PreProcessingError(msg)]
 
-        for r in self.rules:
+        for r in [x for x in self.rules if not isinstance(x, (rumydata.rules.cell.NotNullIfCompare, rumydata.rules.cell.NullIfCompare))]:
             # noinspection PyBroadException
             try:
                 if issubclass(type(r), rule_type):
@@ -161,12 +160,12 @@ class _BaseSubject:
                         errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
                 msg = f'raised {e.__class__.__name__} while checking if value {r._explain()}'
-                if ex.debug():
+                if rumydata.exception.debug():
                     msg += f' [DEBUG]: {str(e)}'
                 errors.append(r.rule_exception()(msg))
         return errors
 
-    def _list_errors(self, value, **kwargs) -> List[ex.UrNotMyDataError]:
+    def _list_errors(self, value, **kwargs) -> List[rumydata.exception.UrNotMyDataError]:
         """
         Flatten nested errors into a list
 

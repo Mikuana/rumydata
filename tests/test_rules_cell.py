@@ -381,7 +381,12 @@ def test_greater_than_column(compared: str, data, expected: bool):
     ('col_b', ('', {'col_b': ''}), False),
     ('col_b', ('test', {'col_b': ''}), False),
     ('col_b', ('test', {'col_b': 'test'}), False),
-    ('col_b', ('', {'col_b': 'test'}), True)
+    ('col_b', ('', {'col_b': 'test'}), True),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': ''}), False),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': ''}), False),
+    (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': 'test'}), True),
+    (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': 'test'}), True)
 ])
 def test_not_null_if_compare(compare, row, expected):
     r = NotNullIfCompare(compare)

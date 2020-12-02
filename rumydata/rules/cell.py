@@ -546,7 +546,7 @@ class ColumnComparisonRule(Rule):
 
     _default_args = ('x',)
 
-    def __init__(self, compare_to: str):
+    def __init__(self, compare_to: [str, List]):
         super().__init__()
         self.compare_to = compare_to
 
@@ -566,17 +566,59 @@ class GreaterThanColumn(ColumnComparisonRule):
 
 class NotNullIfCompare(ColumnComparisonRule):
 
+    def __init__(self, compare_to: [str, List]):
+        super().__init__(compare_to=compare_to)
+
     def dependent_col_value_exists(self, data):
         """
         Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
         compare_to contains a value when the incoming data is empty
         """
         empty_val = data[0] in ['', False]
-        empty_compare = data[1][self.compare_to] in ['', False]
+        empty_compare = True
+        if isinstance(self.compare_to, str):
+            empty_compare = data[1][self.compare_to] in ['', False]
+        elif isinstance(self.compare_to, list):
+            empty_compare = any(data[1].values()) in ['', False]
         if not empty_compare and empty_val:
             return True
         else:
             return False
 
     def _explain(self) -> str:
-        return f"cannot be empty if '{self.compare_to}' contains a value"
+        compare_msg = ''
+        if isinstance(self.compare_to, str):
+            compare_msg = self.compare_to
+        elif isinstance(self.compare_to, list):
+            compare_msg = "' or '".join(self.compare_to)
+        return f"cannot be empty if '{compare_msg}' contains a value"
+
+
+class NullIfCompare(ColumnComparisonRule):
+
+    def __init__(self, compare_to: [str, List]):
+        super().__init__(compare_to=compare_to)
+
+    def dependent_col_value_exists(self, data):
+        """
+        Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
+        compare_to contains a value when the incoming data is empty
+        """
+        empty_val = data[0] in ['', False]
+        empty_compare = True
+        if isinstance(self.compare_to, str):
+            empty_compare = data[1][self.compare_to] not in ['', False]
+        elif isinstance(self.compare_to, list):
+            empty_compare = any(data[1].values()) not in ['', False]
+        if empty_compare and not empty_val:
+            return True
+        else:
+            return False
+
+    def _explain(self) -> str:
+        compare_msg = ''
+        if isinstance(self.compare_to, str):
+            compare_msg = self.compare_to
+        elif isinstance(self.compare_to, list):
+            compare_msg = "' or '".join(self.compare_to)
+        return f"cannot contain a value if '{compare_msg}' contains a value"

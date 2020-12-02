@@ -97,11 +97,21 @@ class Field(_BaseSubject):
         if self.nullable and rule_type == clr.Rule and empty:
             pass
 
-        elif any([isinstance(x, clr.NotNullIfCompare) for x in self.rules]):
-            for rule in [x for x in self.rules if isinstance(x, clr.NotNullIfCompare)]:
-                if rule.dependent_col_value_exists(data):
-                    errors = [rule._exception_msg()]
-                    return ex.CellError(cix, errors=errors, **kwargs)
+        elif any([isinstance(x, (clr.NotNullIfCompare, clr.NullIfCompare)) for x in self.rules]):
+            for rule in self.rules:
+                if isinstance(rule, (clr.NotNullIfCompare, clr.NullIfCompare)):
+                    if rule.dependent_col_value_exists(data):
+                        errors = [rule._exception_msg()]
+                        return ex.CellError(cix, errors=errors, **kwargs)
+                    else:
+                        pass
+                elif not isinstance(rule, (clr.NotNullIfCompare, clr.NullIfCompare)):
+                    e = super()._check(data, rule_type=rule_type, strip=self.strip)
+                    if e:
+                        if rule_type == cr.Rule:
+                            return ex.ColumnError(cix, errors=e, **kwargs)
+                        else:
+                            return ex.CellError(cix, errors=e, **kwargs)
                 else:
                     pass
         else:
@@ -124,7 +134,7 @@ class Field(_BaseSubject):
         compares = set()
         for r in self.rules:
             if issubclass(type(r), clr.ColumnComparisonRule):
-                compares.add(r.compare_to)
+                compares.add(r.compare_to) if isinstance(r.compare_to, str) else [compares.add(x) for x in r.compare_to]
         return compares
 
     def _has_rule_type(self, rule_type):
