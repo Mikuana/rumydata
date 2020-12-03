@@ -150,7 +150,7 @@ class _BaseSubject:
                     msg += f' [DEBUG]: {str(e)}'
                 return [rumydata.exception.PreProcessingError(msg)]
 
-        for r in [x for x in self.rules if not isinstance(x, (rumydata.rules.cell.NotNullIfCompare, rumydata.rules.cell.NullIfCompare))]:
+        for r in [x for x in self.rules if not isinstance(x, rumydata.rules.cell.VariableNullability)]:
             # noinspection PyBroadException
             try:
                 if issubclass(type(r), rule_type):

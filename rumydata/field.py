@@ -97,15 +97,15 @@ class Field(_BaseSubject):
         if self.nullable and rule_type == clr.Rule and empty:
             pass
 
-        elif any([isinstance(x, (clr.NotNullIfCompare, clr.NullIfCompare)) for x in self.rules]):
+        elif any([isinstance(x, clr.VariableNullability) for x in self.rules]):
             for rule in self.rules:
-                if isinstance(rule, (clr.NotNullIfCompare, clr.NullIfCompare)):
+                if isinstance(rule, clr.VariableNullability):
                     if rule.dependent_col_value_exists(data):
                         errors = [rule._exception_msg()]
                         return ex.CellError(cix, errors=errors, **kwargs)
                     else:
                         pass
-                elif not isinstance(rule, (clr.NotNullIfCompare, clr.NullIfCompare)) and not empty:
+                elif not isinstance(rule, clr.VariableNullability) and not empty:
                     e = super()._check(data, rule_type=rule_type, strip=self.strip)
                     if e:
                         if rule_type == cr.Rule:

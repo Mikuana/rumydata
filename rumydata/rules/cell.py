@@ -574,7 +574,16 @@ class GreaterThanOrEqualColumn(ColumnComparisonRule):
         return f"must be greater than or equal to column '{self.compare_to}'"
 
 
-class NotNullIfCompare(ColumnComparisonRule):
+class VariableNullability(ColumnComparisonRule):
+
+    def __init__(self, compare_to: [str, List]):
+        super().__init__(compare_to=compare_to)
+
+    def dependent_col_value_exists(self, data):
+        return data
+
+
+class NotNullIfCompare(VariableNullability):
 
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
@@ -604,7 +613,37 @@ class NotNullIfCompare(ColumnComparisonRule):
         return f"cannot be empty if '{compare_msg}' contains a value"
 
 
-class NullIfCompare(ColumnComparisonRule):
+class NullIfCompare(VariableNullability):
+
+    def __init__(self, compare_to: [str, List]):
+        super().__init__(compare_to=compare_to)
+
+    def dependent_col_value_exists(self, data):
+        """
+        Checks the incoming data value against the value of the rule's compare_to attribute, returning True if the
+        compare_to contains a value when the incoming data is empty
+        """
+        empty_val = data[0] in ['', False]
+        populated_val = True
+        if isinstance(self.compare_to, str):
+            populated_val = data[1][self.compare_to] not in ['', False]
+        elif isinstance(self.compare_to, list):
+            populated_val = any([v for k, v in data[1].items() if k in self.compare_to]) not in ['', False]
+        if populated_val and not empty_val:
+            return True
+        else:
+            return False
+
+    def _explain(self) -> str:
+        compare_msg = ''
+        if isinstance(self.compare_to, str):
+            compare_msg = self.compare_to
+        elif isinstance(self.compare_to, list):
+            compare_msg = "' or '".join(self.compare_to)
+        return f"cannot contain a value if '{compare_msg}' contains a value"
+
+
+class MustBeNullUnless(VariableNullability):
 
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
@@ -617,9 +656,9 @@ class NullIfCompare(ColumnComparisonRule):
         empty_val = data[0] in ['', False]
         empty_compare = True
         if isinstance(self.compare_to, str):
-            empty_compare = data[1][self.compare_to] not in ['', False]
+            empty_compare = data[1][self.compare_to] in ['', False]
         elif isinstance(self.compare_to, list):
-            empty_compare = any(data[1].values()) not in ['', False]
+            empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
         if empty_compare and not empty_val:
             return True
         else:
@@ -631,4 +670,4 @@ class NullIfCompare(ColumnComparisonRule):
             compare_msg = self.compare_to
         elif isinstance(self.compare_to, list):
             compare_msg = "' or '".join(self.compare_to)
-        return f"cannot contain a value if '{compare_msg}' contains a value"
+        return f"cannot contain a value if '{compare_msg}' is empty"
