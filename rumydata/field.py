@@ -96,16 +96,8 @@ class Field(_BaseSubject):
         empty = data[0] == '' if isinstance(data, tuple) else data == ''
         if self.nullable and rule_type == clr.Rule and empty:
             pass
-        elif any([x for x in self.rules if isinstance(x, clr.VariableNullability)]):
-            for ix, r in enumerate(self.rules):
-                if isinstance(r, clr.NotNull):
-                    self.rules.pop(ix)
-            e = super()._check(data, rule_type=rule_type, strip=self.strip)
-            if e:
-                if rule_type == cr.Rule:
-                    return ex.ColumnError(cix, errors=e, **kwargs)
-                else:
-                    return ex.CellError(cix, errors=e, **kwargs)
+        elif empty and all([x.null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)]):
+            pass
         else:
             e = super()._check(data, rule_type=rule_type, strip=self.strip)
             if e:
