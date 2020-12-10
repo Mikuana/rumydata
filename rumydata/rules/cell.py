@@ -556,7 +556,7 @@ class ColumnComparisonRule(Rule):
 
 class OtherCantExist(ColumnComparisonRule):
     def _evaluator(self):
-        return lambda x, y: y not in ['', False]
+        return lambda x, y: y in ['', False]
 
     def _explain(self) -> str:
         return f"cannot contain a value if '{self.compare_to}' is populated"
