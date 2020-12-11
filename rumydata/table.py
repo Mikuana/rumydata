@@ -181,7 +181,7 @@ class _BaseFile(_BaseSubject):
         unlimited by providing a value of -1.
     """
 
-    def __init__(self, layout: Layout, skip_rows=0, max_errors=100, **kwargs):
+    def __init__(self, layout: Layout, skip_rows=0, max_errors=100, file_name_pattern=False, **kwargs):
         self.skip_rows = skip_rows
         self.max_errors = max_errors
 
@@ -190,6 +190,8 @@ class _BaseFile(_BaseSubject):
         self.rules.extend([
             table.FileExists()
         ])
+        if file_name_pattern:
+            self.rules.append(table.FileNameMatch(file_name_pattern))
 
     def check(self, file_path: Union[str, Path], doc_type: str = None):
         """
