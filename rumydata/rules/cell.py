@@ -546,7 +546,7 @@ class ColumnComparisonRule(Rule):
 
     _default_args = ('x',)
 
-    def __init__(self, compare_to: [str, List]):
+    def __init__(self, compare_to: Union[str, List[str]]):
         super().__init__()
         self.compare_to = compare_to
 
@@ -598,7 +598,7 @@ class NotNullIfCompare(ColumnComparisonRule):
     def _prepare(self, data: Tuple[str, Dict]) -> tuple:
         return data
 
-    def null_ok(self, data):
+    def _null_ok(self, data):
         empty_val = data[0] in ['', False]
         empty_compare = True
         if isinstance(self.compare_to, str):
@@ -611,7 +611,7 @@ class NotNullIfCompare(ColumnComparisonRule):
             return True
 
     def _evaluator(self):
-        return lambda x, y: self.null_ok((x, y))
+        return lambda x, y: self._null_ok((x, y))
 
     def _explain(self) -> str:
         compare_msg = ''

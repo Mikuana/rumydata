@@ -80,7 +80,7 @@ class Field(_BaseSubject):
         return any([x for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
 
     def _check_nullable_rule_results(self, data):
-        return all([x.null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+        return all([x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
 
     def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
         """
