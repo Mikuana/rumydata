@@ -24,6 +24,7 @@ __all__ = [
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
     'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
+    'OtherMustExist', 'OtherCantExist',
     'make_static_cell_rule'
 ]
 
@@ -555,16 +556,34 @@ class ColumnComparisonRule(Rule):
 
 
 class OtherCantExist(ColumnComparisonRule):
+    def _helper(self, val, other):
+        if other not in ['', False]:
+            if val not in ['', False]:
+                return False
+            else:
+                return True
+        else:
+            return True
+
     def _evaluator(self):
-        return lambda x, y: y in ['', False]
+        return lambda x, y: self._helper(x, y)
 
     def _explain(self) -> str:
         return f"cannot contain a value if '{self.compare_to}' is populated"
 
 
 class OtherMustExist(ColumnComparisonRule):
+    def _helper(self, val, other):
+        if other not in ['', False]:
+            if val in ['', False]:
+                return False
+            else:
+                return True
+        else:
+            return True
+
     def _evaluator(self):
-        return lambda x, y: y not in ['', False]
+        return lambda x, y: self._helper(x, y)
 
     def _explain(self) -> str:
         return f"must contain a value if '{self.compare_to}' is populated"
