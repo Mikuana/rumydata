@@ -6,6 +6,7 @@ sensible scripts.
 import csv
 import uuid
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from openpyxl import Workbook
@@ -284,3 +285,26 @@ def test_empty_column_good(basic, basic_good, basic_good_with_empty):
 def test_empty_column_bad(basic, basic_good_with_empty):
     with pytest.raises(AssertionError):
         assert CsvFile(Layout(basic, empty_cols_ok=False)).check(basic_good_with_empty)
+
+
+@pytest.fixture()
+def complex_file(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    p.write_text(dedent("""
+    c1,c2,c3,c4xyz,,c5
+    A,1,2020-01-01,X,,a
+    ,,,,,
+    B,2,2020-01-02,y,,a
+    """))
+    yield p.as_posix()
+
+
+def test_complex_good(complex_file):
+    lay = Layout({
+        'c1': field.Text(1),
+        'c2': field.Integer(1),
+        'c3': field.Date(),
+        'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
+        'c5': field.Text(1)
+    }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
+    assert not CsvFile(lay, skip_rows=1).check(complex_file)
