@@ -6,6 +6,7 @@ sensible scripts.
 import csv
 import uuid
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from openpyxl import Workbook
@@ -332,6 +333,28 @@ def test_nullable_rules(rix, row, rule_test):
 
     rex = rule_test[0][0]
     expected = rule_test[0][1]
-    lay.check_row(row, rix) # use this to visually check if a _has_error() returns the error I'm expecting....
+    lay.check_row(row, rix)  # use this to visually check if a _has_error() returns the error I'm expecting....
     assert not lay._has_error(row, rex, rule_type=type(rex)) is expected
 
+
+@pytest.fixture()
+def complex_file(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    p.write_text(dedent("""
+    c1,c2,c3,c4xyz,,c5
+    A,1,2020-01-01,X,,a
+    ,,,,,
+    B,2,2020-01-02,y,,a
+    """))
+    yield p.as_posix()
+
+
+def test_complex_good(complex_file):
+    lay = Layout({
+        'c1': field.Text(1),
+        'c2': field.Integer(1),
+        'c3': field.Date(),
+        'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
+        'c5': field.Text(1)
+    }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
+    assert not CsvFile(lay, skip_rows=1).check(complex_file)

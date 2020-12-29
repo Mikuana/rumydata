@@ -35,4 +35,4 @@ from rumydata import exception
 from rumydata.menu import menu
 from rumydata.table import *
 
-__version__ = '0.6.0'
+__version__ = '0.6.0-dev'
