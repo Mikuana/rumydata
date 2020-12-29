@@ -287,74 +287,25 @@ def test_empty_column_bad(basic, basic_good_with_empty):
         assert CsvFile(Layout(basic, empty_cols_ok=False)).check(basic_good_with_empty)
 
 
-# TODO add tests for combined testing of 'null'-related rules: NotNull, NotNotIfCompare, OtherCantExist, OtherMustExist...
-@pytest.fixture()
-def nullable_checks_prep(tmpdir):
-    p = Path(tmpdir, uuid.uuid4().hex)
-    with p.open('w', newline='') as o:
-        writer = csv.writer(o)
-        writer.writerow(['col_a', 'col_b', 'col_c', 'col_d', 'col_e', 'col_f', 'col_g', 'col_h'])  # 0
-        writer.writerow(['', '', '', '', '', '', '', ''])  # 1
-        writer.writerow(['abc', '', '', 'abc', 'abc', '', 'abc', ''])  # 2
-        writer.writerow(['abc', 'abc', '', '', '', 'abc', '', 'abc'])  # 3
-        writer.writerow(['abc', 'abc', '', 'abc', 'abc', 'abc', 'abc', 'abc'])  # 4
-        writer.writerow(['abc', 'abc', 'abc', '', '', '', '', ''])  # 5
-        writer.writerow(['abc', 'abc', 'abc', 'abc', '', '', '', ''])  # 6
-        writer.writerow(['abc', '', 'abc', '', '', '', '', ''])  # 7
-        writer.writerow(['abc', '', 'abc', 'abc', '', '', '', ''])  # 8
-    yield p.as_posix()
-
-
-# expected True/False means, do we expect the check to error, True or False?
-@pytest.mark.parametrize('rix, row, rule_test', [
-    ##### (0, ['col_a', 'col_b', 'col_c', 'col_d', 'col_e', 'col_f', 'col_g', 'col_h'], True),
-
-    # (1, ['', '', '', '', '', '', '', ''], [(clr.NotNull, True)]),
-    # (2, ['abc', '', '', 'abc', 'abc', '', 'abc', ''], [(clr.OtherCantExist, True)]),
-    (3, ['abc', 'abc', '', '', '', 'abc', '', 'abc'], [(clr.NotNullIfCompare, True), (clr.OtherCantExist, True)]),
-    # (4, ['abc', 'abc', '', 'abc', 'abc', 'abc', 'abc', 'abc'], True),
-    # (5, ['abc', 'abc', 'abc', '', '', '', '', ''], True),
-    # (6, ['abc', 'abc', 'abc', 'abc', '', '', '', ''], False),
-    # (7, ['abc', '', 'abc', '', '', '', '', ''], True),
-    # (8, ['abc', '', 'abc', 'abc', '', '', '', ''], True)
-])
-def test_nullable_rules(rix, row, rule_test):
-    defi = {
-        'col_a': field.Text(5),
-        'col_b': field.Text(5, rules=[clr.NotNullIfCompare('col_c')]),
-        'col_c': field.Text(5, nullable=True),
-        'col_d': field.Text(5, rules=[clr.NotNullIfCompare(['col_b', 'col_c'])]),
-        'col_e': field.Text(5, rules=[clr.OtherCantExist('col_f')]),
-        'col_f': field.Text(5, nullable=True),
-        'col_g': field.Text(5, rules=[clr.OtherMustExist('col_h')]),
-        'col_h': field.Text(5, nullable=True)
-    }
-    lay = Layout(defi)
-
-    rex = rule_test[0][0]
-    expected = rule_test[0][1]
-    lay.check_row(row, rix)  # use this to visually check if a _has_error() returns the error I'm expecting....
-    assert not lay._has_error(row, rex, rule_type=type(rex)) is expected
-
-
 @pytest.fixture()
 def complex_file(tmpdir):
     p = Path(tmpdir, uuid.uuid4().hex)
     p.write_text(dedent("""
-    c1,c2,c3,c4xyz,,c5
-    A,1,2020-01-01,X,,a
-    ,,,,,
-    B,2,2020-01-02,y,,a
+    c1,c2,c3,c4xyz,,c5,c6
+    A,1,2020-01-01,X,,a,a
+    ,,,,,,
+    B,2,2020-01-02,y,,a,
     """))
     yield p.as_posix()
 
 
 def test_complex_good(complex_file):
     lay = Layout({
-        'c1': field.Text(1),
-        'c2': field.Integer(1),
-        'c3': field.Date(),
+        'c1': field.Text(1, rules=[clr.NotNullIfCompare('c2')]),
+        'c2': field.Integer(1, rules=[clr.OtherCantExist('c6')]),
+        'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
         'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
-        'c5': field.Text(1)
+        'c5': field.Text(1),
+        'c6': field.Text(1, nullable=True)
     }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
     assert not CsvFile(lay, skip_rows=1).check(complex_file)
