@@ -574,8 +574,8 @@ class OtherCantExist(ColumnComparisonRule):
 
 class OtherMustExist(ColumnComparisonRule):
     def _helper(self, val, other):
-        if other not in ['', False]:
-            if val in ['', False]:
+        if other in ['', False]:
+            if val not in ['', False]:
                 return False
             else:
                 return True

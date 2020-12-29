@@ -15,7 +15,7 @@ import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
-from rumydata.rules.cell import make_static_cell_rule
+import rumydata.rules.cell as clr
 from rumydata.table import CsvFile, ExcelFile, Layout
 
 
@@ -253,7 +253,7 @@ def test_debug_mode_pre_process(mocker):
 def test_debug_mode(mocker):
     """ Debug messages should only appear when debug method has been patched """
 
-    r = make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
+    r = clr.make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
     try:
         # noinspection PyTypeChecker
         field.Field(rules=[r]).check_cell('1')
@@ -284,3 +284,54 @@ def test_empty_column_good(basic, basic_good, basic_good_with_empty):
 def test_empty_column_bad(basic, basic_good_with_empty):
     with pytest.raises(AssertionError):
         assert CsvFile(Layout(basic, empty_cols_ok=False)).check(basic_good_with_empty)
+
+
+# TODO add tests for combined testing of 'null'-related rules: NotNull, NotNotIfCompare, OtherCantExist, OtherMustExist...
+@pytest.fixture()
+def nullable_checks_prep(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    with p.open('w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerow(['col_a', 'col_b', 'col_c', 'col_d', 'col_e', 'col_f', 'col_g', 'col_h'])  # 0
+        writer.writerow(['', '', '', '', '', '', '', ''])  # 1
+        writer.writerow(['abc', '', '', 'abc', 'abc', '', 'abc', ''])  # 2
+        writer.writerow(['abc', 'abc', '', '', '', 'abc', '', 'abc'])  # 3
+        writer.writerow(['abc', 'abc', '', 'abc', 'abc', 'abc', 'abc', 'abc'])  # 4
+        writer.writerow(['abc', 'abc', 'abc', '', '', '', '', ''])  # 5
+        writer.writerow(['abc', 'abc', 'abc', 'abc', '', '', '', ''])  # 6
+        writer.writerow(['abc', '', 'abc', '', '', '', '', ''])  # 7
+        writer.writerow(['abc', '', 'abc', 'abc', '', '', '', ''])  # 8
+    yield p.as_posix()
+
+
+# expected True/False means, do we expect the check to error, True or False?
+@pytest.mark.parametrize('rix, row, rule_test', [
+    ##### (0, ['col_a', 'col_b', 'col_c', 'col_d', 'col_e', 'col_f', 'col_g', 'col_h'], True),
+
+    # (1, ['', '', '', '', '', '', '', ''], [(clr.NotNull, True)]),
+    # (2, ['abc', '', '', 'abc', 'abc', '', 'abc', ''], [(clr.OtherCantExist, True)]),
+    (3, ['abc', 'abc', '', '', '', 'abc', '', 'abc'], [(clr.NotNullIfCompare, True), (clr.OtherCantExist, True)]),
+    # (4, ['abc', 'abc', '', 'abc', 'abc', 'abc', 'abc', 'abc'], True),
+    # (5, ['abc', 'abc', 'abc', '', '', '', '', ''], True),
+    # (6, ['abc', 'abc', 'abc', 'abc', '', '', '', ''], False),
+    # (7, ['abc', '', 'abc', '', '', '', '', ''], True),
+    # (8, ['abc', '', 'abc', 'abc', '', '', '', ''], True)
+])
+def test_nullable_rules(rix, row, rule_test):
+    defi = {
+        'col_a': field.Text(5),
+        'col_b': field.Text(5, rules=[clr.NotNullIfCompare('col_c')]),
+        'col_c': field.Text(5, nullable=True),
+        'col_d': field.Text(5, rules=[clr.NotNullIfCompare(['col_b', 'col_c'])]),
+        'col_e': field.Text(5, rules=[clr.OtherCantExist('col_f')]),
+        'col_f': field.Text(5, nullable=True),
+        'col_g': field.Text(5, rules=[clr.OtherMustExist('col_h')]),
+        'col_h': field.Text(5, nullable=True)
+    }
+    lay = Layout(defi)
+
+    rex = rule_test[0][0]
+    expected = rule_test[0][1]
+    lay.check_row(row, rix) # use this to visually check if a _has_error() returns the error I'm expecting....
+    assert not lay._has_error(row, rex, rule_type=type(rex)) is expected
+
