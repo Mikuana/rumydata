@@ -288,18 +288,18 @@ def test_empty_column_bad(basic, basic_good_with_empty):
 
 
 @pytest.fixture()
-def complex_file(tmpdir):
+def good_complex_file(tmpdir):
     p = Path(tmpdir, uuid.uuid4().hex)
     p.write_text(dedent("""
     c1,c2,c3,c4xyz,,c5,c6
-    A,1,2020-01-01,X,,a,a
+    A,1,2020-01-01,X,,a,
     ,,,,,,
     B,2,2020-01-02,y,,a,
     """))
     yield p.as_posix()
 
 
-def test_complex_good(complex_file):
+def test_complex_good(good_complex_file):
     lay = Layout({
         'c1': field.Text(1, rules=[clr.NotNullIfCompare('c2')]),
         'c2': field.Integer(1, rules=[clr.OtherCantExist('c6')]),
@@ -308,4 +308,34 @@ def test_complex_good(complex_file):
         'c5': field.Text(1),
         'c6': field.Text(1, nullable=True)
     }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
-    assert not CsvFile(lay, skip_rows=1).check(complex_file)
+    assert not CsvFile(lay, skip_rows=1).check(good_complex_file)
+
+
+@pytest.fixture()
+def bad_complex_file(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    p.write_text(dedent("""
+    c1,c2,c3,c4xyz,,c5,c6
+    ,1,2020-01-01,,,a,a
+    ,,,,,,
+    B,2,2020-01-02,y,,a,
+    """))
+    yield p.as_posix()
+
+
+def test_complex_bad(bad_complex_file):
+    lay = Layout({
+        'c1': field.Text(1, rules=[clr.NotNullIfCompare('c2')]),
+        'c2': field.Integer(1, rules=[clr.OtherCantExist('c6')]),
+        'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
+        'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
+        'c5': field.Text(1),
+        'c6': field.Text(1, nullable=True)
+    }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
+    expected_ex = ['NotNullIfCompare',
+                   'OtherCantExist', 'OtherMustExist']
+    try:
+        CsvFile(lay, skip_rows=1).check(bad_complex_file)
+    except AssertionError as ex:
+        print(str(ex))
+        assert all(x in str(ex) for x in expected_ex)
