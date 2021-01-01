@@ -609,6 +609,26 @@ class GreaterThanOrEqualColumn(ColumnComparisonRule):
         return f"must be greater than or equal to column '{self.compare_to}'"
 
 
+class LessThanColumn(ColumnComparisonRule):
+    """ Less than compared column Rule """
+
+    def _evaluator(self):
+        return lambda x, y: x < y
+
+    def _explain(self) -> str:
+        return f"must be less than column '{self.compare_to}'"
+
+
+class LessThanOrEqualColumn(ColumnComparisonRule):
+    """ Less than compared column Rule """
+
+    def _evaluator(self):
+        return lambda x, y: x <= y
+
+    def _explain(self) -> str:
+        return f"must be less than or equal to column '{self.compare_to}'"
+
+
 class NotNullIfCompare(ColumnComparisonRule):
 
     def __init__(self, compare_to: [str, List]):
