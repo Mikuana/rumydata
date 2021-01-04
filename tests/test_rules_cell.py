@@ -387,6 +387,26 @@ def test_greater_than_or_equal_column(compared: str, data, expected: bool):
     r = GreaterThanOrEqualColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
+@pytest.mark.parametrize('compared,data,expected', [
+    ('x', ('0', {'x': '1'}), True),
+    ('x', ('1', {'x': '1'}), False),
+    ('z', ('0', {'x': '0', 'z': '1'}), True)
+])
+def test_less_than_column(compared: str, data, expected: bool):
+    r = LessThanColumn(compared)
+    assert r._evaluator()(*r._prepare(data)) is expected
+
+
+@pytest.mark.parametrize('compared,data,expected', [
+    ('x', ('0', {'x': '1'}), True),
+    ('x', ('1', {'x': '1'}), True),
+    ('x', ('2', {'x': '1'}), False),
+    ('z', ('0', {'x': '0', 'z': '1'}), True)
+])
+def test_less_than_or_equal_column(compared: str, data, expected: bool):
+    r = LessThanOrEqualColumn(compared)
+    assert r._evaluator()(*r._prepare(data)) is expected
+
 
 @pytest.mark.parametrize('compare,row,expected', [
     ('col_b', ('', {'col_b': ''}), True),
@@ -419,8 +439,8 @@ def test_other_cant_exist(other, row, expected):
 
 @pytest.mark.parametrize('other,row,expected', [
     ('col_b', ('', {'col_b': ''}), True),
-    ('col_b', ('', {'col_b': 'x'}), False),
-    ('col_b', ('x', {'col_b': ''}), True),
+    ('col_b', ('', {'col_b': 'x'}), True),
+    ('col_b', ('x', {'col_b': ''}), False),
     ('col_b', ('x', {'col_b': 'x'}), True),
 ])
 def test_other_must_exist(other, row, expected):

@@ -31,6 +31,8 @@ class FileExists(Rule):
 class FileNameMatch(Rule):
     """ File name matches regex pattern """
 
+    _default_args = ('test',)
+
     def __init__(self, pattern):
         super().__init__()
         self.pattern = pattern

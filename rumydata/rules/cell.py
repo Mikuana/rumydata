@@ -24,7 +24,7 @@ __all__ = [
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
     'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
-    'OtherMustExist', 'OtherCantExist',
+    'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
     'make_static_cell_rule'
 ]
 
