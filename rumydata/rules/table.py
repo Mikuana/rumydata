@@ -28,6 +28,24 @@ class FileExists(Rule):
         return 'files must exist'
 
 
+class FileNameMatch(Rule):
+    """ File name matches regex pattern """
+
+    _default_args = ('test',)
+
+    def __init__(self, pattern):
+        super().__init__()
+        self.pattern = pattern
+
+    def _evaluator(self):
+        import re
+        return lambda x: re.fullmatch(self.pattern, x.name, re.IGNORECASE)
+
+    def _explain(self) -> str:
+        # TODO come up with a better way to make a 'human readable' error message for bad file name in regards to a regex pattern....
+        return f'file must match naming pattern {self.pattern}'
+
+
 class MaxError(Rule):
     """ Row errors returned while checking file do not exceed a limit """
 

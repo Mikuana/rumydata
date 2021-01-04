@@ -31,6 +31,7 @@ the `openpyxl` package.
 
 from rumydata import field
 from rumydata import rules
+from rumydata import exception
 from rumydata.menu import menu
 from rumydata.table import *
 

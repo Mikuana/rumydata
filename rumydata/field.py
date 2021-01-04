@@ -76,6 +76,12 @@ class Field(_BaseSubject):
         errors = self._check(values, rule_type=cr.Rule, **kwargs)
         assert not errors, str(errors)
 
+    def _check_for_nullable_rules(self):
+        return any([x for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+
+    def _check_nullable_rule_results(self, data):
+        return all([x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+
     def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
         """
         Check data against field rules of specified rule type
@@ -95,6 +101,8 @@ class Field(_BaseSubject):
         # if data is nullable and value is empty, skip all checks
         empty = data[0] == '' if isinstance(data, tuple) else data == ''
         if self.nullable and rule_type == clr.Rule and empty:
+            pass
+        elif empty and (self._check_nullable_rule_results(data) if self._check_for_nullable_rules() else False):
             pass
         else:
             e = super()._check(data, rule_type=rule_type, strip=self.strip)
@@ -116,7 +124,7 @@ class Field(_BaseSubject):
         compares = set()
         for r in self.rules:
             if issubclass(type(r), clr.ColumnComparisonRule):
-                compares.add(r.compare_to)
+                compares.add(r.compare_to) if isinstance(r.compare_to, str) else [compares.add(x) for x in r.compare_to]
         return compares
 
     def _has_rule_type(self, rule_type):

@@ -375,3 +375,74 @@ def test_date_lt(comparison: str, value: str, expected: bool):
 def test_greater_than_column(compared: str, data, expected: bool):
     r = GreaterThanColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
+
+
+@pytest.mark.parametrize('compared,data,expected', [
+    ('x', ('1', {'x': '0'}), True),
+    ('x', ('1', {'x': '1'}), True),
+    ('x', ('1', {'x': '2'}), False),
+    ('z', ('1', {'x': '1', 'z': '0'}), True)
+])
+def test_greater_than_or_equal_column(compared: str, data, expected: bool):
+    r = GreaterThanOrEqualColumn(compared)
+    assert r._evaluator()(*r._prepare(data)) is expected
+
+@pytest.mark.parametrize('compared,data,expected', [
+    ('x', ('0', {'x': '1'}), True),
+    ('x', ('1', {'x': '1'}), False),
+    ('z', ('0', {'x': '0', 'z': '1'}), True)
+])
+def test_less_than_column(compared: str, data, expected: bool):
+    r = LessThanColumn(compared)
+    assert r._evaluator()(*r._prepare(data)) is expected
+
+
+@pytest.mark.parametrize('compared,data,expected', [
+    ('x', ('0', {'x': '1'}), True),
+    ('x', ('1', {'x': '1'}), True),
+    ('x', ('2', {'x': '1'}), False),
+    ('z', ('0', {'x': '0', 'z': '1'}), True)
+])
+def test_less_than_or_equal_column(compared: str, data, expected: bool):
+    r = LessThanOrEqualColumn(compared)
+    assert r._evaluator()(*r._prepare(data)) is expected
+
+
+@pytest.mark.parametrize('compare,row,expected', [
+    ('col_b', ('', {'col_b': ''}), True),
+    ('col_b', ('test', {'col_b': ''}), True),
+    ('col_b', ('test', {'col_b': 'test'}), True),
+    ('col_b', ('', {'col_b': 'test'}), False),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': ''}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': '', 'col_c': 'test'}), True),
+    (['col_b', 'col_c'], ('test', {'col_b': 'test', 'col_c': 'test'}), True),
+    (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': ''}), False),
+    (['col_b', 'col_c'], ('', {'col_b': '', 'col_c': 'test'}), False),
+    (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': 'test'}), False)
+])
+def test_not_null_if_compare(compare, row, expected):
+    r = NotNullIfCompare(compare)
+    assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('other,row,expected', [
+    ('col_b', ('', {'col_b': ''}), True),
+    ('col_b', ('', {'col_b': 'x'}), True),
+    ('col_b', ('x', {'col_b': ''}), True),
+    ('col_b', ('x', {'col_b': 'x'}), False),
+])
+def test_other_cant_exist(other, row, expected):
+    r = OtherCantExist(other)
+    assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('other,row,expected', [
+    ('col_b', ('', {'col_b': ''}), True),
+    ('col_b', ('', {'col_b': 'x'}), True),
+    ('col_b', ('x', {'col_b': ''}), False),
+    ('col_b', ('x', {'col_b': 'x'}), True),
+])
+def test_other_must_exist(other, row, expected):
+    r = OtherMustExist(other)
+    assert r._evaluator()(*r._prepare(row)) is expected
