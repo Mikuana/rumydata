@@ -23,7 +23,8 @@ __all__ = [
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
     'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
-    'DateLT', 'GreaterThanColumn',
+    'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
+    'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
     'make_static_cell_rule'
 ]
 
@@ -546,12 +547,46 @@ class ColumnComparisonRule(Rule):
 
     _default_args = ('x',)
 
-    def __init__(self, compare_to: str):
+    def __init__(self, compare_to: Union[str, List[str]]):
         super().__init__()
         self.compare_to = compare_to
 
     def _prepare(self, data: Tuple[str, Dict]) -> tuple:
         return data[0], data[1][self.compare_to]
+
+
+class OtherCantExist(ColumnComparisonRule):
+    def _helper(self, val, other):
+        if other not in ['', False]:
+            if val not in ['', False]:
+                return False
+            else:
+                return True
+        else:
+            return True
+
+    def _evaluator(self):
+        return lambda x, y: self._helper(x, y)
+
+    def _explain(self) -> str:
+        return f"cannot contain a value if '{self.compare_to}' is populated"
+
+
+class OtherMustExist(ColumnComparisonRule):
+    def _helper(self, val, other):
+        if other in ['', False]:
+            if val not in ['', False]:
+                return False
+            else:
+                return True
+        else:
+            return True
+
+    def _evaluator(self):
+        return lambda x, y: self._helper(x, y)
+
+    def _explain(self) -> str:
+        return f"must contain a value if '{self.compare_to}' is populated"
 
 
 class GreaterThanColumn(ColumnComparisonRule):
@@ -562,3 +597,65 @@ class GreaterThanColumn(ColumnComparisonRule):
 
     def _explain(self) -> str:
         return f"must be greater than column '{self.compare_to}'"
+
+
+class GreaterThanOrEqualColumn(ColumnComparisonRule):
+    """ Greater than compared column Rule """
+
+    def _evaluator(self):
+        return lambda x, y: x >= y
+
+    def _explain(self) -> str:
+        return f"must be greater than or equal to column '{self.compare_to}'"
+
+
+class LessThanColumn(ColumnComparisonRule):
+    """ Less than compared column Rule """
+
+    def _evaluator(self):
+        return lambda x, y: x < y
+
+    def _explain(self) -> str:
+        return f"must be less than column '{self.compare_to}'"
+
+
+class LessThanOrEqualColumn(ColumnComparisonRule):
+    """ Less than compared column Rule """
+
+    def _evaluator(self):
+        return lambda x, y: x <= y
+
+    def _explain(self) -> str:
+        return f"must be less than or equal to column '{self.compare_to}'"
+
+
+class NotNullIfCompare(ColumnComparisonRule):
+
+    def __init__(self, compare_to: [str, List]):
+        super().__init__(compare_to=compare_to)
+
+    def _prepare(self, data: Tuple[str, Dict]) -> tuple:
+        return data
+
+    def _null_ok(self, data):
+        empty_val = data[0] in ['', False]
+        empty_compare = True
+        if isinstance(self.compare_to, str):
+            empty_compare = data[1][self.compare_to] in ['', False]
+        elif isinstance(self.compare_to, list):
+            empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
+        if not empty_compare and empty_val:
+            return False
+        else:
+            return True
+
+    def _evaluator(self):
+        return lambda x, y: self._null_ok((x, y))
+
+    def _explain(self) -> str:
+        compare_msg = ''
+        if isinstance(self.compare_to, str):
+            compare_msg = self.compare_to
+        elif isinstance(self.compare_to, list):
+            compare_msg = "' or '".join(self.compare_to)
+        return f"cannot be blank if '{compare_msg}' contains a value"

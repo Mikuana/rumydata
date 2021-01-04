@@ -6,6 +6,7 @@ sensible scripts.
 import csv
 import uuid
 from pathlib import Path
+from textwrap import dedent
 
 import pytest
 from openpyxl import Workbook
@@ -15,7 +16,7 @@ import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
-from rumydata.rules.cell import make_static_cell_rule
+import rumydata.rules.cell as clr
 from rumydata.table import CsvFile, ExcelFile, Layout
 
 
@@ -253,7 +254,7 @@ def test_debug_mode_pre_process(mocker):
 def test_debug_mode(mocker):
     """ Debug messages should only appear when debug method has been patched """
 
-    r = make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
+    r = clr.make_static_cell_rule(lambda x: 1 / 0, 'raise an exception')
     try:
         # noinspection PyTypeChecker
         field.Field(rules=[r]).check_cell('1')
@@ -284,3 +285,57 @@ def test_empty_column_good(basic, basic_good, basic_good_with_empty):
 def test_empty_column_bad(basic, basic_good_with_empty):
     with pytest.raises(AssertionError):
         assert CsvFile(Layout(basic, empty_cols_ok=False)).check(basic_good_with_empty)
+
+
+@pytest.fixture()
+def good_complex_file(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    p.write_text(dedent("""
+    c1,c2,c3,c4xyz,,c5,c6
+    A,1,2020-01-01,X,,a,
+    ,,,,,,
+    B,2,2020-01-02,y,,a,
+    """))
+    yield p.as_posix()
+
+
+def test_complex_good(good_complex_file):
+    lay = Layout({
+        'c1': field.Text(1, rules=[clr.NotNullIfCompare('c2')]),
+        'c2': field.Integer(1, rules=[clr.OtherCantExist('c6')]),
+        'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
+        'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
+        'c5': field.Text(1),
+        'c6': field.Text(1, nullable=True)
+    }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
+    assert not CsvFile(lay, skip_rows=1).check(good_complex_file)
+
+
+@pytest.fixture()
+def bad_complex_file(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    p.write_text(dedent("""
+    c1,c2,c3,c4xyz,,c5,c6
+    ,1,2020-01-01,,,a,a
+    ,,,,,,
+    B,2,2020-01-02,y,,a,
+    """))
+    yield p.as_posix()
+
+
+def test_complex_bad(bad_complex_file):
+    lay = Layout({
+        'c1': field.Text(1, rules=[clr.NotNullIfCompare('c2')]),
+        'c2': field.Integer(1, rules=[clr.OtherCantExist('c6')]),
+        'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
+        'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
+        'c5': field.Text(1),
+        'c6': field.Text(1, nullable=True)
+    }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
+    expected_ex = ['NotNullIfCompare',
+                   'OtherCantExist', 'OtherMustExist']
+    try:
+        CsvFile(lay, skip_rows=1).check(bad_complex_file)
+    except AssertionError as ex:
+        print(str(ex))
+        assert all(x in str(ex) for x in expected_ex)

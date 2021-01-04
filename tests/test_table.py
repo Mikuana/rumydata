@@ -117,3 +117,11 @@ def test_excel_wrong_sheet(wb_sheets):
 def test_excel_right_sheet(wb_sheets):
     lay = Layout({'x': Text(1)})
     assert not ExcelFile(lay, sheet='right').check(wb_sheets)
+
+
+def test_file_name_match(tmpdir):
+    mock_file = Path(tmpdir, '12345_test_file_report.csv')
+    pattern = r'\d{5}_\D*_\D*_report.csv'
+    layout = Layout({'x': Integer(1)})
+    mock_file.write_text('x\n1\n')
+    assert not CsvFile(layout, file_name_pattern=pattern).check(mock_file)
