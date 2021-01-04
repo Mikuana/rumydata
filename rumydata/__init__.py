@@ -29,10 +29,10 @@ format (e.g. csv), but can be used to validate Excel spreadsheets by installing
 the `openpyxl` package.
 """
 
+from rumydata import exception
 from rumydata import field
 from rumydata import rules
-from rumydata import exception
 from rumydata.menu import menu
 from rumydata.table import *
 
-__version__ = '0.6.0-dev'
+__version__ = '0.7.0'
