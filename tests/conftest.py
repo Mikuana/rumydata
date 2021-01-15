@@ -6,7 +6,7 @@ import pytest
 from rumydata.field import Text, Integer, Date, Choice
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def tmpdir():
     with tempfile.TemporaryDirectory() as d:
         yield Path(d)
