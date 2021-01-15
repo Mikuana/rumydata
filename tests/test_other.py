@@ -12,11 +12,11 @@ import pytest
 from openpyxl import Workbook
 
 import rumydata.rules.cell
+import rumydata.rules.cell as clr
 import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
 from rumydata.rules import column as cr, table as tr, header as hr
-import rumydata.rules.cell as clr
 from rumydata.table import CsvFile, ExcelFile, Layout
 
 
@@ -99,7 +99,7 @@ def readme_data(tmpdir):
 
 def empty_rows(rows, directory):
     p = Path(directory, str(uuid.uuid4()))
-    with p.open('w') as f:
+    with p.open('w', newline='') as f:
         w = csv.writer(f)
         w.writerow(['x'])
         for i in range(rows):
