@@ -28,11 +28,11 @@ setuptools.setup(
     ],
     python_requires=">=3.7",
     extras_require={
-        'Excel': ['openpyxl>=3.0.6'],
+        'Excel': ['openpyxl'],
         'Parquet': ['pandas', 'pyarrow'],
         'HTML': ['markdown'],
         'Testing': [
-            'pytest', 'pytest-mock', 'pytest-cov', 'openpyxl>=3.0.6', 'markdown',
+            'pytest', 'pytest-mock', 'pytest-cov', 'openpyxl', 'markdown',
             'pandas', 'pyarrow'
         ]
     },
