@@ -8,6 +8,8 @@ package. This is not intended for use by end-users.
 from typing import List, Union
 
 import rumydata
+from rumydata.exception import UrNotMyDataError
+
 
 class _BaseRule:
     """
@@ -38,7 +40,7 @@ class _BaseRule:
 
     @classmethod
     def rule_exception(cls):
-        return type(f'{cls.__name__}Error', (rumydata.exception.UrNotMyDataError,), {})
+        return type(f'{cls.__name__}Error', (UrNotMyDataError,), {})
 
     def _prepare(self, data) -> tuple:
         """
@@ -81,7 +83,7 @@ class _BaseRule:
         """
         return lambda x: False  # default to failing evaluation if not overwritten
 
-    def _exception_msg(self) -> rumydata.exception.UrNotMyDataError:
+    def _exception_msg(self) -> UrNotMyDataError:
         """
         Validation exception message
 
@@ -115,7 +117,7 @@ class _BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[_BaseRule] = None):
+    def __init__(self, rules: List[_BaseRule] = None, rules_msg_overrides=None):
         """
         Base subject constructor
 
@@ -125,8 +127,9 @@ class _BaseSubject:
         """
         self.rules = rules or []
         self.descriptors = {}
+        self.rule_msg_overrides = rules_msg_overrides or {}
 
-    def _check(self, data, rule_type, **kwargs) -> Union[rumydata.exception.UrNotMyDataError, List[rumydata.exception.UrNotMyDataError], None]:
+    def _check(self, data, rule_type, **kwargs) -> Union[UrNotMyDataError, List[UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -141,6 +144,7 @@ class _BaseSubject:
         :return: a list of any errors that were raised while checking the data.
         """
         errors = []
+        msg_override = self.rule_msg_overrides
         if rule_type:
             try:
                 data = rule_type._pre_process(data, **kwargs)
@@ -163,9 +167,15 @@ class _BaseSubject:
                 if rumydata.exception.debug():
                     msg += f' [DEBUG]: {str(e)}'
                 errors.append(r.rule_exception()(msg))
+        if msg_override:
+            for error in errors:
+                if isinstance(error, UrNotMyDataError):
+                    new_msg = self.rule_msg_overrides.get(type(error).__name__.replace('Error', ''))
+                    if new_msg:
+                        error._message = new_msg
         return errors
 
-    def _list_errors(self, value, **kwargs) -> List[rumydata.exception.UrNotMyDataError]:
+    def _list_errors(self, value, **kwargs) -> List[UrNotMyDataError]:
         """
         Flatten nested errors into a list
 
