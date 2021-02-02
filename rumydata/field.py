@@ -110,7 +110,15 @@ class Field(_BaseSubject):
                 if rule_type == cr.Rule:
                     return ex.ColumnError(cix, errors=e, **kwargs)
                 else:
-                    return ex.CellError(cix, errors=e, **kwargs)
+                    if self.include_all_errors:
+                        return ex.CellError(cix, errors=e, **kwargs)
+                    else:
+                        e = []
+                        if self.custom_error_msg:
+                            e.append(ex.CustomError(self.custom_error_msg))
+                            return ex.CellError(cix, errors=e, **kwargs)
+                        else:
+                            return ex.CellError(cix, **kwargs)
 
     def _comparison_columns(self) -> set:
         """
@@ -146,11 +154,12 @@ class Ignore(Field):
     """
 
     # noinspection PyMissingConstructor
-    def __init__(self, rules_msg_overrides=None):
+    def __init__(self, all_errors=True, custom_error_msg=None):
         self.nullable = True
         self.rules = []
         self.descriptors = {}
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
 
     def _check(self, *args, **kwargs):
         pass
@@ -164,9 +173,10 @@ class Empty(Field):
     field in that it will raise errors if any values are found.
     """
 
-    def __init__(self, rules_msg_overrides=None):
+    def __init__(self, all_errors=True, custom_error_msg=None):
         super().__init__(nullable=True)
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
         self.rules.append(clr.MaxChar(0))
 
 
@@ -183,7 +193,7 @@ class Text(Field):
 
     _default_args = (1,)
 
-    def __init__(self, max_length, min_length=None, rules_msg_overrides=None,
+    def __init__(self, max_length, min_length=None, all_errors=True, custom_error_msg=None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -192,7 +202,8 @@ class Text(Field):
 
         self.rules.append(clr.MaxChar(max_length))
 
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
         if min_length:
             self.descriptors['Min Length'] = f'{str(min_length)} characters'
             self.rules.append(clr.MinChar(min_length))
@@ -213,7 +224,7 @@ class Date(Field):
     """
 
     def __init__(self, min_date: str = None, max_date: str = None,
-                 rules_msg_overrides=None, **kwargs):
+                 all_errors=True, custom_error_msg=None, **kwargs):
         rule_kwargs = {
             'truncate_time': kwargs.pop('truncate_time', False)
         }
@@ -223,7 +234,8 @@ class Date(Field):
         self.descriptors['Format'] = 'YYYY-MM-DD'
 
         self.rules.append(clr.CanBeDateIso(**rule_kwargs))
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
         if max_date:
             self.descriptors['Max Date'] = f'{max_date}'
             self.rules.append(clr.DateLTE(max_date, **rule_kwargs))
@@ -246,13 +258,14 @@ class Currency(Field):
 
     _default_args = (5,)
 
-    def __init__(self, significant_digits: int, rules_msg_overrides=None, **kwargs):
+    def __init__(self, significant_digits: int, all_errors=True, custom_error_msg=None, **kwargs):
         super().__init__(**kwargs)
 
         self.descriptors['Type'] = 'Numeric'
         self.descriptors['Format'] = f'{"9" * (significant_digits - 2)}.99'
         self.descriptors['Max Length'] = f'{str(significant_digits)} digits'
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
         self.rules.append(clr.MaxDigit(significant_digits))
         self.rules.append(clr.NumericDecimals())
 
@@ -271,7 +284,7 @@ class Digit(Field):
 
     _default_args = (1,)
 
-    def __init__(self, max_length, min_length=None, rules_msg_overrides=None,
+    def __init__(self, max_length, min_length=None, all_errors=True, custom_error_msg=None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -282,7 +295,8 @@ class Digit(Field):
         self.rules.append(clr.OnlyNumbers())
         self.rules.append(clr.MaxChar(max_length))
 
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
 
         if min_length:
             self.descriptors['Min Length'] = f'{str(min_length)} digits'
@@ -301,7 +315,7 @@ class Integer(Field):
 
     _default_args = (1,)
 
-    def __init__(self, max_length, min_length=None, rules_msg_overrides=None,
+    def __init__(self, max_length, min_length=None, all_errors=True, custom_error_msg=None,
                  **kwargs):
         super().__init__(**kwargs)
 
@@ -309,7 +323,8 @@ class Integer(Field):
         self.descriptors['Format'] = f'{"9" * max_length}'
         self.descriptors['Max Length'] = f'{str(max_length)} digits'
 
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
         self.rules.append(clr.CanBeInteger())
         self.rules.append(clr.NoLeadingZero())
         self.rules.append(clr.MaxDigit(max_length))
@@ -332,11 +347,11 @@ class Choice(Field):
 
     _default_args = (['x'],)
 
-    def __init__(self, valid_values: list, case_insensitive=False,
-                 rules_msg_overrides=None,
+    def __init__(self, valid_values: list, case_insensitive=False, all_errors=True, custom_error_msg=None,
                  **kwargs):
         super().__init__(**kwargs)
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
         self.rules.append(

@@ -6,6 +6,8 @@ of all errors identified in a subject. These exceptions provide the structure to
 collect multiple exceptions at varying levels within a validation process, and
 display them in a meaningful way.
 """
+
+
 # TODO Figure out how to implement Excel Column Reporting... If openpyxl can't do it easily, might have to do something
 # like this:
 # excel_col_num = lambda a: 0 if a == '' else 1 + ord(a[-1]) - ord('A') + 26 * excel_col_num(a[:-1])
@@ -107,6 +109,44 @@ class UrNotMyDataError(Exception):
         depth += 1
         for el in errors:
             yield el._md(depth)
+
+
+class CustomError(UrNotMyDataError):
+    def __init__(self, msg: str = None):
+        super().__init__(msg)
+        self._message = msg or self._message
+
+    def __str__(self) -> str:
+        """
+        Exception string override
+
+        This method overrides the default string and instead replaces it with
+        the `md` method in this object. This allows simple string printing that
+        can represent nested exceptions that exist in this object, and the
+        exceptions that exist in those objects, and so on.
+        """
+
+        return '\n' + self._md()
+
+    def _md(self, depth=0) -> str:
+        """
+        Nested exception Markdown digest
+
+        This method returns the complete tree of nested exceptions that exist in
+        the errors property of this class in Markdown format, with indentation
+        provided to indicate the relationship of nested exceptions.
+
+        :param depth: an integer which indicates the level of indentation that
+            an exception needs to represent its relationship in the nested
+            structure. Do not call directly.
+        :return: a string of nested exceptions in Markdown format, with
+            indentation providing visual indicator of nested structure.
+        """
+
+        txt = f'{"  " * depth} - {self._message}'
+        if self._errors:
+            txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+        return txt
 
 
 class FileError(UrNotMyDataError):

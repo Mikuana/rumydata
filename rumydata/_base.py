@@ -117,7 +117,7 @@ class _BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[_BaseRule] = None, rules_msg_overrides=None):
+    def __init__(self, rules: List[_BaseRule] = None, all_errors=True, custom_error_msg=None):
         """
         Base subject constructor
 
@@ -127,7 +127,8 @@ class _BaseSubject:
         """
         self.rules = rules or []
         self.descriptors = {}
-        self.rule_msg_overrides = rules_msg_overrides or {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
 
     def _check(self, data, rule_type, **kwargs) -> Union[UrNotMyDataError, List[UrNotMyDataError], None]:
         """
@@ -144,7 +145,6 @@ class _BaseSubject:
         :return: a list of any errors that were raised while checking the data.
         """
         errors = []
-        msg_override = self.rule_msg_overrides
         if rule_type:
             try:
                 data = rule_type._pre_process(data, **kwargs)
@@ -167,12 +167,6 @@ class _BaseSubject:
                 if rumydata.exception.debug():
                     msg += f' [DEBUG]: {str(e)}'
                 errors.append(r.rule_exception()(msg))
-        if msg_override:
-            for error in errors:
-                if isinstance(error, UrNotMyDataError):
-                    new_msg = self.rule_msg_overrides.get(type(error).__name__.replace('Error', ''))
-                    if new_msg:
-                        error._message = new_msg
         return errors
 
     def _list_errors(self, value, **kwargs) -> List[UrNotMyDataError]:
