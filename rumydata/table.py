@@ -382,7 +382,7 @@ class ExcelFile(_BaseFile):
 
             def __enter__(self) -> Iterable:
                 from openpyxl import load_workbook
-                wb = load_workbook(file, read_only=False, data_only=True)
+                wb = load_workbook(file, read_only=True, data_only=True)
                 sheet_name = self.excel_kwargs.get('sheet')
                 ws = wb[sheet_name] if sheet_name else wb.active
                 return ws.values

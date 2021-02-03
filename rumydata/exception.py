@@ -34,6 +34,9 @@ def debug():
     return False
 
 
+def convert_to_excel_col_labels(col_num_str):
+    return lambda n: '' if n <= 0 else col_num_str((n - 1) // 26) + chr((n - 1) % 26 + ord('A'))
+
 class UrNotMyDataError(Exception):
     """
     Base exception class for rumydata package
@@ -196,13 +199,16 @@ class CellError(UrNotMyDataError):
         the index increased by one.
     """
 
+
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
         message = ''
         offset = 0 if kwargs.get("zero_index") else 1
         if kwargs.get('rix'):
             message = str(kwargs.get('rix') + offset) + ','
 
-        message += f'{str(index + offset)}'
+        message += f'{str(index + offset)}' if not kwargs.get(
+            'use_excel_col_labels') else f'{str(convert_to_excel_col_labels(index) + offset)}'
+
         if kwargs.get("name"):
             message += f' ({kwargs.get("name")})'
         message += f'; {msg}' if msg else ''
