@@ -8,13 +8,6 @@ display them in a meaningful way.
 """
 
 
-# TODO Figure out how to implement Excel Column Reporting... If openpyxl can't do it easily, might have to do something
-# like this:
-# excel_col_num = lambda a: 0 if a == '' else 1 + ord(a[-1]) - ord('A') + 26 * excel_col_num(a[:-1])
-# print(excel_col_num('ZZZ'))
-# excel_col_name = lambda n: '' if n <= 0 else excel_col_name((n - 1) // 26) + chr((n - 1) % 26 + ord('A'))
-# print(excel_col_name(18278))
-
 def debug():
     """
     Exception debug mode control
