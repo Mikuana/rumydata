@@ -111,6 +111,8 @@ class Field(_BaseSubject):
                     return ex.ColumnError(cix, errors=e, **kwargs)
                 else:
                     if self.include_all_errors:
+                        if self.custom_error_msg:
+                            e.append(ex.CustomError(self.custom_error_msg))
                         return ex.CellError(cix, errors=e, **kwargs)
                     else:
                         e = []

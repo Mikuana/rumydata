@@ -249,3 +249,30 @@ def test_empty_field():
     assert not empty.check_cell('')
     with pytest.raises(AssertionError):
         assert empty.check_cell('1')
+
+
+def test_custom_message():
+    f = field.Text(1, custom_error_msg='CustomErrorMessage')
+    try:
+        f.check_cell('')
+        # if we didn't hit an exception in the previous step,something got messed up in raising a NotNull error with the blank value
+        assert False
+    except AssertionError as e:
+        assert 'CustomErrorMessage' in str(e)
+
+
+def test_no_errors():
+    f = field.Text(1, all_errors=False)
+    e = f._check('')
+    assert str(e) == '\n - Cell: 0'
+
+
+def test_custom_message_override():
+    f = field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)
+    try:
+        f.check_cell('')
+        # if we didn't hit an exception in the previous step,something got messed up in raising a NotNull error with the blank value
+        assert False
+    except AssertionError as e:
+        assert 'CustomErrorMessage' in str(e)
+    pass
