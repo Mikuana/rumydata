@@ -109,18 +109,6 @@ class CustomError(UrNotMyDataError):
         super().__init__(msg)
         self._message = msg or self._message
 
-    def __str__(self) -> str:
-        """
-        Exception string override
-
-        This method overrides the default string and instead replaces it with
-        the `md` method in this object. This allows simple string printing that
-        can represent nested exceptions that exist in this object, and the
-        exceptions that exist in those objects, and so on.
-        """
-
-        return '\n' + self._md()
-
     def _md(self, depth=0) -> str:
         """
         Nested exception Markdown digest

@@ -117,13 +117,19 @@ class _BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[_BaseRule] = None, all_errors=True, custom_error_msg=None):
+    def __init__(self, rules: List[_BaseRule] = None, all_errors: bool = True, custom_error_msg: str = None):
         """
         Base subject constructor
 
         :param rules: a list of rules which should be applied when performing a
         check of data against this object. Rules must all be subclasses of the
         BaseRule.
+        :param all_errors: boolean to control whether to output the detailed error messages contained in a Rule class
+        definition. If False is provided, only the CellError reporting the coordinates of the field will be reported.
+        Defaults to True.
+        :param custom_error_msg: optional string value, to be used to generate a CustomError which will be added to the
+        list of cell errors. Ignores all_errors in that the provided custom_error_msg will still be output for cases
+        you wish to entirely override the message when a given field finds an error in one of its rules.
         """
         self.rules = rules or []
         self.descriptors = {}
