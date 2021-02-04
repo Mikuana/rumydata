@@ -117,7 +117,8 @@ class _BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[_BaseRule] = None, all_errors: bool = True, custom_error_msg: str = None):
+    def __init__(self, rules: List[_BaseRule] = None, all_errors: bool = True, custom_error_msg: str = None,
+                 use_excel_cell_format: bool = False):
         """
         Base subject constructor
 
@@ -135,6 +136,7 @@ class _BaseSubject:
         self.descriptors = {}
         self.include_all_errors = all_errors
         self.custom_error_msg = custom_error_msg
+        self.use_excel_cell_format = use_excel_cell_format
 
     def _check(self, data, rule_type, **kwargs) -> Union[UrNotMyDataError, List[UrNotMyDataError], None]:
         """

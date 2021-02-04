@@ -47,7 +47,7 @@ class Layout(_BaseSubject):
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
         self.header_mode = kwargs.pop('header_mode', 'exact')
         self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
-
+        self.use_excel_cell_format = kwargs.get('use_excel_cell_format')
         header_modes = ('exact', 'startswith', 'contains')
         if self.header_mode not in header_modes:
             raise ValueError(f"header_mode argument invalid. Must be one of: {header_modes}")
@@ -153,7 +153,7 @@ class Layout(_BaseSubject):
                 comp = {k: row[k] for k in t._comparison_columns()}
                 check_args = dict(
                     data=(val, comp), rule_type=clr.Rule,
-                    rix=rix, cix=cix, name=name
+                    rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format
                 )
                 ce = t._check(**check_args)
                 if ce:
@@ -184,6 +184,7 @@ class _BaseFile(_BaseSubject):
     def __init__(self, layout: Layout, skip_rows=0, max_errors=100, file_name_pattern=False, **kwargs):
         self.skip_rows = skip_rows
         self.max_errors = max_errors
+        self.use_excel_cell_format = kwargs.get('use_excel_cell_format')
 
         super().__init__(**kwargs)
         self.layout = Layout(layout) if isinstance(layout, Dict) else layout
