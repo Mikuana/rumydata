@@ -40,6 +40,8 @@ class Layout(_BaseSubject):
         Defaults to False.
     :param title: (optional) a brief name for the layout, which is included
         in the technical digest.
+    :param use_excel_cell_format: (optional) a boolean control to specify whether to use Excel-style cell naming
+    (e.g. A1 to represent rix=1, cix=1, AA20 to represent rix=20, cix=27, etc.) when reporting validation errors.
     """
 
     def __init__(self, _definition: Dict[str, field.Field], **kwargs):
