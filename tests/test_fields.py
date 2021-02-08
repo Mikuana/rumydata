@@ -5,8 +5,6 @@ import pytest
 from rumydata import field, rules, exception as ex
 
 
-
-
 @pytest.mark.parametrize('value,func,assertion', [
     ('2', lambda x: int(x) % 2 == 1, "must be an even number"),
     ('1', lambda x: int(x) % 2 == 0, "must be an odd number"),
