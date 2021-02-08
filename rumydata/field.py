@@ -173,8 +173,8 @@ class Empty(Field):
     field in that it will raise errors if any values are found.
     """
 
-    def __init__(self, all_errors=True, custom_error_msg=None):
-        super().__init__(nullable=True, all_errors=all_errors, custom_error_msg=custom_error_msg)
+    def __init__(self, **kwargs):
+        super().__init__(nullable=True, **kwargs)
         self.rules.append(clr.MaxChar(0))
 
 
