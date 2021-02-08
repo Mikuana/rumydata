@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import pytest
 
-from rumydata import field, rules
+from rumydata import field, rules, exception as ex
 
 
 def recurse_subclasses(class_to_recurse):
@@ -253,26 +253,20 @@ def test_empty_field():
 
 def test_custom_message():
     f = field.Text(1, custom_error_msg='CustomErrorMessage')
-    try:
-        f.check_cell('')
-        # if we didn't hit an exception in the previous step,something got messed up in raising a NotNull error with the blank value
-        assert False
-    except AssertionError as e:
-        assert 'CustomErrorMessage' in str(e)
+    t = f._has_error('', ex.CustomError)
+    assert t
 
 
 def test_no_errors():
     f = field.Text(1, all_errors=False)
-    e = f._check('')
-    assert str(e) == '\n - Cell: 0'
+    e = f._list_errors('')
+    he = f._has_error('', ex.CellError)
+    assert len(e) == 1 and he
 
 
 def test_custom_message_override():
     f = field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)
-    try:
-        f.check_cell('')
-        # if we didn't hit an exception in the previous step,something got messed up in raising a NotNull error with the blank value
-        assert False
-    except AssertionError as e:
-        assert 'CustomErrorMessage' in str(e)
-    pass
+    e = f._list_errors('')
+    cuse = f._has_error('', ex.CustomError)
+    cele = f._has_error('', ex.CellError)
+    assert all([len(e) == 2, cuse, cele])
