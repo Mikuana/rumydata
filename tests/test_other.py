@@ -120,11 +120,6 @@ def test_file_excel_good(basic_good_excel, basic):
     assert not ExcelFile(rumydata.table.Layout(basic)).check(basic_good_excel)
 
 
-def test_file_invalid_type(basic):
-    with pytest.raises(TypeError):
-        CsvFile(rumydata.table.Layout(basic), file_type='xxx')
-
-
 def test_file_row_skip_good(basic_row_skip_good, basic):
     assert not CsvFile(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
