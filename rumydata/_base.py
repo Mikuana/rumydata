@@ -117,7 +117,7 @@ class _BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[_BaseRule] = None, **kwargs):
+    def __init__(self, rules: List[_BaseRule] = None, all_errors=True, custom_error_msg=None):
         """
         Base subject constructor
 
@@ -133,9 +133,8 @@ class _BaseSubject:
         """
         self.rules = rules or []
         self.descriptors = {}
-        self.include_all_errors = kwargs.get('all_errors', True)
-        self.custom_error_msg = kwargs.get('custom_error_msg')
-        self.use_excel_cell_format = kwargs.get('use_excel_cell_format', False)
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
 
     def _check(self, data, rule_type, **kwargs) -> Union[UrNotMyDataError, List[UrNotMyDataError], None]:
         """
@@ -240,6 +239,7 @@ class _BaseSubject:
         continuing to recurse until all errors have been yielded.
         """
         yield error
-        for el in error._errors:
-            for x in cls._flatten_exceptions(el):
-                yield x
+        if issubclass(type(error), UrNotMyDataError):
+            for el in error._errors:
+                for x in cls._flatten_exceptions(el):
+                    yield x

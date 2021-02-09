@@ -40,9 +40,9 @@ class Field(_BaseSubject):
     """
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
+        self.strip = kwargs.pop('strip', None)
         super().__init__(rules, **kwargs)
         self.nullable = nullable
-        self.strip = kwargs.get('strip')
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
@@ -112,13 +112,11 @@ class Field(_BaseSubject):
                 else:
                     if self.include_all_errors:
                         if self.custom_error_msg:
-                            e.append(ex.CustomError(self.custom_error_msg))
+                            e.insert(0, ex.CustomError(self.custom_error_msg))
                         return ex.CellError(cix, errors=e, **kwargs)
                     else:
-                        e = []
                         if self.custom_error_msg:
-                            e.append(ex.CustomError(self.custom_error_msg))
-                            return ex.CellError(cix, errors=e, **kwargs)
+                            return ex.CellError(cix, errors=[ex.CustomError(self.custom_error_msg)], **kwargs)
                         else:
                             return ex.CellError(cix, **kwargs)
 
