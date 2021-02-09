@@ -112,13 +112,11 @@ class Field(_BaseSubject):
                 else:
                     if self.include_all_errors:
                         if self.custom_error_msg:
-                            e.append(ex.CustomError(self.custom_error_msg))
+                            e.insert(0, ex.CustomError(self.custom_error_msg))
                         return ex.CellError(cix, errors=e, **kwargs)
                     else:
-                        e = []
                         if self.custom_error_msg:
-                            e.append(ex.CustomError(self.custom_error_msg))
-                            return ex.CellError(cix, errors=e, **kwargs)
+                            return ex.CellError(cix, errors=[ex.CustomError(self.custom_error_msg)], **kwargs)
                         else:
                             return ex.CellError(cix, **kwargs)
 
