@@ -252,21 +252,19 @@ def test_empty_field():
 
 
 def test_custom_message():
-    f = field.Text(1, custom_error_msg='CustomErrorMessage')
-    t = f._has_error('', ex.CustomError)
-    assert t
+    assert not field.Text(1, custom_error_msg='CustomErrorMessage')._has_error('1', ex.CustomError,
+                                                                               rule_type=rules.cell.Rule)
+    assert field.Text(1, custom_error_msg='CustomErrorMessage')._has_error('', ex.CustomError,
+                                                                           rule_type=rules.cell.Rule)
 
 
 def test_no_errors():
-    f = field.Text(1, all_errors=False)
-    e = f._list_errors('')
-    he = f._has_error('', ex.CellError)
-    assert len(e) == 1 and he
+    assert not len(field.Text(1, all_errors=False)._list_errors('', rule_type=rules.cell.Rule)) > 1
+    assert len(field.Text(1, all_errors=True)._list_errors('', rule_type=rules.cell.Rule)) > 1
 
 
 def test_custom_message_override():
-    f = field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)
-    e = f._list_errors('')
-    cuse = f._has_error('', ex.CustomError)
-    cele = f._has_error('', ex.CellError)
-    assert all([len(e) == 2, cuse, cele])
+    assert not len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)._list_errors('',
+                                                                                                       rule_type=rules.cell.Rule)) > 2
+    assert len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=True)._list_errors('',
+                                                                                                  rule_type=rules.cell.Rule)) > 2
