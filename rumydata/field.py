@@ -40,9 +40,9 @@ class Field(_BaseSubject):
     """
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
+        self.strip = kwargs.pop('strip', None)
         super().__init__(rules, **kwargs)
         self.nullable = nullable
-        self.strip = kwargs.get('strip')
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
