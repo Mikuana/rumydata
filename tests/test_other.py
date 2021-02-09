@@ -271,9 +271,10 @@ def test_cell_trim():
 
 
 def test_column_trim():
-    assert not field.Choice(['x'], strip=True).check_column([' x '])
+    values = ['x', ' x']
+    assert not field.Text(9, rules=[cr.Unique()], strip=False).check_column(values)
     with pytest.raises(AssertionError):
-        field.Choice(['x'], strip=False).check_column([' x '])
+        field.Text(9, rules=[cr.Unique()], strip=True).check_column(values)
 
 
 def test_empty_column_good(basic, basic_good, basic_good_with_empty):
