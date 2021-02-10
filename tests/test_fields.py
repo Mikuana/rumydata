@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import pytest
 
-from rumydata import field, rules
+from rumydata import field, rules, exception as ex
 
 
 def recurse_subclasses(class_to_recurse):
@@ -249,3 +249,22 @@ def test_empty_field():
     assert not empty.check_cell('')
     with pytest.raises(AssertionError):
         assert empty.check_cell('1')
+
+
+def test_custom_message():
+    assert not field.Text(1, custom_error_msg='CustomErrorMessage')._has_error('1', ex.CustomError,
+                                                                               rule_type=rules.cell.Rule)
+    assert field.Text(1, custom_error_msg='CustomErrorMessage')._has_error('', ex.CustomError,
+                                                                           rule_type=rules.cell.Rule)
+
+
+def test_no_errors():
+    assert not len(field.Text(1, all_errors=False)._list_errors('', rule_type=rules.cell.Rule)) > 1
+    assert len(field.Text(1, all_errors=True)._list_errors('', rule_type=rules.cell.Rule)) > 1
+
+
+def test_custom_message_override():
+    assert not len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)._list_errors('',
+                                                                                                       rule_type=rules.cell.Rule)) > 2
+    assert len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=True)._list_errors('',
+                                                                                                  rule_type=rules.cell.Rule)) > 2

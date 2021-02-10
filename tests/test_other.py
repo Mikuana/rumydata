@@ -120,11 +120,6 @@ def test_file_excel_good(basic_good_excel, basic):
     assert not ExcelFile(rumydata.table.Layout(basic)).check(basic_good_excel)
 
 
-def test_file_invalid_type(basic):
-    with pytest.raises(TypeError):
-        CsvFile(rumydata.table.Layout(basic), file_type='xxx')
-
-
 def test_file_row_skip_good(basic_row_skip_good, basic):
     assert not CsvFile(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
@@ -271,10 +266,15 @@ def test_debug_mode(mocker):
 
 def test_cell_trim():
     assert not field.Choice(['x'], strip=True).check_cell(' x ')
+    with pytest.raises(AssertionError):
+        field.Choice(['x'], strip=False).check_cell(' x ')
 
 
 def test_column_trim():
-    assert not field.Choice(['x'], strip=True).check_column([' x '])
+    values = ['x', ' x']
+    assert not field.Text(9, rules=[cr.Unique()], strip=False).check_column(values)
+    with pytest.raises(AssertionError):
+        field.Text(9, rules=[cr.Unique()], strip=True).check_column(values)
 
 
 def test_empty_column_good(basic, basic_good, basic_good_with_empty):
