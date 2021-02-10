@@ -186,7 +186,6 @@ class _BaseFile(_BaseSubject):
     def __init__(self, layout: Layout, skip_rows=0, max_errors=100, file_name_pattern=False, **kwargs):
         self.skip_rows = skip_rows
         self.max_errors = max_errors
-        self.use_excel_cell_format = kwargs.get('use_excel_cell_format')
 
         super().__init__(**kwargs)
         self.layout = Layout(layout) if isinstance(layout, Dict) else layout
