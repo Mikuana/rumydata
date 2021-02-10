@@ -239,7 +239,7 @@ class _BaseSubject:
         continuing to recurse until all errors have been yielded.
         """
         yield error
-        if issubclass(type(error), UrNotMyDataError):
+        if error is not None:
             for el in error._errors:
                 for x in cls._flatten_exceptions(el):
                     yield x
