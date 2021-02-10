@@ -49,7 +49,7 @@ class Layout(_BaseSubject):
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
         self.header_mode = kwargs.pop('header_mode', 'exact')
         self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
-        self.use_excel_cell_format = kwargs.get('use_excel_cell_format')
+        self.use_excel_cell_format = kwargs.pop('use_excel_cell_format', False)
         header_modes = ('exact', 'startswith', 'contains')
         if self.header_mode not in header_modes:
             raise ValueError(f"header_mode argument invalid. Must be one of: {header_modes}")
