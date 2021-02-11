@@ -37,8 +37,10 @@ def debug():
 def convert_to_excel_col_labels(col_num_str):
     if type(col_num_str) == str:
         col_num_str = int(col_num_str)
-    return '' if col_num_str <= 0 else convert_to_excel_col_labels((col_num_str - 1) // 26) + chr(
-        (col_num_str - 1) % 26 + ord('A'))
+    if col_num_str <= 0:
+        return ''
+    else:
+        return convert_to_excel_col_labels((col_num_str - 1) // 26) + chr((col_num_str - 1) % 26 + ord('A'))
 
 
 class UrNotMyDataError(Exception):
