@@ -347,5 +347,4 @@ def test_complex_bad(bad_complex_file):
     ('16384', 'XFD')
 ])
 def test_excel_cell_formatter(value, expected_output):
-    print(ex.convert_to_excel_col_labels(value))
     assert ex.convert_to_excel_col_labels(value) == expected_output
