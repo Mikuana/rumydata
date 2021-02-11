@@ -131,6 +131,5 @@ def test_excel_cell_format():
     lay = Layout({'col_a': Text(1)}, use_excel_cell_format=True)
     try:
         lay.check_row([''])
-        assert False
     except AssertionError as e:
         assert 'A0' in str(e)

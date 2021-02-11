@@ -315,10 +315,10 @@ def test_complex_good(good_complex_file):
 def bad_complex_file(tmpdir):
     p = Path(tmpdir, uuid.uuid4().hex)
     p.write_text(dedent("""
-    c1,c2,c3,c4xyz,,c5,c6
-    ,1,2020-01-01,,,a,a
-    ,,,,,,
-    B,2,2020-01-02,y,,a,
+    c1,c2,c3,c4xyz,,c5,c6,c7,c8,c9
+    ,1,2020-01-01,,,a,a,,,a
+    ,,,,,,,,,
+    B,2,2020-01-02,y,,a,,,,
     """))
     yield p.as_posix()
 
@@ -330,7 +330,10 @@ def test_complex_bad(bad_complex_file):
         'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
         'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
         'c5': field.Text(1),
-        'c6': field.Text(1, nullable=True)
+        'c6': field.Text(1, nullable=True),
+        'c7': field.Text(1, rules=[clr.NotNullIfCompare(['c8', 'c9'])]),
+        'c8': field.Text(1, nullable=True),
+        'c9': field.Text(1, nullable=True)
     }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
     expected_ex = ['NotNullIfCompare',
                    'OtherCantExist', 'OtherMustExist']

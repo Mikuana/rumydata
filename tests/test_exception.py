@@ -1,4 +1,5 @@
 import pytest
+
 import rumydata.exception as ex
 
 
@@ -18,5 +19,15 @@ import rumydata.exception as ex
 ])
 def test_cell_error_excel_format(index, rix, zero_index, expected, assertion):
     x = str(ex.CellError(index, use_excel_cell_format=True, rix=rix, zero_index=zero_index))
-    print(x)
     assert (expected in x) is assertion
+
+
+def test_populated_custom_error():
+    assert ex.CustomError('Testing')._md() != ' - None'
+
+
+def test_custom_error():
+    x = ex.CustomError('Testing')
+    x._errors = [ex.CellError(0)]
+    print(x._md())
+    assert x._md() == " - Testing\n   - Cell: 1"
