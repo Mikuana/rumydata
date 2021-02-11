@@ -34,6 +34,16 @@ def debug():
     return False
 
 
+def convert_to_excel_col_labels(col_num_str):
+    if type(col_num_str) == str:
+        col_num_str = int(col_num_str)
+        print(col_num_str)
+    if col_num_str <= 0:
+        return ''
+    else:
+        return convert_to_excel_col_labels((col_num_str - 1) // 26) + chr((col_num_str - 1) % 26 + ord('A'))
+
+
 class UrNotMyDataError(Exception):
     """
     Base exception class for rumydata package
@@ -104,6 +114,32 @@ class UrNotMyDataError(Exception):
             yield el._md(depth)
 
 
+class CustomError(UrNotMyDataError):
+    def __init__(self, msg: str = None):
+        super().__init__(msg)
+        self._message = msg or self._message
+
+    def _md(self, depth=0) -> str:
+        """
+        Nested exception Markdown digest
+
+        This method returns the complete tree of nested exceptions that exist in
+        the errors property of this class in Markdown format, with indentation
+        provided to indicate the relationship of nested exceptions.
+
+        :param depth: an integer which indicates the level of indentation that
+            an exception needs to represent its relationship in the nested
+            structure. Do not call directly.
+        :return: a string of nested exceptions in Markdown format, with
+            indentation providing visual indicator of nested structure.
+        """
+
+        txt = f'{"  " * depth} - {self._message}'
+        if self._errors:
+            txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+        return txt
+
+
 class FileError(UrNotMyDataError):
     """
     File Error exception
@@ -170,13 +206,18 @@ class CellError(UrNotMyDataError):
         the index increased by one.
     """
 
-    def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
+    def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
         message = ''
         offset = 0 if kwargs.get("zero_index") else 1
-        if kwargs.get('rix'):
-            message = str(kwargs.get('rix') + offset) + ','
+        if use_excel_cell_format:
+            message = f'{str(convert_to_excel_col_labels(index + offset))}'
+            if kwargs.get('rix') is not None:
+                message += str(kwargs.get('rix') + offset)
+        else:
+            if kwargs.get('rix') is not None:
+                message = str(kwargs.get('rix') + offset) + ','
+            message += f'{str(index + offset)}'
 
-        message += f'{str(index + offset)}'
         if kwargs.get("name"):
             message += f' ({kwargs.get("name")})'
         message += f'; {msg}' if msg else ''

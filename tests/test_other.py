@@ -120,11 +120,6 @@ def test_file_excel_good(basic_good_excel, basic):
     assert not ExcelFile(rumydata.table.Layout(basic)).check(basic_good_excel)
 
 
-def test_file_invalid_type(basic):
-    with pytest.raises(TypeError):
-        CsvFile(rumydata.table.Layout(basic), file_type='xxx')
-
-
 def test_file_row_skip_good(basic_row_skip_good, basic):
     assert not CsvFile(rumydata.table.Layout(basic), skip_rows=2).check(basic_row_skip_good)
 
@@ -271,10 +266,15 @@ def test_debug_mode(mocker):
 
 def test_cell_trim():
     assert not field.Choice(['x'], strip=True).check_cell(' x ')
+    with pytest.raises(AssertionError):
+        field.Choice(['x'], strip=False).check_cell(' x ')
 
 
 def test_column_trim():
-    assert not field.Choice(['x'], strip=True).check_column([' x '])
+    values = ['x', ' x']
+    assert not field.Text(9, rules=[cr.Unique()], strip=False).check_column(values)
+    with pytest.raises(AssertionError):
+        field.Text(9, rules=[cr.Unique()], strip=True).check_column(values)
 
 
 def test_empty_column_good(basic, basic_good, basic_good_with_empty):
@@ -315,10 +315,10 @@ def test_complex_good(good_complex_file):
 def bad_complex_file(tmpdir):
     p = Path(tmpdir, uuid.uuid4().hex)
     p.write_text(dedent("""
-    c1,c2,c3,c4xyz,,c5,c6
-    ,1,2020-01-01,,,a,a
-    ,,,,,,
-    B,2,2020-01-02,y,,a,
+    c1,c2,c3,c4xyz,,c5,c6,c7,c8,c9
+    ,1,2020-01-01,,,a,a,,,a
+    ,,,,,,,,,
+    B,2,2020-01-02,y,,a,,,,
     """))
     yield p.as_posix()
 
@@ -330,7 +330,10 @@ def test_complex_bad(bad_complex_file):
         'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
         'c4': field.Choice(['x', 'y', 'z'], case_insensitive=True),
         'c5': field.Text(1),
-        'c6': field.Text(1, nullable=True)
+        'c6': field.Text(1, nullable=True),
+        'c7': field.Text(1, rules=[clr.NotNullIfCompare(['c8', 'c9'])]),
+        'c8': field.Text(1, nullable=True),
+        'c9': field.Text(1, nullable=True)
     }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
     expected_ex = ['NotNullIfCompare',
                    'OtherCantExist', 'OtherMustExist']
@@ -339,3 +342,12 @@ def test_complex_bad(bad_complex_file):
     except AssertionError as ex:
         print(str(ex))
         assert all(x in str(ex) for x in expected_ex)
+
+
+@pytest.mark.parametrize('value,expected_output', [
+    ('1', 'A'),
+    ('1234', 'AUL'),
+    ('16384', 'XFD')
+])
+def test_excel_cell_formatter(value, expected_output):
+    assert ex.convert_to_excel_col_labels(value) == expected_output

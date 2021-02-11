@@ -8,6 +8,8 @@ package. This is not intended for use by end-users.
 from typing import List, Union
 
 import rumydata
+from rumydata.exception import UrNotMyDataError
+
 
 class _BaseRule:
     """
@@ -38,7 +40,7 @@ class _BaseRule:
 
     @classmethod
     def rule_exception(cls):
-        return type(f'{cls.__name__}Error', (rumydata.exception.UrNotMyDataError,), {})
+        return type(f'{cls.__name__}Error', (UrNotMyDataError,), {})
 
     def _prepare(self, data) -> tuple:
         """
@@ -81,7 +83,7 @@ class _BaseRule:
         """
         return lambda x: False  # default to failing evaluation if not overwritten
 
-    def _exception_msg(self) -> rumydata.exception.UrNotMyDataError:
+    def _exception_msg(self) -> UrNotMyDataError:
         """
         Validation exception message
 
@@ -115,18 +117,26 @@ class _BaseSubject:
 
     _default_args = tuple()  # a default set of positional args for testing
 
-    def __init__(self, rules: List[_BaseRule] = None):
+    def __init__(self, rules: List[_BaseRule] = None, all_errors=True, custom_error_msg=None):
         """
         Base subject constructor
 
         :param rules: a list of rules which should be applied when performing a
         check of data against this object. Rules must all be subclasses of the
         BaseRule.
+        :param all_errors: boolean to control whether to output the detailed error messages contained in a Rule class
+        definition. If False is provided, only the CellError reporting the coordinates of the field will be reported.
+        Defaults to True.
+        :param custom_error_msg: optional string value, to be used to generate a CustomError which will be added to the
+        list of cell errors. Ignores all_errors in that the provided custom_error_msg will still be output for cases
+        you wish to entirely override the message when a given field finds an error in one of its rules.
         """
         self.rules = rules or []
         self.descriptors = {}
+        self.include_all_errors = all_errors
+        self.custom_error_msg = custom_error_msg
 
-    def _check(self, data, rule_type, **kwargs) -> Union[rumydata.exception.UrNotMyDataError, List[rumydata.exception.UrNotMyDataError], None]:
+    def _check(self, data, rule_type, **kwargs) -> Union[UrNotMyDataError, List[UrNotMyDataError], None]:
         """
         Check data against specified rule types
 
@@ -165,7 +175,7 @@ class _BaseSubject:
                 errors.append(r.rule_exception()(msg))
         return errors
 
-    def _list_errors(self, value, **kwargs) -> List[rumydata.exception.UrNotMyDataError]:
+    def _list_errors(self, value, **kwargs) -> List[UrNotMyDataError]:
         """
         Flatten nested errors into a list
 
@@ -229,6 +239,7 @@ class _BaseSubject:
         continuing to recurse until all errors have been yielded.
         """
         yield error
-        for el in error._errors:
-            for x in cls._flatten_exceptions(el):
-                yield x
+        if error is not None:
+            for el in error._errors:
+                for x in cls._flatten_exceptions(el):
+                    yield x

@@ -125,3 +125,11 @@ def test_file_name_match(tmpdir):
     layout = Layout({'x': Integer(1)})
     mock_file.write_text('x\n1\n')
     assert not CsvFile(layout, file_name_pattern=pattern).check(mock_file)
+
+
+def test_excel_cell_format():
+    lay = Layout({'col_a': Text(1)}, use_excel_cell_format=True)
+    try:
+        lay.check_row([''])
+    except AssertionError as e:
+        assert 'A0' in str(e)

@@ -40,9 +40,9 @@ class Field(_BaseSubject):
     """
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
-        super().__init__(rules)
+        self.strip = kwargs.pop('strip', None)
+        super().__init__(rules, **kwargs)
         self.nullable = nullable
-        self.strip = kwargs.get('strip')
 
         if not self.nullable:
             self.rules.append(clr.NotNull())
@@ -110,7 +110,15 @@ class Field(_BaseSubject):
                 if rule_type == cr.Rule:
                     return ex.ColumnError(cix, errors=e, **kwargs)
                 else:
-                    return ex.CellError(cix, errors=e, **kwargs)
+                    if self.include_all_errors:
+                        if self.custom_error_msg:
+                            e.insert(0, ex.CustomError(self.custom_error_msg))
+                        return ex.CellError(cix, errors=e, **kwargs)
+                    else:
+                        if self.custom_error_msg:
+                            return ex.CellError(cix, errors=[ex.CustomError(self.custom_error_msg)], **kwargs)
+                        else:
+                            return ex.CellError(cix, **kwargs)
 
     def _comparison_columns(self) -> set:
         """
@@ -163,8 +171,8 @@ class Empty(Field):
     field in that it will raise errors if any values are found.
     """
 
-    def __init__(self):
-        super().__init__(nullable=True)
+    def __init__(self, **kwargs):
+        super().__init__(nullable=True, **kwargs)
         self.rules.append(clr.MaxChar(0))
 
 
@@ -218,7 +226,6 @@ class Date(Field):
         self.descriptors['Format'] = 'YYYY-MM-DD'
 
         self.rules.append(clr.CanBeDateIso(**rule_kwargs))
-
         if max_date:
             self.descriptors['Max Date'] = f'{max_date}'
             self.rules.append(clr.DateLTE(max_date, **rule_kwargs))
@@ -247,7 +254,6 @@ class Currency(Field):
         self.descriptors['Type'] = 'Numeric'
         self.descriptors['Format'] = f'{"9" * (significant_digits - 2)}.99'
         self.descriptors['Max Length'] = f'{str(significant_digits)} digits'
-
         self.rules.append(clr.MaxDigit(significant_digits))
         self.rules.append(clr.NumericDecimals())
 
@@ -324,7 +330,6 @@ class Choice(Field):
 
     def __init__(self, valid_values: list, case_insensitive=False, **kwargs):
         super().__init__(**kwargs)
-
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
         self.rules.append(
