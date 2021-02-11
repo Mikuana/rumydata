@@ -37,6 +37,7 @@ def debug():
 def convert_to_excel_col_labels(col_num_str):
     if type(col_num_str) == str:
         col_num_str = int(col_num_str)
+        print(col_num_str)
     if col_num_str <= 0:
         return ''
     else:
@@ -210,10 +211,10 @@ class CellError(UrNotMyDataError):
         offset = 0 if kwargs.get("zero_index") else 1
         if use_excel_cell_format:
             message = f'{str(convert_to_excel_col_labels(index + offset))}'
-            if kwargs.get('rix'):
+            if kwargs.get('rix') is not None:
                 message += str(kwargs.get('rix') + offset)
         else:
-            if kwargs.get('rix'):
+            if kwargs.get('rix') is not None:
                 message = str(kwargs.get('rix') + offset) + ','
             message += f'{str(index + offset)}'
 
