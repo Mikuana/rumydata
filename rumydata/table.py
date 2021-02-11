@@ -40,6 +40,8 @@ class Layout(_BaseSubject):
         Defaults to False.
     :param title: (optional) a brief name for the layout, which is included
         in the technical digest.
+    :param use_excel_cell_format: (optional) a boolean control to specify whether to use Excel-style cell naming
+    (e.g. A1 to represent rix=1, cix=1, AA20 to represent rix=20, cix=27, etc.) when reporting validation errors.
     """
 
     def __init__(self, _definition: Dict[str, field.Field], **kwargs):
@@ -47,7 +49,7 @@ class Layout(_BaseSubject):
         self.empty_row_ok = kwargs.pop('empty_row_ok', False)
         self.header_mode = kwargs.pop('header_mode', 'exact')
         self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
-
+        self.use_excel_cell_format = kwargs.pop('use_excel_cell_format', False)
         header_modes = ('exact', 'startswith', 'contains')
         if self.header_mode not in header_modes:
             raise ValueError(f"header_mode argument invalid. Must be one of: {header_modes}")
@@ -153,7 +155,7 @@ class Layout(_BaseSubject):
                 comp = {k: row[k] for k in t._comparison_columns()}
                 check_args = dict(
                     data=(val, comp), rule_type=clr.Rule,
-                    rix=rix, cix=cix, name=name
+                    rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format
                 )
                 ce = t._check(**check_args)
                 if ce:

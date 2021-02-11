@@ -339,3 +339,12 @@ def test_complex_bad(bad_complex_file):
     except AssertionError as ex:
         print(str(ex))
         assert all(x in str(ex) for x in expected_ex)
+
+
+@pytest.mark.parametrize('value,expected_output', [
+    ('1', 'A'),
+    ('1234', 'AUL'),
+    ('16384', 'XFD')
+])
+def test_excel_cell_formatter(value, expected_output):
+    assert ex.convert_to_excel_col_labels(value) == expected_output
