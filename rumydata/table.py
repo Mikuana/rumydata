@@ -237,7 +237,7 @@ class _BaseFile(_BaseSubject):
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super()._check(p, rule_type=table.Rule)  # check files-based rules first
         if e:
-            return ex.FileError(file=p.as_posix(), errors=e)
+            return ex.FileError(file=p.name, errors=e)
 
         column_cache = {
             k: [] for k, v in self.layout.layout.items()
