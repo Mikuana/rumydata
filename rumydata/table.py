@@ -31,6 +31,9 @@ class Layout(_BaseSubject):
     :param _definition: dictionary of column names with DataType definitions
     :param skip_header: (optional) a boolean control to skip validation of
         the header in the file. Defaults to False.
+    :param no_header: (optional) a boolean control that indicates that there is
+        no header in the layout, and that every row should be treated as data.
+        Defaults to False.
     :param header_mode: (optional) sets the mode for checking the header.
         Defaults to 'exact', but also accepts 'startswith' and 'contains'. This
         allows optional partial matching of header values in a layout to the
@@ -50,6 +53,7 @@ class Layout(_BaseSubject):
         self.header_mode = kwargs.pop('header_mode', 'exact')
         self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
         self.use_excel_cell_format = kwargs.pop('use_excel_cell_format', False)
+        self.no_header = kwargs.pop('no_header', False)
         header_modes = ('exact', 'startswith', 'contains')
         if self.header_mode not in header_modes:
             raise ValueError(f"header_mode argument invalid. Must be one of: {header_modes}")
@@ -254,7 +258,7 @@ class _BaseFile(_BaseSubject):
                 if rix < self.skip_rows:
                     continue
                 row = self._row_handler(row)
-                if rix == (0 + self.skip_rows):  # if header
+                if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header
                     re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
                     if self.layout.empty_cols_ok:
                         # remap layout positions with Empty columns wherever header is empty
