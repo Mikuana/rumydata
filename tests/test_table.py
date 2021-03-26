@@ -165,3 +165,19 @@ def test_no_header_false_good(tmpdir):
     p.write_text('\n'.join(['c1,c2', 'a,b']))
     layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=False)
     assert False if CsvFile(layout)._list_errors(p) != [None] else True
+
+
+def test_no_header_default_good(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['c1,c2', 'a,b']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)})
+    assert False if CsvFile(layout)._list_errors(p) != [None] else True
+
+
+def test_no_header_default_bad(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['a,b', 'c,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)})
+    assert False if CsvFile(layout)._list_errors(p) == [None] else True
