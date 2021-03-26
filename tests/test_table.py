@@ -8,7 +8,6 @@ from rumydata.field import Integer, Field, Text
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 from tests.utils import mock_no_module
-from rumydata.rules import header as hr
 
 
 @pytest.fixture
