@@ -8,6 +8,7 @@ from rumydata.field import Integer, Field, Text
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 from tests.utils import mock_no_module
+from rumydata.rules import header as hr
 
 
 @pytest.fixture
@@ -133,3 +134,35 @@ def test_excel_cell_format():
         lay.check_row([''])
     except AssertionError as e:
         assert 'A0' in str(e)
+
+
+def test_no_header_true_bad(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['aaaa,b', 'c,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=True)
+    assert False if CsvFile(layout)._list_errors(p) == [None] else True
+
+
+def test_no_header_true_good(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['a,b', 'c,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=True)
+    assert False if CsvFile(layout)._list_errors(p) != [None] else True
+
+
+def test_no_header_false_bad(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['a,b', 'c,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=False)
+    assert False if CsvFile(layout)._list_errors(p) == [None] else True
+
+
+def test_no_header_false_good(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['c1,c2', 'a,b']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=False)
+    assert False if CsvFile(layout)._list_errors(p) != [None] else True
