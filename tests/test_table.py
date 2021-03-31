@@ -7,6 +7,7 @@ from openpyxl import Workbook
 from rumydata.field import Integer, Field, Text
 from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
+from rumydata import exception as ex
 from tests.utils import mock_no_module
 
 
@@ -138,9 +139,18 @@ def test_excel_cell_format():
 def test_no_header_true_bad(tmpdir):
     hid = uuid4().hex[:5]
     p = Path(tmpdir, hid)
-    p.write_text('\n'.join(['aaaa,b', 'c,d']))
+    p.write_text('\n'.join(['aa,b', 'c,d']))
     layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=True)
     assert False if CsvFile(layout)._list_errors(p) == [None] else True
+
+
+def test_no_header_true_bad_plus(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['aa,b', 'cc,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=True)
+    errors = CsvFile(layout)._list_errors(p)
+    assert True if len([x for x in errors if type(x) == ex.RowError]) == 2 else False
 
 
 def test_no_header_true_good(tmpdir):
