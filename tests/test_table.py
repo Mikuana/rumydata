@@ -191,3 +191,11 @@ def test_no_header_default_bad(tmpdir):
     p.write_text('\n'.join(['a,b', 'c,d']))
     layout = Layout({'c1': Text(1), 'c2': Text(1)})
     assert False if CsvFile(layout)._list_errors(p) == [None] else True
+
+
+def test_no_header_with_column_rule(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['a', 'a']))
+    layout = Layout({'c1': Text(1, rules=[Unique()])}, no_header=True)
+    assert True if CsvFile(layout)._has_error(p, Unique.rule_exception()) else False
