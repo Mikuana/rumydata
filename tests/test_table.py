@@ -9,6 +9,7 @@ from rumydata.rules.column import Unique
 from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 from rumydata import exception as ex
 from tests.utils import mock_no_module
+from rumydata import rules
 
 
 @pytest.fixture
@@ -199,3 +200,32 @@ def test_no_header_with_column_rule(tmpdir):
     p.write_text('\n'.join(['a', 'a']))
     layout = Layout({'c1': Text(1, rules=[Unique()])}, no_header=True)
     assert True if CsvFile(layout)._has_error(p, Unique.rule_exception()) else False
+
+
+def test_no_header_with_skip_rows(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['aa', 'aa', 'aa']))
+    layout = Layout({'c1': Text(1, rules=[Unique()])}, no_header=True)
+    errors = CsvFile(layout, skip_rows=1)._list_errors(p)
+    assert True if all([len([x for x in errors if type(x) == ex.ColumnError]) == 1,
+                        len([x for x in errors if type(x) == ex.RowError]) == 2]) else False
+
+
+def test_skip_rows_bad_header(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['', 'c2', 'aa', 'aa']))
+    layout = Layout({'c1': Text(2, rules=[Unique()])})
+    csv = CsvFile(layout, skip_rows=1)
+    assert all(
+        [csv._has_error(p, rules.header.ColumnOrder.rule_exception()), not csv._has_error(p, Unique.rule_exception())])
+
+
+def test_skip_rows_skips_columns_errors(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['aa', 'c1', 'aa']))
+    layout = Layout({'c1': Text(2, rules=[Unique()])})
+    csv = CsvFile(layout, skip_rows=1)
+    assert not csv._has_error(p, Unique.rule_exception())

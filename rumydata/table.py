@@ -283,7 +283,7 @@ class _BaseFile(_BaseSubject):
 
                 if re:
                     e.append(re)
-                    if rix == 0 and self.layout.no_header is False:  # if header error present, stop checking rows
+                    if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
