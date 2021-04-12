@@ -149,7 +149,12 @@ class Layout(_BaseSubject):
 
         if rule_type == rr.Rule:
             row = dict(zip(self.layout.keys(), row))
-            ignore = {k: isinstance(v, field.Ignore) for k, v in self.layout.items()}
+            # if any of the fields are Ignore, or if the field uses the ignore_if parameter and the value matches the
+            # specified value we ignore them. Handles cases where a string or list is specified
+            ignore = {k: (isinstance(v, field.Ignore) if isinstance(v, field.Ignore) else row[k] in self.layout[
+                k].ignore_if if isinstance(self.layout[k].ignore_if, List) else row[k] == self.layout[k].ignore_if) for
+                      k, v in self.layout.items()}
+
             # if empty row is okay, and all fields are either empty, or Ignore class
             if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
                 return
