@@ -181,3 +181,12 @@ def test_no_header_default_bad(tmpdir):
     p.write_text('\n'.join(['a,b', 'c,d']))
     layout = Layout({'c1': Text(1), 'c2': Text(1)})
     assert False if CsvFile(layout)._list_errors(p) == [None] else True
+
+
+def test_ignore_if(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['c1,c2', "x,", 'c,d']))
+    layout = Layout({'c1': Text(1, ignore_if='x'), 'c2': Text(1)}, empty_row_ok=True)
+    results = CsvFile(layout).check(p)
+    assert True if not results else False
