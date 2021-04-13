@@ -222,10 +222,14 @@ def test_skip_rows_bad_header(tmpdir):
         [csv._has_error(p, rules.header.ColumnOrder.rule_exception()), not csv._has_error(p, Unique.rule_exception())])
 
 
-def test_skip_rows_skips_columns_errors(tmpdir):
+@pytest.mark.parametrize('skip, expected', [
+    (1, True),
+    (2, False)
+])
+def test_skip_rows_skips_columns_errors(tmpdir, skip, expected):
     hid = uuid4().hex[:5]
     p = Path(tmpdir, hid)
-    p.write_text('\n'.join(['aa', 'c1', 'aa']))
-    layout = Layout({'c1': Text(2, rules=[Unique()])})
-    csv = CsvFile(layout, skip_rows=1)
-    assert not csv._has_error(p, Unique.rule_exception())
+    p.write_text('\n'.join(['a', 'a', 'a', 'a']))
+    layout = Layout({'a': Text(2, rules=[Unique()])})
+    csv = CsvFile(layout, skip_rows=skip)
+    assert csv._has_error(p, Unique.rule_exception()) is expected
