@@ -288,7 +288,7 @@ class _BaseFile(_BaseSubject):
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
                         break
-                if rix > 0 or self.layout.no_header is True:
+                if rix > (0 + self.skip_rows) or self.layout.no_header is True:
                     for k, ix in column_cache_map.items():
                         column_cache[k].append(row[ix])
 
