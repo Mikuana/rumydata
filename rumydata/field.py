@@ -37,13 +37,11 @@ class Field(_BaseSubject):
     :param strip: (optional) apply pre-processing to values in the field which
         applies the str.strip method, removing leading and trailing whitespaces,
         prior to checking rules.
-    :param ignore_if: (optional) specify values which will force the field to be
-        treated as an Ignore field. Can be a single value or list of values
     """
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
         self.strip = kwargs.pop('strip', None)
-        self.ignore_if = kwargs.pop('ignore_if', None)
+        self.ignore_if = None
         super().__init__(rules, **kwargs)
         self.nullable = nullable
 
