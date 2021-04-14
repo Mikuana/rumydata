@@ -16,8 +16,7 @@ jobs:
         with:
           name: Version ${{ env.PACKAGE_VERSION }}
           tag_name: v${{ env.PACKAGE_VERSION }}
-          body: Body release text
-          files: README.txt
+          body_path: docs/release/current.md
           draft: true
           prerelease: true
         env:
