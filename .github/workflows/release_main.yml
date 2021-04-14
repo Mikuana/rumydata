@@ -1,10 +1,8 @@
 name: Automated Release
-
 on:
   push:
     branches:
       - auto-release
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -16,9 +14,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          name: Version ${{ env.PACKAGE_VERSION }}
           tag_name: v${{ env.PACKAGE_VERSION }}
           body: Body release text
           files: README.txt
           draft: true
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
