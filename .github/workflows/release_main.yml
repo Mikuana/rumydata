@@ -20,6 +20,7 @@ jobs:
         with:
           tag_name: v${{ PACKAGE_VERSION }}
           body: Body release text
+          files: README.txt
           draft: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
