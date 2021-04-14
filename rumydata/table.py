@@ -283,12 +283,12 @@ class _BaseFile(_BaseSubject):
 
                 if re:
                     e.append(re)
-                    if rix == 0:  # if header error present, stop checking rows
+                    if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
                         break
-                if rix > 0:
+                if rix > (0 + self.skip_rows) or self.layout.no_header is True:
                     for k, ix in column_cache_map.items():
                         column_cache[k].append(row[ix])
 
