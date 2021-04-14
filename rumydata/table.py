@@ -149,11 +149,11 @@ class Layout(_BaseSubject):
 
         if rule_type == rr.Rule:
             row = dict(zip(self.layout.keys(), row))
-            # if any of the fields are Ignore, or if the field uses the ignore_if parameter and the value matches the
+            # if any of the fields are Ignore, or if the field uses the _ignore_if parameter and the value matches the
             # specified value we ignore them. Handles cases where a string or list is specified
             ignore = {k: (isinstance(v, field.Ignore) if isinstance(v, field.Ignore) else row[k] in self.layout[
-                k].ignore_if if isinstance(self.layout[k].ignore_if, List) else row[k] == self.layout[k].ignore_if) for
-                      k, v in self.layout.items()}
+                k]._ignore_if if isinstance(self.layout[k]._ignore_if, List) else row[k] == self.layout[k]._ignore_if)
+                      for k, v in self.layout.items()}
 
             # if empty row is okay, and all fields are either empty, or Ignore class
             if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
@@ -205,7 +205,7 @@ class _BaseFile(_BaseSubject):
 
         if self.ignore_exceptions:
             for k, v in self.ignore_exceptions.items():
-                self.layout.layout[k].ignore_if = v
+                self.layout.layout[k]._ignore_if = v
 
         self.rules.extend([
             table.FileExists()
@@ -297,7 +297,8 @@ class _BaseFile(_BaseSubject):
 
                 if re:
                     e.append(re)
-                    if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
+                    if rix == (
+                            0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
