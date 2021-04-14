@@ -18,7 +18,7 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: v${{ PACKAGE_VERSION }}
+          tag_name: v${{ $PACKAGE_VERSION }}
           body: Body release text
           files: README.txt
           draft: true
