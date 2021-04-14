@@ -149,7 +149,12 @@ class Layout(_BaseSubject):
 
         if rule_type == rr.Rule:
             row = dict(zip(self.layout.keys(), row))
-            ignore = {k: isinstance(v, field.Ignore) for k, v in self.layout.items()}
+            # if any of the fields are Ignore, or if the field uses the _ignore_if parameter and the value matches the
+            # specified value we ignore them. Handles cases where a string or list is specified
+            ignore = {k: (isinstance(v, field.Ignore) if isinstance(v, field.Ignore) else row[k] in self.layout[
+                k]._ignore_if if isinstance(self.layout[k]._ignore_if, List) else row[k] == self.layout[k]._ignore_if)
+                      for k, v in self.layout.items()}
+
             # if empty row is okay, and all fields are either empty, or Ignore class
             if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
                 return
@@ -185,14 +190,23 @@ class _BaseFile(_BaseSubject):
         This is used to prevent overly verbose (and mostly useless)
         validation reports from being generated. The error limit can be set to
         unlimited by providing a value of -1.
+    :param ignore_exceptions: (optional) specify a dictionary of column names
+        mapping to a value or list of values which will force the field to be
+        treated as an Ignore field when the value is encountered.
     """
 
     def __init__(self, layout: Layout, skip_rows=0, max_errors=100, file_name_pattern=False, **kwargs):
         self.skip_rows = skip_rows
         self.max_errors = max_errors
+        self.ignore_exceptions = kwargs.pop('ignore_exceptions', None)
 
         super().__init__(**kwargs)
         self.layout = Layout(layout) if isinstance(layout, Dict) else layout
+
+        if self.ignore_exceptions:
+            for k, v in self.ignore_exceptions.items():
+                self.layout.layout[k]._ignore_if = v
+
         self.rules.extend([
             table.FileExists()
         ])
@@ -283,7 +297,8 @@ class _BaseFile(_BaseSubject):
 
                 if re:
                     e.append(re)
-                    if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
+                    if rix == (
+                            0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
@@ -376,7 +391,7 @@ class ExcelFile(_BaseFile):
 
         x = {x: kwargs.pop(x, None) for x in ['sheet']}
         self.excel_kwargs = {k: v for k, v in x.items() if v}
-
+        # add ignore_ifs to the layout's fields when this gets constructed
         super().__init__(layout, skip_rows, max_errors, **kwargs)
 
     def _rows(self, file: Path):
