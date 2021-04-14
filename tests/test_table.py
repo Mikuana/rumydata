@@ -233,3 +233,29 @@ def test_skip_rows_skips_columns_errors(tmpdir, skip, expected):
     layout = Layout({'a': Text(2, rules=[Unique()])})
     csv = CsvFile(layout, skip_rows=skip)
     assert csv._has_error(p, Unique.rule_exception()) is expected
+
+
+def test_ignore_if_single_good(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['c1,c2', 'x,', 'c,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, empty_row_ok=True)
+    results = CsvFile(layout, ignore_exceptions={'c1': 'x'}).check(p)
+    assert True if not results else False
+
+
+def test_ignore_if_single_bad(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['c1,c2', 'z,', 'c,d']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, empty_row_ok=True)
+    assert False if CsvFile(layout, ignore_exceptions={'c1': 'x'})._list_errors(p) == [None] else True
+
+
+def test_ignore_if_list(tmpdir):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['c1,c2', 'x,z', 'c,d', ',', 'z,', 'x,']))
+    layout = Layout({'c1': Text(1), 'c2': Text(1)}, empty_row_ok=True)
+    results = CsvFile(layout, ignore_exceptions={'c1': ['x', 'z']}).check(p)
+    assert True if not results else False

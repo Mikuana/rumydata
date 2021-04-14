@@ -41,6 +41,7 @@ class Field(_BaseSubject):
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
         self.strip = kwargs.pop('strip', None)
+        self._ignore_if = None
         super().__init__(rules, **kwargs)
         self.nullable = nullable
 
