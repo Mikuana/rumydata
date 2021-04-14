@@ -13,13 +13,14 @@ jobs:
         uses: actions/checkout@v2
       - name: Get Version
         run: echo "PACKAGE_VERSION=$(python setup.py --version)" >> $GITHUB_ENV
-      - name: Check Version
+      - name: Echo Version
         run: echo $PACKAGE_VERSION
-#      - name: Release
-#        uses: softprops/action-gh-release@v1
-#        if: startsWith(github.ref, 'refs/tags/')
-#        with:
-#          body_path: ${{ github.workflow }}-CHANGELOG.txt
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v$PACKAGE_VERSION
+          body: Body release text
+          draft: true
 #        env:
 #          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #          GITHUB_REPOSITORY: my_gh_org/my_gh_repo
