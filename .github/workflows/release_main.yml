@@ -21,6 +21,5 @@ jobs:
           tag_name: v$PACKAGE_VERSION
           body: Body release text
           draft: true
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-#          GITHUB_REPOSITORY: my_gh_org/my_gh_repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
