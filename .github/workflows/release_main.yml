@@ -12,7 +12,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Get Version
-        run: echo "PACKAGE_VERSION=$(echo python setup.py --version)" >> $GITHUB_ENV
+        run: echo "PACKAGE_VERSION=$(python setup.py --version)" >> $GITHUB_ENV
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
