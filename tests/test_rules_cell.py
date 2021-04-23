@@ -459,6 +459,6 @@ def test_other_must_exist(other, row, expected):
     (('', {'c': 'y'}), 'c', ['y'], False),
     (('', {'c': 'y'}), 'c', ['x', 'y'], False),
 ])
-def test_other_must_exist(row, other, values, expected):
+def test_other_must_exist_if_equals(row, other, values, expected):
     r = NotNullIfOtherEquals(other, values)
     assert r._evaluator()(*r._prepare(row)) is expected
