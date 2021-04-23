@@ -17,7 +17,7 @@ from typing import Union, Tuple, Dict, List
 from rumydata._base import _BaseRule
 
 __all__ = [
-    'NotNull', 'ExactChar', 'MinChar', 'MaxChar', 'AsciiChar', 'Choice',
+    'NotNull', 'ExactChar', 'MinChar', 'MaxChar', 'AsciiChar', 'NonTrim', 'Choice',
     'MinDigit', 'MaxDigit', 'OnlyNumbers', 'NoLeadingZero', 'CanBeFloat',
     'CanBeInteger', 'NumericDecimals', 'LengthComparison', 'LengthGT',
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
@@ -145,6 +145,16 @@ class AsciiChar(Rule):
 
     def _explain(self) -> str:
         return 'must have only ASCII characters'
+
+
+class NonTrim(Rule):
+    """ Cell does not have whitespace characters at beginning or end """
+
+    def _evaluator(self):
+        return lambda x: x == str(x).strip()
+
+    def _explain(self) -> str:
+        return 'Value has trailing or leading whitespace'
 
 
 class Choice(Rule):

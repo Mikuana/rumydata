@@ -387,6 +387,7 @@ def test_greater_than_or_equal_column(compared: str, data, expected: bool):
     r = GreaterThanOrEqualColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
+
 @pytest.mark.parametrize('compared,data,expected', [
     ('x', ('0', {'x': '1'}), True),
     ('x', ('1', {'x': '1'}), False),
@@ -446,3 +447,16 @@ def test_other_cant_exist(other, row, expected):
 def test_other_must_exist(other, row, expected):
     r = OtherMustExist(other)
     assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('1', True),
+    ('1 1', True),
+    ('1 ', False),
+    ('1 ', False),
+    (' 1 ', False),
+    ('1\t', False),
+])
+def test_non_trim(value, expected):
+    r = NonTrim()
+    assert r._evaluator()(*r._prepare(value)) is expected
