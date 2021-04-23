@@ -342,22 +342,28 @@ class CsvFile(_BaseFile):
     def __init__(self, layout: Union[Layout, dict], skip_rows=0, max_errors=100, **kwargs):
         x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
         self.csv_kwargs = {k: v for k, v in x.items() if v}
+
+        y = {y: kwargs.pop(y, None) for y in ['newline', 'encoding', 'errors']}
+        self.file_kwargs = {k: v for k, v in y.items() if v}
+
         super().__init__(layout, skip_rows, max_errors, **kwargs)
 
     def _rows(self, file: Path):
         class Handler:
-            def __init__(self, file_path: Path, **kwargs):
+            def __init__(self, file_path: Path, csv_kwargs, file_kwargs):
                 self.file_path = file_path
-                self.csv_kwargs = kwargs
+                self.csv_kwargs = csv_kwargs
+                self.file_kwargs = file_kwargs
+                self.file_kwargs['newline'] = self.file_kwargs.get('newline', '')
 
             def __enter__(self) -> Iterable:
-                self.file_object = self.file_path.open(newline='')
+                self.file_object = self.file_path.open(**self.file_kwargs)
                 return csv.reader(self.file_object, **self.csv_kwargs)
 
             def __exit__(self, exc_type, exc_val, exc_tb):
                 self.file_object.close()
 
-        return Handler(file, **self.csv_kwargs)
+        return Handler(file, self.csv_kwargs, self.file_kwargs)
 
 
 class ExcelFile(_BaseFile):
