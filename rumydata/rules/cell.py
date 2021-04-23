@@ -566,7 +566,8 @@ class ColumnComparisonRule(Rule):
 
 
 class OtherCantExist(ColumnComparisonRule):
-    def _helper(self, val, other):
+    @staticmethod
+    def _helper(val, other):
         if other not in ['', False]:
             if val not in ['', False]:
                 return False
@@ -583,7 +584,8 @@ class OtherCantExist(ColumnComparisonRule):
 
 
 class OtherMustExist(ColumnComparisonRule):
-    def _helper(self, val, other):
+    @staticmethod
+    def _helper(val, other):
         if other in ['', False]:
             if val not in ['', False]:
                 return False
