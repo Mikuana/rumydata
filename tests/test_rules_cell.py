@@ -449,6 +449,21 @@ def test_other_must_exist(other, row, expected):
     assert r._evaluator()(*r._prepare(row)) is expected
 
 
+@pytest.mark.parametrize('row, other, values, expected', [
+    (('1', {'c': 'x'}), 'c', 'x', True),
+    (('', {'c': 'x'}), 'c', 'x', False),
+    (('1', {'c': 'x'}), 'c', ['x'], True),
+    (('1', {'c': 'y'}), 'c', ['y'], True),
+    (('1', {'c': 'y'}), 'c', ['x', 'y'], True),
+    (('', {'c': 'x'}), 'c', ['x'], False),
+    (('', {'c': 'y'}), 'c', ['y'], False),
+    (('', {'c': 'y'}), 'c', ['x', 'y'], False),
+])
+def test_other_must_exist_if_equals(row, other, values, expected):
+    r = NotNullIfOtherEquals(other, values)
+    assert r._evaluator()(*r._prepare(row)) is expected
+
+
 @pytest.mark.parametrize('value, expected', [
     ('1', True),
     ('1 1', True),

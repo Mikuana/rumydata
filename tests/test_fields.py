@@ -97,6 +97,9 @@ def test_date_bad(value, rule, kwargs):
     ('0.00', 3, dict(rules=[rules.cell.NumericET(0)])),
     ('0', 3, dict(rules=[rules.cell.NumericGTE(0)])),
     ('0.01', 3, dict(rules=[rules.cell.NumericGT(0)])),
+    ('0.1', 4, dict(precision=4)),
+    ('0.001', 4, dict(precision=3)),
+    ('0.0001', 5, dict(precision=4)),
 ])
 def test_currency_good(value, sig_dig, kwargs):
     assert not field.Currency(sig_dig, **kwargs).check_cell(value)
