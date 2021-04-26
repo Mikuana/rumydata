@@ -249,14 +249,15 @@ class Currency(Field):
 
     _default_args = (5,)
 
-    def __init__(self, significant_digits: int, **kwargs):
+    def __init__(self, significant_digits: int, precision: int = 2, **kwargs):
         super().__init__(**kwargs)
 
         self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"9" * (significant_digits - 2)}.99'
+        self.descriptors['Format'] = \
+            f'{"9" * (significant_digits - precision)}.{"9" * precision}'
         self.descriptors['Max Length'] = f'{str(significant_digits)} digits'
         self.rules.append(clr.MaxDigit(significant_digits))
-        self.rules.append(clr.NumericDecimals())
+        self.rules.append(clr.NumericDecimals(precision))
 
 
 class Digit(Field):
