@@ -25,6 +25,7 @@ __all__ = [
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
     'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
     'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
+    'NotNullIfOtherEquals',
     'make_static_cell_rule'
 ]
 
@@ -659,3 +660,22 @@ class NotNullIfCompare(ColumnComparisonRule):
         elif isinstance(self.compare_to, list):
             compare_msg = "' or '".join(self.compare_to)
         return f"cannot be blank if '{compare_msg}' contains a value"
+
+
+class NotNullIfOtherEquals(NotNullIfCompare):
+    """ Cell cannot be null if other has specified value(s) """
+    _default_args = ('x', 'x')
+
+    def __init__(self, compare_to: str, values: Union[str, List[str]]):
+        self.values = [values] if isinstance(values, str) else values
+        super().__init__(compare_to=compare_to)
+
+    def _null_ok(self, data):
+        empty_val = data[0] in ['', False]
+        if empty_val and data[1][self.compare_to] in self.values:
+            return False
+        else:
+            return True
+
+    def _explain(self) -> str:
+        return f"cannot be blank if '{self.compare_to}' contains value: {self.values}"
