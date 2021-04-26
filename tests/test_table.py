@@ -259,3 +259,23 @@ def test_ignore_if_list(tmpdir):
     layout = Layout({'c1': Text(1), 'c2': Text(1)}, empty_row_ok=True)
     results = CsvFile(layout, ignore_exceptions={'c1': ['x', 'z']}).check(p)
     assert True if not results else False
+
+
+@pytest.mark.parametrize("write, read, expect_pass", [
+    ('utf-8', 'utf-8', True),
+    ('utf-8-sig', 'utf-8-sig', True),
+    ('utf-8', 'utf-8-sig', True),
+    ('utf-8-sig', 'utf-8', False),
+])
+def test_bom_sig(tmpdir, write, read, expect_pass):
+    hid = uuid4().hex[:5]
+    p = Path(tmpdir, hid)
+    p.write_text('\n'.join(['column', 'data']), encoding=write)
+    layout = Layout({'column': Text(4)})
+    cf = CsvFile(layout, encoding=read)
+
+    if expect_pass is True:
+        assert not cf.check(p)
+    else:
+        with pytest.raises(AssertionError):
+            cf.check(p)
