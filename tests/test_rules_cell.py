@@ -462,3 +462,16 @@ def test_other_must_exist(other, row, expected):
 def test_other_must_exist_if_equals(row, other, values, expected):
     r = NotNullIfOtherEquals(other, values)
     assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('1', True),
+    ('1 1', True),
+    ('1 ', False),
+    ('1 ', False),
+    (' 1 ', False),
+    ('1\t', False),
+])
+def test_non_trim(value, expected):
+    r = NonTrim()
+    assert r._evaluator()(*r._prepare(value)) is expected
