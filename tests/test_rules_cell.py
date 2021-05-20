@@ -387,6 +387,7 @@ def test_greater_than_or_equal_column(compared: str, data, expected: bool):
     r = GreaterThanOrEqualColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
+
 @pytest.mark.parametrize('compared,data,expected', [
     ('x', ('0', {'x': '1'}), True),
     ('x', ('1', {'x': '1'}), False),
@@ -446,3 +447,31 @@ def test_other_cant_exist(other, row, expected):
 def test_other_must_exist(other, row, expected):
     r = OtherMustExist(other)
     assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('row, other, values, expected', [
+    (('1', {'c': 'x'}), 'c', 'x', True),
+    (('', {'c': 'x'}), 'c', 'x', False),
+    (('1', {'c': 'x'}), 'c', ['x'], True),
+    (('1', {'c': 'y'}), 'c', ['y'], True),
+    (('1', {'c': 'y'}), 'c', ['x', 'y'], True),
+    (('', {'c': 'x'}), 'c', ['x'], False),
+    (('', {'c': 'y'}), 'c', ['y'], False),
+    (('', {'c': 'y'}), 'c', ['x', 'y'], False),
+])
+def test_other_must_exist_if_equals(row, other, values, expected):
+    r = NotNullIfOtherEquals(other, values)
+    assert r._evaluator()(*r._prepare(row)) is expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('1', True),
+    ('1 1', True),
+    ('1 ', False),
+    ('1 ', False),
+    (' 1 ', False),
+    ('1\t', False),
+])
+def test_non_trim(value, expected):
+    r = NonTrim()
+    assert r._evaluator()(*r._prepare(value)) is expected

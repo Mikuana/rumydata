@@ -17,7 +17,7 @@ from typing import Union, Tuple, Dict, List
 from rumydata._base import _BaseRule
 
 __all__ = [
-    'NotNull', 'ExactChar', 'MinChar', 'MaxChar', 'AsciiChar', 'Choice',
+    'NotNull', 'ExactChar', 'MinChar', 'MaxChar', 'AsciiChar', 'NonTrim', 'Choice',
     'MinDigit', 'MaxDigit', 'OnlyNumbers', 'NoLeadingZero', 'CanBeFloat',
     'CanBeInteger', 'NumericDecimals', 'LengthComparison', 'LengthGT',
     'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
@@ -25,6 +25,7 @@ __all__ = [
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
     'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
     'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
+    'NotNullIfOtherEquals',
     'make_static_cell_rule'
 ]
 
@@ -145,6 +146,16 @@ class AsciiChar(Rule):
 
     def _explain(self) -> str:
         return 'must have only ASCII characters'
+
+
+class NonTrim(Rule):
+    """ Cell does not have whitespace characters at beginning or end """
+
+    def _evaluator(self):
+        return lambda x: x == str(x).strip()
+
+    def _explain(self) -> str:
+        return 'Value has trailing or leading whitespace'
 
 
 class Choice(Rule):
@@ -556,7 +567,8 @@ class ColumnComparisonRule(Rule):
 
 
 class OtherCantExist(ColumnComparisonRule):
-    def _helper(self, val, other):
+    @staticmethod
+    def _helper(val, other):
         if other not in ['', False]:
             if val not in ['', False]:
                 return False
@@ -573,7 +585,8 @@ class OtherCantExist(ColumnComparisonRule):
 
 
 class OtherMustExist(ColumnComparisonRule):
-    def _helper(self, val, other):
+    @staticmethod
+    def _helper(val, other):
         if other in ['', False]:
             if val not in ['', False]:
                 return False
@@ -659,3 +672,22 @@ class NotNullIfCompare(ColumnComparisonRule):
         elif isinstance(self.compare_to, list):
             compare_msg = "' or '".join(self.compare_to)
         return f"cannot be blank if '{compare_msg}' contains a value"
+
+
+class NotNullIfOtherEquals(NotNullIfCompare):
+    """ Cell cannot be null if other has specified value(s) """
+    _default_args = ('x', 'x')
+
+    def __init__(self, compare_to: str, values: Union[str, List[str]]):
+        self.values = [values] if isinstance(values, str) else values
+        super().__init__(compare_to=compare_to)
+
+    def _null_ok(self, data):
+        empty_val = data[0] in ['', False]
+        if empty_val and data[1][self.compare_to] in self.values:
+            return False
+        else:
+            return True
+
+    def _explain(self) -> str:
+        return f"cannot be blank if '{self.compare_to}' contains value: {self.values}"
