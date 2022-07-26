@@ -35,4 +35,4 @@ from rumydata import rules
 from rumydata.menu import menu
 from rumydata.table import *
 
-__version__ = '1.3.0-dev'
+__version__ = '1.4.0'
