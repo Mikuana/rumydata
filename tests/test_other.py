@@ -54,7 +54,7 @@ def basic_good_with_empty(tmpdir):
 
 
 @pytest.fixture()
-def basic_good_with_trailing_empty(tmpdir):
+def basic_good_with_trailing_empty_cols(tmpdir):
     p = Path(tmpdir, uuid.uuid4().hex)
     with p.open('w', newline='') as o:
         writer = csv.writer(o)
@@ -287,10 +287,10 @@ def test_column_trim():
         field.Text(9, rules=[cr.Unique()], strip=True).check_column(values)
 
 
-def test_empty_column_good(basic, basic_good, basic_good_with_empty, basic_good_with_trailing_empty):
+def test_empty_column_good(basic, basic_good, basic_good_with_empty, basic_good_with_trailing_empty_cols):
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_empty)
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good)
-    assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_trailing_empty)
+    assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_trailing_empty_cols)
 
 
 def test_empty_column_bad(basic, basic_good_with_empty):

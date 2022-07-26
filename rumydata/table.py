@@ -286,6 +286,13 @@ class _BaseFile(_BaseSubject):
 
                         bumps = {v: k for k, v in bumps.items()}
                         bumps = [bumps.get(i, f"empty_{uuid4().hex[:5]}") for i in range(len(row))]
+                        # strip out the "trailing" empty columns before updating the field_count for the row length
+                        # rules. These might get picked up when processing excel file layouts based on how the
+                        # worksheet is configured, which would result in a mismatch between the number of columns
+                        # rumydata sees in the row data and the number of columns which get inferred by reading the
+                        # worksheet
+                        while bumps[-1].startswith('empty_'):
+                            bumps.pop()
                         self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
 
                         for ix, rule in enumerate(self.layout.rules):  # update row length rules
