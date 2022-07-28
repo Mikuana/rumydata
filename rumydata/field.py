@@ -48,7 +48,7 @@ class Field(_BaseSubject):
         if not self.nullable:
             self.rules.append(clr.NotNull())
 
-    def check_cell(self, value: Union[str, Tuple[str, Dict]], **kwargs):
+    def check_cell(self, value: Union[str, Tuple[str, Dict]], report_value=False, **kwargs):
         """
         Cell Rule assertion
 
@@ -58,12 +58,13 @@ class Field(_BaseSubject):
 
         :param value: a cell value, either a string or a tuple of a string
             and a dictionary, to be checked.
+        :param report_value: pass invalid values to error object for reporting
         """
 
-        errors = self._check(value, rule_type=clr.Rule, **kwargs)
+        errors = self._check(value, rule_type=clr.Rule, report_value=report_value, **kwargs)
         assert not errors, str(errors)
 
-    def check_column(self, values: List[str], **kwargs):
+    def check_column(self, values: List[str], report_value=False, **kwargs):
         """
         Column Rule assertion
 
@@ -72,9 +73,10 @@ class Field(_BaseSubject):
         rules, the assertion will raise a detailed exception message.
 
         :param values: a list of values contained in the column.
+        :param report_value: pass invalid values to error object for reporting
         """
 
-        errors = self._check(values, rule_type=cr.Rule, **kwargs)
+        errors = self._check(values, rule_type=cr.Rule, report_value=report_value, **kwargs)
         assert not errors, str(errors)
 
     def _check_for_nullable_rules(self):
@@ -83,7 +85,9 @@ class Field(_BaseSubject):
     def _check_nullable_rule_results(self, data):
         return all([x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
 
-    def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
+    def _check(
+            self, data, cix=-1, rule_type=None, report_value=False, **kwargs
+    ) -> Union[ex.CellError, ex.ColumnError, None]:
         """
         Check data against field rules of specified rule type
 
@@ -108,6 +112,9 @@ class Field(_BaseSubject):
         else:
             e = super()._check(data, rule_type=rule_type, strip=self.strip)
             if e:
+                if report_value is True:
+                    kwargs['value'] = data[0]
+
                 if rule_type == cr.Rule:
                     return ex.ColumnError(cix, errors=e, **kwargs)
                 else:
