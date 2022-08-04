@@ -64,6 +64,16 @@ def basic_good_with_trailing_empty_cols(tmpdir):
 
 
 @pytest.fixture()
+def basic_good_with_trailing_empty_cols_and_rows(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    with p.open('w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerow(['col1', 'col2', 'col3', '', 'col4', '', '', ''])
+        writer.writerow(['A', '1', '2020-01-01', '', 'X', '', '', ''])
+    yield p.as_posix()
+
+
+@pytest.fixture()
 def basic_good_excel(tmpdir):
     p = Path(tmpdir, 'good.xlsx')
     wb = Workbook()
@@ -287,10 +297,11 @@ def test_column_trim():
         field.Text(9, rules=[cr.Unique()], strip=True).check_column(values)
 
 
-def test_empty_column_good(basic, basic_good, basic_good_with_empty, basic_good_with_trailing_empty_cols):
+def test_empty_column_good(basic, basic_good, basic_good_with_empty, basic_good_with_trailing_empty_cols, basic_good_with_trailing_empty_cols_and_rows):
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_empty)
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good)
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_trailing_empty_cols)
+    assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_trailing_empty_cols_and_rows)
 
 
 def test_empty_column_bad(basic, basic_good_with_empty):

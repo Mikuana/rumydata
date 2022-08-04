@@ -299,6 +299,10 @@ class _BaseFile(_BaseSubject):
                             if isinstance(rule, (rr.RowLengthLTE, rr.RowLengthGTE)):
                                 self.layout.rules[ix].columns_length = self.layout.field_count()
 
+                elif self.layout.empty_cols_ok:
+                    cleaned_col_count = self.layout.field_count()
+                    row = row[:cleaned_col_count]
+                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
                 else:
                     re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
 
