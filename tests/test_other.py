@@ -64,6 +64,16 @@ def basic_good_with_trailing_empty_cols(tmpdir):
 
 
 @pytest.fixture()
+def basic_good_with_trailing_empty_cols_and_rows(tmpdir):
+    p = Path(tmpdir, uuid.uuid4().hex)
+    with p.open('w', newline='') as o:
+        writer = csv.writer(o)
+        writer.writerow(['col1', 'col2', 'col3', '', 'col4', '', '', ''])
+        writer.writerow(['A', '1', '2020-01-01', '', 'X', '', '', ''])
+    yield p.as_posix()
+
+
+@pytest.fixture()
 def basic_good_excel(tmpdir):
     p = Path(tmpdir, 'good.xlsx')
     wb = Workbook()
