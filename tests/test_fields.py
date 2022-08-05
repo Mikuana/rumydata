@@ -271,3 +271,12 @@ def test_custom_message_override():
                                                                                                        rule_type=rules.cell.Rule)) > 2
     assert len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=True)._list_errors('',
                                                                                                   rule_type=rules.cell.Rule)) > 2
+
+
+@pytest.mark.parametrize('value', [
+    ('1')
+])
+def test_error_reported_value(value):
+    e = field.Text(0)._check(value, report_value=True)
+    assert isinstance(e, ex.CellError)
+    assert getattr(e, '_value') == value

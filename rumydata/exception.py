@@ -208,6 +208,8 @@ class CellError(UrNotMyDataError):
 
     def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
         message = ''
+        if kwargs.get('value'):
+            self._value = kwargs.get('value')
         offset = 0 if kwargs.get("zero_index") else 1
         if use_excel_cell_format:
             message = f'{str(convert_to_excel_col_labels(index + offset))}'
