@@ -138,7 +138,7 @@ class Layout(_BaseSubject):
         ])
         return fields
 
-    def _check(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
+    def _check(self, row, rule_type, rix=None, **kwargs) -> Union[ex.UrNotMyDataError, None]:
         if rule_type == hr.Rule and self.skip_header:
             return
 
@@ -164,13 +164,14 @@ class Layout(_BaseSubject):
                 comp = {k: row[k] for k in t._comparison_columns()}
                 check_args = dict(
                     data=(val, comp), rule_type=clr.Rule,
-                    rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format
+                    rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format,
+                    report_value=kwargs.get('report_value')
                 )
                 ce = t._check(**check_args)
                 if ce:
                     e.append(ce)
             if e:
-                return ex.RowError(rix, errors=e)
+                return ex.RowError(rix, errors=e, report_value=kwargs.get('report_value'))
 
 
 class _BaseFile(_BaseSubject):

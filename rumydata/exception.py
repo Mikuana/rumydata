@@ -191,6 +191,8 @@ class RowError(UrNotMyDataError):
         message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
         message += f'; {msg}' if msg else ''
         super().__init__(message, errors)
+        if kwargs.get('report_value') is True:
+            self._values = {getattr(e, '_value')[0]: getattr(e, '_value')[1] for e in errors}
 
 
 class CellError(UrNotMyDataError):
@@ -209,7 +211,7 @@ class CellError(UrNotMyDataError):
     def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
         message = ''
         if kwargs.get('value'):
-            self._value = kwargs.get('value')
+            self._value = (index, kwargs.get('value'))
         offset = 0 if kwargs.get("zero_index") else 1
         if use_excel_cell_format:
             message = f'{str(convert_to_excel_col_labels(index + offset))}'

@@ -2,7 +2,8 @@ from datetime import datetime as dt
 
 import pytest
 
-from rumydata import field, rules, exception as ex
+from rumydata import field, rules, exception as ex, Layout
+from rumydata.rules.row import Rule
 
 
 def recurse_subclasses(class_to_recurse):
@@ -276,7 +277,21 @@ def test_custom_message_override():
 @pytest.mark.parametrize('value', [
     ('1')
 ])
-def test_error_reported_value(value):
+def test_error_reported_cell(value):
     e = field.Text(0)._check(value, report_value=True)
     assert isinstance(e, ex.CellError)
-    assert getattr(e, '_value') == value
+    assert getattr(e, '_value') == (-1, value)
+
+
+# TODO: column
+
+@pytest.mark.parametrize('row', [
+    (['1', 'x', '1'])
+])
+def test_error_reported_row(row):
+    lay = Layout({
+        'c1': field.Integer(1), 'c2': field.Integer(0), 'c3': field.Integer(1)
+    })
+    e = lay._check(row, Rule, 1, report_value=True)
+    assert isinstance(e, ex.RowError)
+    assert getattr(e, '_values') == {1: row[1]}
