@@ -286,7 +286,8 @@ def test_error_reported_cell(value):
 # TODO: column
 
 @pytest.mark.parametrize('row', [
-    (['1', 'x', '1'])
+    (['1', 'x', '1']),
+    (['1', '11', '1']),
 ])
 def test_error_reported_row(row):
     lay = Layout({
@@ -294,4 +295,4 @@ def test_error_reported_row(row):
     })
     e = lay._check(row, Rule, 1, report_value=True)
     assert isinstance(e, ex.RowError)
-    assert getattr(e, '_values') == {1: row[1]}
+    assert getattr(e, '_values') == {'c2': row[1]}

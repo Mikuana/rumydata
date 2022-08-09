@@ -171,6 +171,9 @@ class Layout(_BaseSubject):
                 if ce:
                     e.append(ce)
             if e:
+                for i in e:
+                    if getattr(i, '_value', False):
+                        i._value = (list(self.layout.keys())[i._value[0]], i._value[1])
                 return ex.RowError(rix, errors=e, report_value=kwargs.get('report_value'))
 
 
