@@ -160,7 +160,7 @@ class FileError(UrNotMyDataError):
                 k: v.most_common() for k, v in
                 sorted(
                     kwargs.get('value_counts').items(),
-                    key=lambda item: item[1].total(),
+                    key=lambda item: sum(item[1].values()),
                     reverse=True
                 )
             }
