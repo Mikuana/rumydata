@@ -4,6 +4,7 @@ table submodule
 This submodule contains the File class, and it's closely related Layout class.
 """
 import csv
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Union, Dict, List, Iterable
 from uuid import uuid4
@@ -217,7 +218,7 @@ class _BaseFile(_BaseSubject):
         if file_name_pattern:
             self.rules.append(table.FileNameMatch(file_name_pattern))
 
-    def check(self, file_path: Union[str, Path], doc_type: str = None):
+    def check(self, file_path: Union[str, Path], doc_type: str = None, **kwargs):
         """
         File check method
 
@@ -228,7 +229,7 @@ class _BaseFile(_BaseSubject):
         :param doc_type: the type of output to return with exception details,
             rather than raising an exception. Valid options are ['md', 'html']
         """
-        errors = self._check(Path(file_path))
+        errors = self._check(Path(file_path), report_values=kwargs.get('report_values'))
         try:
             assert not errors, str(errors)
             msg = f"Validated file successfully: {Path(file_path).as_posix()}"
@@ -271,6 +272,12 @@ class _BaseFile(_BaseSubject):
         }
 
         max_error_rule = table.MaxError(self.max_errors)
+        rv = kwargs.get('report_values', False)
+        if rv is True:
+            rvc = defaultdict(Counter)
+        else:
+            rvc = False
+
         with self._rows(p) as generator:
             for rix, row in enumerate(generator):
                 if rix < self.skip_rows:
@@ -306,12 +313,17 @@ class _BaseFile(_BaseSubject):
                 elif self.layout.empty_cols_ok:
                     cleaned_col_count = self.layout.field_count()
                     row = row[:cleaned_col_count]
-                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
+                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix, report_value=rv)
                 else:
-                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
+                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix, report_value=rv)
 
                 if re:
                     e.append(re)
+                    if rv is True and getattr(re, '_values', False):
+                        for k, v in getattr(re, '_values').items():
+                            # noinspection PyUnboundLocalVariable
+                            rvc[k][v] += 1
+
                     if rix == (
                             0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
                         break
@@ -329,7 +341,7 @@ class _BaseFile(_BaseSubject):
                 if ce:
                     e.append(ce)
             if e:
-                return ex.FileError(file=p.name, errors=e)
+                return ex.FileError(file=p.name, errors=e, value_counts=rvc)
 
 
 class CsvFile(_BaseFile):

@@ -149,9 +149,19 @@ class FileError(UrNotMyDataError):
     :param errors: a list of errors contained in the file.
     """
 
-    def __init__(self, file, msg=None, errors: list = None):
+    def __init__(self, file, msg=None, errors: list = None, **kwargs):
         message = file
         message += f'; {msg}' if msg else ''
+        if kwargs.get('value_counts'):
+            self._value_counts = {
+                k: v.most_common() for k, v in
+                sorted(
+                    kwargs.get('value_counts').items(),
+                    key=lambda item: item[1].total(),
+                    reverse=True
+                )
+            }
+            # TODO: convert this dictionary into tabular form for readout
         super().__init__(message, errors)
 
 
