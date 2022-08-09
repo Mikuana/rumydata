@@ -63,10 +63,11 @@ class UrNotMyDataError(Exception):
 
     _message: str = None
 
-    def __init__(self, msg: str = None, errors: list = None):
+    def __init__(self, msg: str = None, errors: list = None, **kwargs):
         super().__init__(msg)
         self._message = msg or self._message
         self._errors = errors or []
+        self._appendix = kwargs.get('appendix')
 
     def __str__(self) -> str:
         """
@@ -98,6 +99,8 @@ class UrNotMyDataError(Exception):
         txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self._message}'
         if self._errors:
             txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+        if self._appendix:
+            txt += '\n\n' + self._appendix
         return txt
 
     @classmethod
@@ -153,7 +156,7 @@ class FileError(UrNotMyDataError):
         message = file
         message += f'; {msg}' if msg else ''
         if kwargs.get('value_counts'):
-            self._value_counts = {
+            value_counts = {
                 k: v.most_common() for k, v in
                 sorted(
                     kwargs.get('value_counts').items(),
@@ -161,8 +164,15 @@ class FileError(UrNotMyDataError):
                     reverse=True
                 )
             }
-            # TODO: convert this dictionary into tabular form for readout
-        super().__init__(message, errors)
+            txt = '# Invalid Values Report\n'
+            txt += 'column, occurrences, value\n'
+            for k, v in value_counts.items():
+                for value, cnt in v:
+                    txt += f'{k}, {cnt}, {value}\n'
+            value_counts = txt
+        else:
+            value_counts = None
+        super().__init__(message, errors, appendix=value_counts)
 
 
 class ColumnError(UrNotMyDataError):
