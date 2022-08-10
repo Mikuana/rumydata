@@ -297,7 +297,8 @@ def test_column_trim():
         field.Text(9, rules=[cr.Unique()], strip=True).check_column(values)
 
 
-def test_empty_column_good(basic, basic_good, basic_good_with_empty, basic_good_with_trailing_empty_cols, basic_good_with_trailing_empty_cols_and_rows):
+def test_empty_column_good(basic, basic_good, basic_good_with_empty, basic_good_with_trailing_empty_cols,
+                           basic_good_with_trailing_empty_cols_and_rows):
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_empty)
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good)
     assert not CsvFile(Layout(basic, empty_cols_ok=True)).check(basic_good_with_trailing_empty_cols)
@@ -345,8 +346,8 @@ def bad_complex_file(tmpdir):
     yield p.as_posix()
 
 
-def test_complex_bad(bad_complex_file):
-    lay = Layout({
+def bad_complex_file_layout():
+    return Layout({
         'c1': field.Text(1, rules=[clr.NotNullIfCompare('c2')]),
         'c2': field.Integer(1, rules=[clr.OtherCantExist('c6')]),
         'c3': field.Date(rules=[clr.OtherMustExist('c4')]),
@@ -357,6 +358,10 @@ def test_complex_bad(bad_complex_file):
         'c8': field.Text(1, nullable=True),
         'c9': field.Text(1, nullable=True)
     }, empty_row_ok=True, empty_cols_ok=True, header_mode='startswith')
+
+
+def test_complex_bad(bad_complex_file):
+    lay = bad_complex_file_layout()
     expected_ex = ['NotNullIfCompare',
                    'OtherCantExist', 'OtherMustExist']
     try:
@@ -373,3 +378,17 @@ def test_complex_bad(bad_complex_file):
 ])
 def test_excel_cell_formatter(value, expected_output):
     assert ex.convert_to_excel_col_labels(value) == expected_output
+
+
+def test_error_reported_file(bad_complex_file):
+    lay = bad_complex_file_layout()
+    e = CsvFile(lay, skip_rows=1)._check(bad_complex_file, report_values=True)
+    assert getattr(e, '_appendix').startswith('# Invalid Values Report')
+
+
+def test_error_reported_md_file(bad_complex_file):
+    lay = bad_complex_file_layout()
+    try:
+       CsvFile(lay, skip_rows=1).check(bad_complex_file, report_values=True)
+    except AssertionError as ex:
+        assert '# Invalid Values Report' in str(ex)

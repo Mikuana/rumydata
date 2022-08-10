@@ -63,10 +63,11 @@ class UrNotMyDataError(Exception):
 
     _message: str = None
 
-    def __init__(self, msg: str = None, errors: list = None):
+    def __init__(self, msg: str = None, errors: list = None, **kwargs):
         super().__init__(msg)
         self._message = msg or self._message
         self._errors = errors or []
+        self._appendix = kwargs.get('appendix')
 
     def __str__(self) -> str:
         """
@@ -98,6 +99,8 @@ class UrNotMyDataError(Exception):
         txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self._message}'
         if self._errors:
             txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+        if self._appendix:
+            txt += '\n\n' + self._appendix
         return txt
 
     @classmethod
@@ -149,10 +152,27 @@ class FileError(UrNotMyDataError):
     :param errors: a list of errors contained in the file.
     """
 
-    def __init__(self, file, msg=None, errors: list = None):
+    def __init__(self, file, msg=None, errors: list = None, **kwargs):
         message = file
         message += f'; {msg}' if msg else ''
-        super().__init__(message, errors)
+        if kwargs.get('value_counts'):
+            value_counts = {
+                k: v.most_common() for k, v in
+                sorted(
+                    kwargs.get('value_counts').items(),
+                    key=lambda item: sum(item[1].values()),
+                    reverse=True
+                )
+            }
+            txt = '# Invalid Values Report\n'
+            txt += 'column, occurrences, value\n'
+            for k, v in value_counts.items():
+                for value, cnt in v:
+                    txt += f'{k}, {cnt}, {value}\n'
+            value_counts = txt
+        else:
+            value_counts = None
+        super().__init__(message, errors, appendix=value_counts)
 
 
 class ColumnError(UrNotMyDataError):
@@ -168,6 +188,8 @@ class ColumnError(UrNotMyDataError):
         offset = 0 if kwargs.get("zero_index") else 1
 
         message += f'{str(index + offset)}'
+        if kwargs.get('value'):
+            self._value = (index, kwargs.get('value'))
         if kwargs.get("name"):
             message += f' ({kwargs.get("name")})'
         message += f'; {msg}' if msg else ''
@@ -191,6 +213,8 @@ class RowError(UrNotMyDataError):
         message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
         message += f'; {msg}' if msg else ''
         super().__init__(message, errors)
+        if kwargs.get('report_value') is True:
+            self._values = {getattr(e, '_value')[0]: getattr(e, '_value')[1] for e in errors}
 
 
 class CellError(UrNotMyDataError):
@@ -208,6 +232,8 @@ class CellError(UrNotMyDataError):
 
     def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
         message = ''
+        if kwargs.get('value') or kwargs.get('value') == '':
+            self._value = (index, kwargs.get('value'))
         offset = 0 if kwargs.get("zero_index") else 1
         if use_excel_cell_format:
             message = f'{str(convert_to_excel_col_labels(index + offset))}'

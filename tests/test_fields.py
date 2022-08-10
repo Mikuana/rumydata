@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import pytest
 
-from rumydata import field, rules, exception as ex
+from rumydata import field, rules, exception as ex, Layout
 
 
 def recurse_subclasses(class_to_recurse):
@@ -271,3 +271,32 @@ def test_custom_message_override():
                                                                                                        rule_type=rules.cell.Rule)) > 2
     assert len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=True)._list_errors('',
                                                                                                   rule_type=rules.cell.Rule)) > 2
+
+
+@pytest.mark.parametrize('value', [
+    ('1')
+])
+def test_error_reported_cell(value):
+    e = field.Text(0)._check(value, report_value=True)
+    assert isinstance(e, ex.CellError)
+    assert getattr(e, '_value') == (-1, value)
+
+
+def test_error_reported_column():
+    e = field.Integer(1, rules=[rules.column.Unique()])._check(['1', '1'], -1, rule_type=rules.column.Rule,
+                                                               report_value=True)
+    assert isinstance(e, ex.ColumnError)
+    assert getattr(e, '_value') == (-1, '1')
+
+
+@pytest.mark.parametrize('row', [
+    (['1', 'x', '1']),
+    (['1', '11', '1']),
+])
+def test_error_reported_row(row):
+    lay = Layout({
+        'c1': field.Integer(1), 'c2': field.Integer(0), 'c3': field.Integer(1)
+    })
+    e = lay._check(row, rules.row.Rule, 1, report_value=True)
+    assert isinstance(e, ex.RowError)
+    assert getattr(e, '_values') == {'c2': row[1]}
