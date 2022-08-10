@@ -232,7 +232,7 @@ class CellError(UrNotMyDataError):
 
     def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
         message = ''
-        if kwargs.get('value'):
+        if kwargs.get('value') or kwargs.get('value') == '':
             self._value = (index, kwargs.get('value'))
         offset = 0 if kwargs.get("zero_index") else 1
         if use_excel_cell_format:
