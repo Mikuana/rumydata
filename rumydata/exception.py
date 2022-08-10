@@ -188,6 +188,8 @@ class ColumnError(UrNotMyDataError):
         offset = 0 if kwargs.get("zero_index") else 1
 
         message += f'{str(index + offset)}'
+        if kwargs.get('value'):
+            self._value = (index, kwargs.get('value'))
         if kwargs.get("name"):
             message += f' ({kwargs.get("name")})'
         message += f'; {msg}' if msg else ''

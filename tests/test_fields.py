@@ -3,7 +3,6 @@ from datetime import datetime as dt
 import pytest
 
 from rumydata import field, rules, exception as ex, Layout
-from rumydata.rules.row import Rule
 
 
 def recurse_subclasses(class_to_recurse):
@@ -283,7 +282,12 @@ def test_error_reported_cell(value):
     assert getattr(e, '_value') == (-1, value)
 
 
-# TODO: column
+def test_error_reported_column():
+    e = field.Integer(1, rules=[rules.column.Unique()])._check(['1', '1'], -1, rule_type=rules.column.Rule,
+                                                               report_value=True)
+    assert isinstance(e, ex.ColumnError)
+    assert getattr(e, '_value') == (-1, '1')
+
 
 @pytest.mark.parametrize('row', [
     (['1', 'x', '1']),
@@ -293,6 +297,6 @@ def test_error_reported_row(row):
     lay = Layout({
         'c1': field.Integer(1), 'c2': field.Integer(0), 'c3': field.Integer(1)
     })
-    e = lay._check(row, Rule, 1, report_value=True)
+    e = lay._check(row, rules.row.Rule, 1, report_value=True)
     assert isinstance(e, ex.RowError)
     assert getattr(e, '_values') == {'c2': row[1]}
