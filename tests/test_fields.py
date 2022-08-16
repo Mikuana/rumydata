@@ -3,6 +3,7 @@ from datetime import datetime as dt
 import pytest
 
 from rumydata import field, rules, exception as ex
+from tests.utils import file_cell_harness
 
 
 def recurse_subclasses(class_to_recurse):
@@ -47,7 +48,9 @@ def test_digest(fo):
     ('', dict(max_length=1, min_length=1, nullable=True))
 ])
 def test_text_good(value, kwargs):
-    assert not field.Text(**kwargs).check_cell(value)
+    fld = field.Text(**kwargs)
+    assert not fld.check_cell(value)
+    assert not file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,kwargs,rule', [
