@@ -12,9 +12,12 @@ def test_row_good(basic):
 
 
 def test_row_choice(basic):
-    lay = Layout({'c1': field.Choice(['x'], nullable=True)})
+    fields = {'c1': field.Choice(['x'], nullable=True)}
+    lay = Layout(fields)
     assert not lay.check_row(['x'])
     assert not lay.check_row([''])
+    assert not file_row_harness(['x'], fields)
+    assert not file_row_harness([''], fields)
 
 
 @pytest.mark.parametrize('value,err', [
@@ -23,11 +26,12 @@ def test_row_choice(basic):
 ])
 def test_row_bad(basic, value, err):
     assert table.Layout(basic)._has_error(value, err.rule_exception(), rule_type=rr.Rule)
+    with pytest.raises(AssertionError):
+        file_row_harness(value, basic)
 
 
 def test_header_good(basic):
     assert not table.Layout(basic).check_header(['col1', 'col2', 'col3', 'col4'])
-
 
 @pytest.mark.parametrize('value,err', [
     (['col1', 'col2'], hr.NoMissing),

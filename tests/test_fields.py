@@ -59,7 +59,10 @@ def test_text_good(value, kwargs):
     ('x', dict(max_length=80, min_length=2), rules.cell.MinChar),
 ])
 def test_text_bad(value, kwargs, rule):
-    assert field.Text(**kwargs)._has_error(value, rule.rule_exception())
+    fld = field.Text(**kwargs)
+    assert fld._has_error(value, rule.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,kwargs', [
@@ -71,7 +74,9 @@ def test_text_bad(value, kwargs, rule):
     ('2020-01-01 00:00:00', dict(truncate_time=True))
 ])
 def test_date_good(value, kwargs):
-    assert not field.Date(**kwargs).check_cell(value)
+    fld = field.Date(**kwargs)
+    assert not fld.check_cell(value)
+    assert not file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,rule,kwargs', [
@@ -82,11 +87,13 @@ def test_date_good(value, kwargs):
     ('2020-01-02', rules.cell.DateLTE, dict(max_date='2020-01-01')),
     ('2020-01-01', rules.cell.DateGTE, dict(min_date='2020-01-02', max_date='2020-01-03')),
     ('2020-01-05', rules.cell.DateLTE, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-01 00:00:00', rules.cell.CanBeDateIso, dict(truncate_time=True)),
     ('2020-01-01 00:00:01', rules.cell.CanBeDateIso, dict(truncate_time=False))
 ])
 def test_date_bad(value, rule, kwargs):
-    assert field.Date(**kwargs)._has_error(value, rule.rule_exception())
+    fld = field.Date(**kwargs)
+    assert fld._has_error(value, rule.rule_exception(), rule_type=rules.cell.Rule)
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,sig_dig,kwargs', [
@@ -105,7 +112,9 @@ def test_date_bad(value, rule, kwargs):
     ('0.0001', 5, dict(precision=4)),
 ])
 def test_currency_good(value, sig_dig, kwargs):
-    assert not field.Currency(sig_dig, **kwargs).check_cell(value)
+    fld = field.Currency(sig_dig, **kwargs)
+    assert not fld.check_cell(value)
+    file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,sig_dig,rules_list,err', [
@@ -120,7 +129,10 @@ def test_currency_good(value, sig_dig, kwargs):
     ('123.456', 4, [], rules.cell.NumericDecimals)
 ])
 def test_currency_bad(value, sig_dig, rules_list, err):
-    assert field.Currency(sig_dig, rules=rules_list)._has_error(value, err.rule_exception())
+    fld = field.Currency(sig_dig, rules=rules_list)
+    assert fld._has_error(value, err.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,max_length, kwargs', [
@@ -131,7 +143,9 @@ def test_currency_bad(value, sig_dig, rules_list, err):
     ('123', 3, dict(min_length=2))
 ])
 def test_digit_good(value, max_length, kwargs):
-    assert not field.Digit(max_length, **kwargs).check_cell(value)
+    fld = field.Digit(max_length, **kwargs)
+    assert not fld.check_cell(value)
+    file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,max_length,err,kwargs', [
@@ -141,7 +155,10 @@ def test_digit_good(value, max_length, kwargs):
     ('123456', 3, rules.cell.MaxChar, dict(min_length=2))
 ])
 def test_digit_bad(value, max_length, err, kwargs):
-    assert field.Digit(max_length, **kwargs)._has_error(value, err.rule_exception())
+    fld = field.Digit(max_length, **kwargs)
+    assert fld._has_error(value, err.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs', [
@@ -160,7 +177,9 @@ def test_digit_bad(value, max_length, err, kwargs):
     ('1', 1, dict(rules=[rules.cell.NumericGT(0)]))
 ])
 def test_integer_good(value, max_length, kwargs):
-    assert not field.Integer(max_length, **kwargs).check_cell(value)
+    fld = field.Integer(max_length, **kwargs)
+    assert not fld.check_cell(value)
+    file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,max_length,kwargs,err', [
@@ -176,7 +195,10 @@ def test_integer_good(value, max_length, kwargs):
     ('01', 2, {}, rules.cell.NoLeadingZero)
 ])
 def test_integer_bad(value, max_length, kwargs, err):
-    assert field.Integer(max_length, **kwargs)._has_error(value, err.rule_exception())
+    fld = field.Integer(max_length, **kwargs)
+    assert fld._has_error(value, err.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,choices,kwargs', [
@@ -188,7 +210,9 @@ def test_integer_bad(value, max_length, kwargs, err):
     ('x', ['X'], dict(case_insensitive=True))
 ])
 def test_choice_good(value, choices, kwargs):
-    assert not field.Choice(choices, **kwargs).check_cell(value)
+    fld = field.Choice(choices, **kwargs)
+    assert not fld.check_cell(value)
+    file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,choices,kwargs,err', [
@@ -196,7 +220,10 @@ def test_choice_good(value, choices, kwargs):
     ('x', ['z'], {}, rules.cell.Choice)
 ])
 def test_choice_bad(value, choices, kwargs, err):
-    assert field.Choice(choices, **kwargs)._has_error(value, err.rule_exception())
+    fld = field.Choice(choices, **kwargs)
+    assert fld._has_error(value, err.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
 
 
 @pytest.mark.parametrize('value,func,assertion', [
@@ -207,6 +234,7 @@ def test_choice_bad(value, choices, kwargs, err):
 def test_static_rules_good(value, func, assertion):
     x = field.Field(rules=[rules.cell.make_static_cell_rule(func, assertion)])
     assert not x.check_cell(value)
+    file_cell_harness(value, x)
 
 
 @pytest.mark.parametrize('value,func,assertion', [
@@ -219,6 +247,8 @@ def test_static_rules_bad(value, func, assertion):
     r = rules.cell.make_static_cell_rule(func, assertion)
     x = field.Field(rules=[r])
     assert x._has_error(value, r.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, x)
 
 
 @pytest.mark.parametrize('cell', [
@@ -227,27 +257,42 @@ def test_static_rules_bad(value, func, assertion):
     '8k;abc;abc'
 ])
 def test_ignore_cell(cell):
-    assert not field.Ignore().check_cell(cell)
+    fld = field.Ignore()
+    assert not fld.check_cell(cell)
+    file_cell_harness(cell, fld)
 
 
 def test_column_compare_rule_good():
+    value = ('1', {'x': '0'})
     x = field.Field(rules=[rules.cell.GreaterThanColumn('x')])
-    assert not x.check_cell(('1', {'x': '0'}))
+    assert not x.check_cell(value)
+
+
+def test_column_compare_rule_good_files():
+    value = ['1', '0']
+    lay = {'c1': field.Field(rules=[rules.cell.GreaterThanColumn('c2')]), 'c2': field.Integer(1)}
+    file_cell_harness(value, lay)
 
 
 def test_column_compare_rule_bad():
     x = field.Field(rules=[rules.cell.GreaterThanColumn('x')])
     assert x._has_error('1', compare={'x': '1'}, error=rules.cell.GreaterThanColumn.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(['1', '0'], dict(x=field.Integer(1), y=x))
 
 
 def test_column_unique_good():
     x = field.Field(rules=[rules.column.Unique()])
     assert not x.check_column(['1', '2', '3'])
+    file_cell_harness(['1', '2', '3'], dict(x=x,
+                                            y=field.Ignore(),
+                                            z=field.Ignore()))
 
 
 def test_column_unique_bad():
     x = field.Field(rules=[rules.column.Unique()])
     assert x._has_error(['2', '2'], rules.column.Unique.rule_exception(), rule_type=field.cr.Rule)
+    file_cell_harness(['2', '2'], dict(x=x, y=x))
 
 
 def test_empty_field():

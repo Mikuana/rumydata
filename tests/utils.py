@@ -1,7 +1,7 @@
 import csv
 import tempfile
 from pathlib import Path
-from typing import List
+from typing import List, Union, Tuple
 from unittest.mock import DEFAULT
 
 import openpyxl
@@ -22,7 +22,7 @@ def mock_no_module(module: str):
     return func
 
 
-def file_row_harness(row: List[str], layout: dict):
+def file_row_harness(row: List[Union[str, int]], layout: dict):
     """ Write row to file for testing in ingest """
     lay = Layout(layout, no_header=True)
 
@@ -44,16 +44,19 @@ def file_row_harness(row: List[str], layout: dict):
             ('CsvFile', CsvFile(lay), csv_p),
             ('ExcelFile', ExcelFile(lay), xl_p)
         ]
-        aes = []
+        aes = {}
         for nm, obj, p in to_check:
             try:
                 assert not obj.check(p)
-            except AssertionError:
-                aes.append(nm)
+            except AssertionError as e:
+                aes[nm] = e
+        new_line = '\n'
+        assert not aes, f'Write test failed for:\n {new_line.join([f"{k}:{v}" for k, v in aes.items()])}'
 
-        assert not aes, f'Write test failed for {aes}'
 
-
-def file_cell_harness(value: str, field: Field):
+def file_cell_harness(value: Union[str, list], field: Union[Field, dict]):
     """ Wrapper to convert cell to row for harness check """
-    file_row_harness(row=[value], layout={'c1': field})
+    if isinstance(value, list):
+        file_row_harness(row=value, layout=field)
+    else:
+        file_row_harness(row=[value], layout={'c1': field})
