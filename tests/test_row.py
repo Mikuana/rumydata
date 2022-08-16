@@ -2,10 +2,13 @@ import pytest
 
 from rumydata import table, Layout, field
 from rumydata.rules import row as rr, header as hr
+from tests.utils import file_row_harness
 
 
 def test_row_good(basic):
-    assert not table.Layout(basic).check_row(['1', '2', '2020-01-01', 'X'])
+    row = ['1', '2', '2020-01-01', 'X']
+    assert not Layout(basic).check_row(row)
+    assert not file_row_harness(row, basic)
 
 
 def test_row_choice(basic):
