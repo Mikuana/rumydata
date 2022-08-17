@@ -296,8 +296,10 @@ def test_column_unique_bad():
 def test_empty_field():
     empty = field.Empty()
     assert not empty.check_cell('')
+    file_cell_harness('', empty)
     with pytest.raises(AssertionError):
         assert empty.check_cell('1')
+        file_cell_harness('1', empty)
 
 
 def test_custom_message():
