@@ -3,7 +3,7 @@ from datetime import datetime as dt
 import pytest
 
 from rumydata import field, rules, exception as ex
-from tests.utils import file_cell_harness
+from tests.utils import file_cell_harness, file_row_harness
 
 
 def recurse_subclasses(class_to_recurse):
@@ -271,28 +271,26 @@ def test_column_compare_rule_good():
 def test_column_compare_rule_good_files():
     value = ['1', '0']
     lay = {'c1': field.Field(rules=[rules.cell.GreaterThanColumn('c2')]), 'c2': field.Integer(1)}
-    file_cell_harness(value, lay)
+    file_row_harness(value, lay)
 
 
 def test_column_compare_rule_bad():
     x = field.Field(rules=[rules.cell.GreaterThanColumn('x')])
     assert x._has_error('1', compare={'x': '1'}, error=rules.cell.GreaterThanColumn.rule_exception())
     with pytest.raises(AssertionError):
-        file_cell_harness(['1', '0'], dict(x=field.Integer(1), y=x))
+        file_row_harness(['1', '0'], dict(x=field.Integer(1), y=x))
 
 
 def test_column_unique_good():
     x = field.Field(rules=[rules.column.Unique()])
     assert not x.check_column(['1', '2', '3'])
-    file_cell_harness(['1', '2', '3'], dict(x=x,
-                                            y=field.Ignore(),
-                                            z=field.Ignore()))
+    file_row_harness(['1', '2', '3'], dict(x=x, y=field.Ignore(), z=field.Ignore()))
 
 
 def test_column_unique_bad():
     x = field.Field(rules=[rules.column.Unique()])
     assert x._has_error(['2', '2'], rules.column.Unique.rule_exception(), rule_type=field.cr.Rule)
-    file_cell_harness(['2', '2'], dict(x=x, y=x))
+    file_row_harness(['2', '2'], dict(x=x, y=x))
 
 
 def test_empty_field():

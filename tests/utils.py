@@ -54,9 +54,6 @@ def file_row_harness(row: List[Union[str, int]], layout: dict):
         assert not aes, f'Write test failed for:\n {new_line.join([f"{k}:{v}" for k, v in aes.items()])}'
 
 
-def file_cell_harness(value: Union[str, list], field: Union[Field, dict]):
+def file_cell_harness(value: str, field: Field):
     """ Wrapper to convert cell to row for harness check """
-    if isinstance(value, list):
-        file_row_harness(row=value, layout=field)
-    else:
-        file_row_harness(row=[value], layout={'c1': field})
+    file_row_harness(row=[value], layout={'c1': field})
