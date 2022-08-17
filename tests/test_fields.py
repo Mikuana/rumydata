@@ -299,6 +299,7 @@ def test_empty_field():
     file_cell_harness('', empty)
     with pytest.raises(AssertionError):
         assert empty.check_cell('1')
+    with pytest.raises(AssertionError):
         file_cell_harness('1', empty)
 
 
