@@ -432,7 +432,7 @@ class ExcelFile(_BaseFile):
 
     @staticmethod
     def _row_handler(row: list) -> List[str]:
-        return [str(x or '') for x in row]
+        return ['' if x is None else str(x) for x in row]
 
 
 class ParquetFile(_BaseFile):
