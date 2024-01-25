@@ -124,7 +124,7 @@ def _open_doc(doc: str, ext: str):
         else:
             url = p.as_posix()
         webbrowser.open(url)
-        sleep(0.1)
+        sleep(2)
 
 
 def _select_option(options: dict):
