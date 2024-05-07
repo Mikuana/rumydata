@@ -487,11 +487,11 @@ def test_non_trim(value, expected):
 
 @pytest.mark.parametrize('value, expected', [
     ('+3', True),
-    ('3.2e23', True),
-    ('-4.70e+9', True),
-    ('-.2E-4', True),
+    ('3.2e23', False),
+    ('-4.70e+9', False),
+    ('-.2E-4', False),
     ('-7.6603', True),
-    ('+0003 ', False),
+    ('+0003 ', True),
     ('37.e88', False)
 ])
 def test_non_scientific(value, expected):

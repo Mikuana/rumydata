@@ -259,11 +259,11 @@ class NoScientific(Rule):
     """
     Cell no scientific notation.
 
-    Ensure that there are no scientific notation characters.
+    Ensure that there are no scientific notation characters in the cell.
     """
 
     def _evaluator(self):
-        return lambda x: 'e' not in x.lower()
+        return lambda x: bool(re.fullmatch(r'^([+\-\d])[0-9.]*[eE+\-]{1,2}.*$', x)) is False
 
     def _explain(self) -> str:
         return 'cannot have scientific notation'
