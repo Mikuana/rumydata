@@ -20,7 +20,8 @@ from rumydata import exception as ex
 from rumydata._base import _BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
-__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore', 'Empty']
+__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore',
+           'Empty', 'Number']
 
 
 class Field(_BaseSubject):
