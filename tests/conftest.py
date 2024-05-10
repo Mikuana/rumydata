@@ -8,7 +8,7 @@ from rumydata.field import Text, Integer, Date, Choice
 
 @pytest.fixture()
 def tmpdir():
-    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as d:
+    with tempfile.TemporaryDirectory() as d:
         yield Path(d)
 
 
