@@ -8,9 +8,11 @@ from rumydata.field import Text, Integer, Date, Choice
 
 @pytest.fixture()
 def tmpdir():
-    with tempfile.TemporaryDirectory() as d:
-        yield Path(d)
-
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            yield Path(d)
+    except PermissionError:
+        pass
 
 @pytest.fixture()
 def basic() -> dict:
