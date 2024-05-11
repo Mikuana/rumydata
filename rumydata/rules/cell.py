@@ -25,7 +25,7 @@ __all__ = [
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
     'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
     'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
-    'NotNullIfOtherEquals',
+    'NotNullIfOtherEquals', 'NoScientific', 'CanBeFloat',
     'make_static_cell_rule'
 ]
 
@@ -253,6 +253,20 @@ class NoLeadingZero(Rule):
 
     def _explain(self) -> str:
         return 'cannot have a leading zero digit'
+
+
+class NoScientific(Rule):
+    """
+    Cell no scientific notation.
+
+    Ensure that there are no scientific notation characters in the cell.
+    """
+
+    def _evaluator(self):
+        return lambda x: bool(re.fullmatch(r'^([+\-\d])[0-9.]*[eE+\-]{1,2}.*$', x)) is False
+
+    def _explain(self) -> str:
+        return 'cannot have scientific notation'
 
 
 class CanBeFloat(Rule):

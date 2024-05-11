@@ -148,7 +148,15 @@ def test_no_leading_zero(value: str, expected: bool):
 @pytest.mark.parametrize('value,expected', [
     ('1', True),
     ('0', True),
+    ('0.1', True),
     ('a', False),
+    ('+3', True),
+    ('3.2e23', True),
+    ('-4.70e+9', True),
+    ('-.2E-4', True),
+    ('-7.6603', True),
+    ('+0003 ', True),
+    ('37.e88', True)
 ])
 def test_can_be_float(value: str, expected: bool):
     r = CanBeFloat()
@@ -474,4 +482,18 @@ def test_other_must_exist_if_equals(row, other, values, expected):
 ])
 def test_non_trim(value, expected):
     r = NonTrim()
+    assert r._evaluator()(*r._prepare(value)) is expected
+
+
+@pytest.mark.parametrize('value, expected', [
+    ('+3', True),
+    ('3.2e23', False),
+    ('-4.70e+9', False),
+    ('-.2E-4', False),
+    ('-7.6603', True),
+    ('+0003 ', True),
+    ('37.e88', False)
+])
+def test_non_scientific(value, expected):
+    r = NoScientific()
     assert r._evaluator()(*r._prepare(value)) is expected

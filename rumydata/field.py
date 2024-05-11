@@ -20,7 +20,8 @@ from rumydata import exception as ex
 from rumydata._base import _BaseSubject
 from rumydata.rules import cell as clr, column as cr
 
-__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore', 'Empty']
+__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore',
+           'Empty', 'Number']
 
 
 class Field(_BaseSubject):
@@ -310,6 +311,35 @@ class Integer(Field):
 
         self.rules.append(clr.CanBeInteger())
         self.rules.append(clr.NoLeadingZero())
+        self.rules.append(clr.MaxDigit(max_length))
+
+        if min_length:
+            self.descriptors['Min Length'] = f'{str(max_length)} digits'
+            self.rules.append(clr.MinDigit(min_length))
+
+
+class Number(Field):
+    """
+    Number field
+
+    A value made up entirely of digits (numbers). A whole number.
+
+    :param max_length: the maximum number of digits
+    :param min_length: (optional) the minimum number of digits
+    :param allow_scientific: (optional) whether to allow scientific notation. Defaults to False.
+    """
+    _default_args = (1,)
+
+    def __init__(self, max_length, min_length=None, allow_scientific=False, **kwargs):
+        super().__init__(**kwargs)
+
+        self.descriptors['Type'] = 'Numeric'
+        self.descriptors['Format'] = f'{"9" * max_length}.{"0"}'
+        self.descriptors['Max Length'] = f'{str(max_length)} digits'
+
+        self.rules.append(clr.CanBeFloat())
+        if allow_scientific is False:
+            self.rules.append(clr.NoScientific())
         self.rules.append(clr.MaxDigit(max_length))
 
         if min_length:
