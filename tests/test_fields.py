@@ -316,7 +316,7 @@ def test_no_errors():
 
 
 def test_custom_message_override():
-    assert not len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)._list_errors('',
-                                                                                                       rule_type=rules.cell.Rule)) > 2
-    assert len(field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=True)._list_errors('',
-                                                                                                  rule_type=rules.cell.Rule)) > 2
+    f = field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=False)
+    assert not len(f._list_errors('', rule_type=rules.cell.Rule)) > 2
+    f = field.Text(1, custom_error_msg='CustomErrorMessage', all_errors=True)
+    assert len(f._list_errors('', rule_type=rules.cell.Rule)) > 2

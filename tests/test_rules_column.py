@@ -1,6 +1,6 @@
 import pytest
 
-from rumydata.rules.column import *
+from rumydata.rules import column
 from rumydata.rules.column import Rule
 
 
@@ -32,5 +32,5 @@ def test_rule_prepare(rule):
     (['', '1', '1'], False)
 ])
 def test_unique(value: list, expected: bool):
-    r = Unique()
+    r = column.Unique()
     assert r._evaluator()(*r._prepare(value)) is expected

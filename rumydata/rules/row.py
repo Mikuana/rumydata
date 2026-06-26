@@ -10,6 +10,8 @@ from typing import List
 
 from rumydata._base import _BaseRule
 
+__all__ = ['RowLengthLTE', 'RowLengthGTE']
+
 
 class Rule(_BaseRule):
     """ Row Rule """

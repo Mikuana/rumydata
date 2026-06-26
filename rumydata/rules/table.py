@@ -10,6 +10,8 @@ from typing import Union
 
 from rumydata._base import _BaseRule
 
+__all__ = ['FileExists', 'FileNameMatch', 'MaxError']
+
 
 class Rule(_BaseRule):
     """ File Rule """
@@ -42,7 +44,8 @@ class FileNameMatch(Rule):
         return lambda x: re.fullmatch(self.pattern, x.name, re.IGNORECASE)
 
     def _explain(self) -> str:
-        # TODO come up with a better way to make a 'human readable' error message for bad file name in regards to a regex pattern....
+        # TODO come up with a better way to make a 'human readable' error message
+        #  for bad file name in regards to a regex pattern....
         return f'file must match naming pattern {self.pattern}'
 
 

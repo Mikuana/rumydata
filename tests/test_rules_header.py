@@ -1,7 +1,7 @@
 import pytest
 
 from rumydata.field import Field
-from rumydata.rules.header import *
+from rumydata.rules import header
 from rumydata.table import Layout
 
 
@@ -16,7 +16,7 @@ from rumydata.table import Layout
     (['xyz123', 'abc456', 'mno789'], True, {'header_mode': 'contains'})
 ])
 def test_no_extra(value, expected, kwargs):
-    r = NoExtra(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
+    r = header.NoExtra(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -34,7 +34,7 @@ def test_no_extra(value, expected, kwargs):
     (['123', 'abc456', 'mno789'], False, {'header_mode': 'contains'})
 ])
 def test_no_missing(value, expected, kwargs):
-    r = NoMissing(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
+    r = header.NoMissing(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -47,7 +47,7 @@ def test_no_missing(value, expected, kwargs):
     (['1xyz2', '111xyz222'], False, {'header_mode': 'contains'}),
 ])
 def test_no_duplicate(value, expected, kwargs):
-    r = NoDuplicate(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
+    r = header.NoDuplicate(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -60,7 +60,7 @@ def test_no_duplicate(value, expected, kwargs):
     (['1xyz1', '1mno3', '1abc2'], False, {'header_mode': 'contains'}),
 ])
 def test_column_order(value, expected, kwargs):
-    r = ColumnOrder(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
+    r = header.ColumnOrder(Layout({'xyz': Field(), 'abc': Field(), 'mno': Field()}, **kwargs))
     assert r._evaluator()(*r._prepare(value)) is expected
 
 

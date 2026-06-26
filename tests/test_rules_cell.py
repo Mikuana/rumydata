@@ -1,6 +1,6 @@
 import pytest
 
-from rumydata.rules.cell import *
+from rumydata.rules import cell
 from rumydata.rules.cell import Rule
 
 
@@ -37,7 +37,7 @@ def test_rule_evaluator_callable(rule):
     ('', False),
 ])
 def test_not_null(value: str, expected: bool):
-    r = NotNull()
+    r = cell.NotNull()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -47,7 +47,7 @@ def test_not_null(value: str, expected: bool):
     (0, 'a', False)
 ])
 def test_exact_char(value: str, expected: bool, length: int):
-    r = ExactChar(length)
+    r = cell.ExactChar(length)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -59,7 +59,7 @@ def test_exact_char(value: str, expected: bool, length: int):
     (3, 'aa', False)
 ])
 def test_min_char(value: str, expected: bool, length: int):
-    r = MinChar(length)
+    r = cell.MinChar(length)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -71,7 +71,7 @@ def test_min_char(value: str, expected: bool, length: int):
     (3, 'aa', True)
 ])
 def test_max_char(value: str, expected: bool, length: int):
-    r = MaxChar(length)
+    r = cell.MaxChar(length)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -81,7 +81,7 @@ def test_max_char(value: str, expected: bool, length: int):
     ("\u0394", False)
 ])
 def test_ascii_char(value: str, expected: bool):
-    r = AsciiChar()
+    r = cell.AsciiChar()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -93,7 +93,7 @@ def test_ascii_char(value: str, expected: bool):
     (['X'], ('x', {}), True, {'case_insensitive': True})
 ])
 def test_choice(data, expected: bool, choice: list, kwargs):
-    r = Choice(choice, **kwargs)
+    r = cell.Choice(choice, **kwargs)
     assert r._evaluator()(*r._prepare(data)) is expected
 
 
@@ -106,7 +106,7 @@ def test_choice(data, expected: bool, choice: list, kwargs):
     (2, '111a', True)
 ])
 def test_min_digit(value: str, expected: bool, length: int):
-    r = MinDigit(length)
+    r = cell.MinDigit(length)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -119,7 +119,7 @@ def test_min_digit(value: str, expected: bool, length: int):
     (2, '111a', False)
 ])
 def test_max_digit(value: str, expected: bool, length: int):
-    r = MaxDigit(length)
+    r = cell.MaxDigit(length)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -129,7 +129,7 @@ def test_max_digit(value: str, expected: bool, length: int):
     ('12.3', False)
 ])
 def test_only_numbers(value: str, expected: bool):
-    r = OnlyNumbers()
+    r = cell.OnlyNumbers()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -140,7 +140,7 @@ def test_only_numbers(value: str, expected: bool):
     ('0.0', False)
 ])
 def test_no_leading_zero(value: str, expected: bool):
-    r = NoLeadingZero()
+    r = cell.NoLeadingZero()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -158,7 +158,7 @@ def test_no_leading_zero(value: str, expected: bool):
     ('37.e88', True)
 ])
 def test_can_be_float(value: str, expected: bool):
-    r = CanBeFloat()
+    r = cell.CanBeFloat()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -170,7 +170,7 @@ def test_can_be_float(value: str, expected: bool):
     ('a', False)
 ])
 def test_can_be_integer(value: str, expected: bool):
-    r = CanBeInteger()
+    r = cell.CanBeInteger()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -182,7 +182,7 @@ def test_can_be_integer(value: str, expected: bool):
     (2, '1.00', True)
 ])
 def test_numeric_decimals(decimals: int, value: str, expected: bool):
-    r = NumericDecimals(decimals)
+    r = cell.NumericDecimals(decimals)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -192,7 +192,7 @@ def test_numeric_decimals(decimals: int, value: str, expected: bool):
     (2, 'xx', False)
 ])
 def test_length_gt(comparison: int, value: str, expected: bool):
-    r = LengthGT(comparison)
+    r = cell.LengthGT(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -202,7 +202,7 @@ def test_length_gt(comparison: int, value: str, expected: bool):
     (3, 'xx', False)
 ])
 def test_length_gte(comparison: int, value: str, expected: bool):
-    r = LengthGTE(comparison)
+    r = cell.LengthGTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -212,7 +212,7 @@ def test_length_gte(comparison: int, value: str, expected: bool):
     (3, 'xx', False)
 ])
 def test_length_et(comparison: int, value: str, expected: bool):
-    r = LengthET(comparison)
+    r = cell.LengthET(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -223,7 +223,7 @@ def test_length_et(comparison: int, value: str, expected: bool):
     (0, 'x', False)
 ])
 def test_length_lte(comparison: int, value: str, expected: bool):
-    r = LengthLTE(comparison)
+    r = cell.LengthLTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -234,7 +234,7 @@ def test_length_lte(comparison: int, value: str, expected: bool):
     (0, 'x', False)
 ])
 def test_length_lt(comparison: int, value: str, expected: bool):
-    r = LengthLT(comparison)
+    r = cell.LengthLT(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -245,7 +245,7 @@ def test_length_lt(comparison: int, value: str, expected: bool):
     (0, '0', False)
 ])
 def test_numeric_gt(comparison: float, value: str, expected: bool):
-    r = NumericGT(comparison)
+    r = cell.NumericGT(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -258,7 +258,7 @@ def test_numeric_gt(comparison: float, value: str, expected: bool):
     (1, '0', False)
 ])
 def test_numeric_gte(comparison: float, value: str, expected: bool):
-    r = NumericGTE(comparison)
+    r = cell.NumericGTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -271,7 +271,7 @@ def test_numeric_gte(comparison: float, value: str, expected: bool):
     (1, '0', False)
 ])
 def test_numeric_et(comparison: float, value: str, expected: bool):
-    r = NumericET(comparison)
+    r = cell.NumericET(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -284,7 +284,7 @@ def test_numeric_et(comparison: float, value: str, expected: bool):
     (1, '0', True)
 ])
 def test_numeric_lte(comparison: float, value: str, expected: bool):
-    r = NumericLTE(comparison)
+    r = cell.NumericLTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -298,7 +298,7 @@ def test_numeric_lte(comparison: float, value: str, expected: bool):
     (1, '0', True)
 ])
 def test_numeric_lt(comparison: float, value: str, expected: bool):
-    r = NumericLT(comparison)
+    r = cell.NumericLT(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -315,7 +315,7 @@ def test_numeric_lt(comparison: float, value: str, expected: bool):
     ('2020-01-01 00:00:01', False, {'truncate_time': True})
 ])
 def test_can_be_date_iso(value: str, expected: bool, kwargs: dict):
-    r = CanBeDateIso(**kwargs)
+    r = cell.CanBeDateIso(**kwargs)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -326,7 +326,7 @@ def test_can_be_date_iso(value: str, expected: bool, kwargs: dict):
     ('2020-01-01', '2019-12-31', False)
 ])
 def test_date_gt(comparison: str, value: str, expected: bool):
-    r = DateGT(comparison)
+    r = cell.DateGT(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -337,7 +337,7 @@ def test_date_gt(comparison: str, value: str, expected: bool):
     ('2020-01-01', '2019-12-31', False)
 ])
 def test_date_gte(comparison: str, value: str, expected: bool):
-    r = DateGTE(comparison)
+    r = cell.DateGTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -348,7 +348,7 @@ def test_date_gte(comparison: str, value: str, expected: bool):
     ('2020-01-01', '2019-12-31', False)
 ])
 def test_date_et(comparison: str, value: str, expected: bool):
-    r = DateET(comparison)
+    r = cell.DateET(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -359,7 +359,7 @@ def test_date_et(comparison: str, value: str, expected: bool):
     ('2020-01-01', '2019-12-31', True)
 ])
 def test_date_lte(comparison: str, value: str, expected: bool):
-    r = DateLTE(comparison)
+    r = cell.DateLTE(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -370,7 +370,7 @@ def test_date_lte(comparison: str, value: str, expected: bool):
     ('2020-01-01', '2019-12-31', True)
 ])
 def test_date_lt(comparison: str, value: str, expected: bool):
-    r = DateLT(comparison)
+    r = cell.DateLT(comparison)
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -380,7 +380,7 @@ def test_date_lt(comparison: str, value: str, expected: bool):
     ('z', ('1', {'x': '1', 'z': '0'}), True)
 ])
 def test_greater_than_column(compared: str, data, expected: bool):
-    r = GreaterThanColumn(compared)
+    r = cell.GreaterThanColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
 
@@ -391,7 +391,7 @@ def test_greater_than_column(compared: str, data, expected: bool):
     ('z', ('1', {'x': '1', 'z': '0'}), True)
 ])
 def test_greater_than_or_equal_column(compared: str, data, expected: bool):
-    r = GreaterThanOrEqualColumn(compared)
+    r = cell.GreaterThanOrEqualColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
 
@@ -401,7 +401,7 @@ def test_greater_than_or_equal_column(compared: str, data, expected: bool):
     ('z', ('0', {'x': '0', 'z': '1'}), True)
 ])
 def test_less_than_column(compared: str, data, expected: bool):
-    r = LessThanColumn(compared)
+    r = cell.LessThanColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
 
@@ -412,7 +412,7 @@ def test_less_than_column(compared: str, data, expected: bool):
     ('z', ('0', {'x': '0', 'z': '1'}), True)
 ])
 def test_less_than_or_equal_column(compared: str, data, expected: bool):
-    r = LessThanOrEqualColumn(compared)
+    r = cell.LessThanOrEqualColumn(compared)
     assert r._evaluator()(*r._prepare(data)) is expected
 
 
@@ -430,7 +430,7 @@ def test_less_than_or_equal_column(compared: str, data, expected: bool):
     (['col_b', 'col_c'], ('', {'col_b': 'test', 'col_c': 'test'}), False)
 ])
 def test_not_null_if_compare(compare, row, expected):
-    r = NotNullIfCompare(compare)
+    r = cell.NotNullIfCompare(compare)
     assert r._evaluator()(*r._prepare(row)) is expected
 
 
@@ -441,7 +441,7 @@ def test_not_null_if_compare(compare, row, expected):
     ('col_b', ('x', {'col_b': 'x'}), False),
 ])
 def test_other_cant_exist(other, row, expected):
-    r = OtherCantExist(other)
+    r = cell.OtherCantExist(other)
     assert r._evaluator()(*r._prepare(row)) is expected
 
 
@@ -452,7 +452,7 @@ def test_other_cant_exist(other, row, expected):
     ('col_b', ('x', {'col_b': 'x'}), True),
 ])
 def test_other_must_exist(other, row, expected):
-    r = OtherMustExist(other)
+    r = cell.OtherMustExist(other)
     assert r._evaluator()(*r._prepare(row)) is expected
 
 
@@ -467,7 +467,7 @@ def test_other_must_exist(other, row, expected):
     (('', {'c': 'y'}), 'c', ['x', 'y'], False),
 ])
 def test_other_must_exist_if_equals(row, other, values, expected):
-    r = NotNullIfOtherEquals(other, values)
+    r = cell.NotNullIfOtherEquals(other, values)
     assert r._evaluator()(*r._prepare(row)) is expected
 
 
@@ -480,7 +480,7 @@ def test_other_must_exist_if_equals(row, other, values, expected):
     ('1\t', False),
 ])
 def test_non_trim(value, expected):
-    r = NonTrim()
+    r = cell.NonTrim()
     assert r._evaluator()(*r._prepare(value)) is expected
 
 
@@ -494,5 +494,5 @@ def test_non_trim(value, expected):
     ('37.e88', False)
 ])
 def test_non_scientific(value, expected):
-    r = NoScientific()
+    r = cell.NoScientific()
     assert r._evaluator()(*r._prepare(value)) is expected
