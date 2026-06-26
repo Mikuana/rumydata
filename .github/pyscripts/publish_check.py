@@ -3,15 +3,14 @@ import re
 import urllib.request
 from pathlib import Path
 
-from packaging.version import parse
+from packaging.version import Version, parse
 
 try:
     from importlib.metadata import version
 except ImportError:
     # noinspection PyUnresolvedReferences,PyUnresolvedReferences
-    from importlib_metadata import version
+    pass
 
-from distutils.version import LooseVersion
 
 
 def read_version():
@@ -23,9 +22,10 @@ def read_version():
         raise RuntimeError(f"Unable to read version string: {e}")
 
 
-pypi_url = f'https://pypi.org/pypi/rumydata/json'
+pypi_url = 'https://pypi.org/pypi/rumydata/json'
 response = urllib.request.urlopen(pypi_url).read().decode()
-latest_version = max(LooseVersion(s) for s in json.loads(response)['releases'].keys())
+releases = json.loads(response)['releases'].keys()
+latest_version = max(Version(s) for s in releases)
 setup_version = read_version()
 
 if parse(setup_version) > parse(str(latest_version)):
