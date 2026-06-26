@@ -33,6 +33,7 @@ Testing = [
     "pandas",
     "pyarrow",
     "packaging",
+    "ruff",
 ]
 
 [tool.setuptools.dynamic]
