@@ -9,15 +9,11 @@ jobs:
   version:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - name: Set up Python
-        uses: actions/setup-python@v1
+      - uses: actions/checkout@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: '3.x'
-      - name: Install dependencies
+      - name: Check Build Against Published
         run: |
-          python -m pip install --upgrade pip
-          pip install setuptools packaging
-      - name: Check Build Aganist Published
-        run: |
-          python .github/pyscripts/publish_check.py
+          uv run --extra Testing .github/pyscripts/publish_check.py
