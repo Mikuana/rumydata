@@ -255,6 +255,59 @@ class _BaseFile(_BaseSubject):
     def _row_handler(row: list) -> List[str]:
         return row
 
+    def _handle_header(self, row: List[str], rix: int):
+        re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
+        if self.layout.empty_cols_ok:
+            # remap layout positions with Empty columns wherever header is empty
+            empties = [ix for ix, i in enumerate(row) if i == '']
+            bumps = {k: ix for ix, k in enumerate(self.layout.layout.keys())}
+
+            for i in empties:
+                for k, v in bumps.items():
+                    if v >= i:
+                        bumps[k] += 1
+
+            bumps = {v: k for k, v in bumps.items()}
+            bumps = [bumps.get(i, f"empty_{uuid4().hex[:5]}") for i in range(len(row))]
+            # strip out the "trailing" empty columns before updating the field_count for the row length
+            # rules. These might get picked up when processing excel file layouts based on how the
+            # worksheet is configured, which would result in a mismatch between the number of columns
+            # rumydata sees in the row data and the number of columns which get inferred by reading the
+            # worksheet
+            while bumps[-1].startswith('empty_'):
+                bumps.pop()
+            self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
+
+            for ix, rule in enumerate(self.layout.rules):  # update row length rules
+                if isinstance(rule, (rr.RowLengthLTE, rr.RowLengthGTE)):
+                    self.layout.rules[ix].columns_length = self.layout.field_count()
+        return re
+
+    def _process_row(self, row: List[str], rix: int, max_error_rule, e: list, column_cache: dict, column_cache_map: dict) -> bool:
+        row = self._row_handler(row)
+        if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header
+            re = self._handle_header(row, rix)
+        elif self.layout.empty_cols_ok:
+            cleaned_col_count = self.layout.field_count()
+            row = row[:cleaned_col_count]
+            re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
+        else:
+            re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
+
+        if re:
+            e.append(re)
+            if rix == (0 + self.skip_rows) and self.layout.no_header is False:
+                # if header error present, stop checking rows
+                return False
+            if len(e) > self.max_errors:
+                e.append(max_error_rule._exception_msg())
+                return False
+
+        if rix > (0 + self.skip_rows) or self.layout.no_header is True:
+            for k, ix in column_cache_map.items():
+                column_cache[k].append(row[ix])
+        return True
+
     def _check(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super()._check(p, rule_type=table.Rule)  # check files-based rules first
@@ -275,61 +328,17 @@ class _BaseFile(_BaseSubject):
             for rix, row in enumerate(generator):
                 if rix < self.skip_rows:
                     continue
-                row = self._row_handler(row)
-                if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header
-                    re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
-                    if self.layout.empty_cols_ok:
-                        # remap layout positions with Empty columns wherever header is empty
-                        empties = [ix for ix, i in enumerate(row) if i == '']
-                        bumps = {k: ix for ix, k in enumerate(self.layout.layout.keys())}
+                if not self._process_row(row, rix, max_error_rule, e, column_cache, column_cache_map):
+                    break
 
-                        for i in empties:
-                            for k, v in bumps.items():
-                                if v >= i:
-                                    bumps[k] += 1
-
-                        bumps = {v: k for k, v in bumps.items()}
-                        bumps = [bumps.get(i, f"empty_{uuid4().hex[:5]}") for i in range(len(row))]
-                        # strip out the "trailing" empty columns before updating the field_count for the row length
-                        # rules. These might get picked up when processing excel file layouts based on how the
-                        # worksheet is configured, which would result in a mismatch between the number of columns
-                        # rumydata sees in the row data and the number of columns which get inferred by reading the
-                        # worksheet
-                        while bumps[-1].startswith('empty_'):
-                            bumps.pop()
-                        self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
-
-                        for ix, rule in enumerate(self.layout.rules):  # update row length rules
-                            if isinstance(rule, (rr.RowLengthLTE, rr.RowLengthGTE)):
-                                self.layout.rules[ix].columns_length = self.layout.field_count()
-
-                elif self.layout.empty_cols_ok:
-                    cleaned_col_count = self.layout.field_count()
-                    row = row[:cleaned_col_count]
-                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
-                else:
-                    re = self.layout._check(row, rule_type=rr.Rule, rix=rix)
-
-                if re:
-                    e.append(re)
-                    if rix == (0 + self.skip_rows) and self.layout.no_header is False:
-                        # if header error present, stop checking rows
-                        break
-                    if len(e) > self.max_errors:
-                        e.append(max_error_rule._exception_msg())
-                        break
-                if rix > (0 + self.skip_rows) or self.layout.no_header is True:
-                    for k, ix in column_cache_map.items():
-                        column_cache[k].append(row[ix])
-
-            for k, v in column_cache.items():
-                ce = self.layout.layout[k]._check(
-                    v, cix=column_cache_map[k], rule_type=cr.Rule, name=k
-                )
-                if ce:
-                    e.append(ce)
-            if e:
-                return ex.FileError(file=p.name, errors=e)
+        for k, v in column_cache.items():
+            ce = self.layout.layout[k]._check(
+                v, cix=column_cache_map[k], rule_type=cr.Rule, name=k
+            )
+            if ce:
+                e.append(ce)
+        if e:
+            return ex.FileError(file=p.name, errors=e)
 
 
 class CsvFile(_BaseFile):
