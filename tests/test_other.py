@@ -16,7 +16,9 @@ import rumydata.rules.cell as clr
 import rumydata.table
 from rumydata import exception as ex
 from rumydata import field
-from rumydata.rules import column as cr, table as tr, header as hr
+from rumydata.rules import column as cr
+from rumydata.rules import header as hr
+from rumydata.rules import table as tr
 from rumydata.table import CsvFile, ExcelFile, Layout
 
 
@@ -122,7 +124,7 @@ def empty_rows(rows, directory):
     with p.open('w', newline='') as f:
         w = csv.writer(f)
         w.writerow(['x'])
-        for i in range(rows):
+        for _i in range(rows):
             w.writerow('')
     return p
 
@@ -223,8 +225,8 @@ def test_unique_good(tmpdir):
 
 @pytest.mark.parametrize('row,kwargs', [
     (['1', '1'], {}),
-    (['1', '1'], dict(empty_row_ok=False)),
-    (['', ''], dict(empty_row_ok=True))
+    (['1', '1'], {'empty_row_ok': False}),
+    (['', ''], {'empty_row_ok': True})
 ])
 def test_empty_row_good(row, kwargs):
     lay = rumydata.table.Layout({'x': field.Integer(1), 'y': field.Integer(2)}, **kwargs)

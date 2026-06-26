@@ -6,7 +6,9 @@ from pathlib import Path
 from packaging.version import Version, parse
 
 try:
-    from importlib.metadata import version
+    from importlib.util import find_spec
+    if find_spec("importlib.metadata"):
+        from importlib.metadata import version as _version  # noqa: F401
 except ImportError:
     # noinspection PyUnresolvedReferences,PyUnresolvedReferences
     pass
@@ -19,7 +21,7 @@ def read_version():
         v = re.match(r"__version__ *= *'(.*?)'\n", v)[1]
         return v
     except Exception as e:
-        raise RuntimeError(f"Unable to read version string: {e}")
+        raise RuntimeError(f"Unable to read version string: {e}") from e
 
 
 pypi_url = 'https://pypi.org/pypi/rumydata/json'

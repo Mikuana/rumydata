@@ -18,7 +18,7 @@ class _BaseRule:
     This class contains the default methods that can be used to stub out all of
     the rule types contained in the rules submodule.
     """
-    _default_args = tuple()  # a default set of positional args for testing
+    _default_args = ()  # a default set of positional args for testing
 
     def __init__(self):
         pass
@@ -115,7 +115,7 @@ class _BaseSubject:
     and reporting errors in a way that can be easily collected.
     """
 
-    _default_args = tuple()  # a default set of positional args for testing
+    _default_args = ()  # a default set of positional args for testing
 
     def __init__(self, rules: List[_BaseRule] = None, all_errors=True, custom_error_msg=None):
         """
@@ -163,7 +163,7 @@ class _BaseSubject:
         for r in self.rules:
             # noinspection PyBroadException
             try:
-                if issubclass(type(r), rule_type):
+                if isinstance(r, rule_type):
                     x = r._prepare(data)
                     e = r._evaluator()(*x)
                     if not e:
@@ -241,5 +241,4 @@ class _BaseSubject:
         yield error
         if error is not None:
             for el in error._errors:
-                for x in cls._flatten_exceptions(el):
-                    yield x
+                yield from cls._flatten_exceptions(el)

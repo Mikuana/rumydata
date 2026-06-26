@@ -12,7 +12,7 @@ the constructor of the classes in the field submodule.
 """
 import re
 from datetime import datetime
-from typing import Union, Tuple, Dict, List
+from typing import Dict, List, Tuple, Union
 
 from rumydata._base import _BaseRule
 
@@ -670,7 +670,7 @@ class NotNullIfCompare(ColumnComparisonRule):
         if isinstance(self.compare_to, str):
             empty_compare = data[1][self.compare_to] in ['', False]
         elif isinstance(self.compare_to, list):
-            empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
+            empty_compare = any(v for k, v in data[1].items() if k in self.compare_to) in ['', False]
         if not empty_compare and empty_val:
             return False
         else:

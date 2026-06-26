@@ -2,15 +2,15 @@ from datetime import datetime as dt
 
 import pytest
 
-from rumydata import field, rules, exception as ex
+from rumydata import exception as ex
+from rumydata import field, rules
 from tests.utils import file_cell_harness, file_row_harness
 
 
 def recurse_subclasses(class_to_recurse):
     def generator(x):
         for y in x.__subclasses__():
-            for z in generator(y):
-                yield z
+            yield from generator(y)
         yield x
 
     return list(generator(class_to_recurse))
@@ -42,10 +42,10 @@ def test_digest(fo):
 
 
 @pytest.mark.parametrize('value,kwargs', [
-    ('x', dict(max_length=1)),
-    ('x', dict(max_length=2)),
-    ('', dict(max_length=1, nullable=True)),
-    ('', dict(max_length=1, min_length=1, nullable=True))
+    ('x', {'max_length': 1}),
+    ('x', {'max_length': 2}),
+    ('', {'max_length': 1, 'nullable': True}),
+    ('', {'max_length': 1, 'min_length': 1, 'nullable': True})
 ])
 def test_text_good(value, kwargs):
     fld = field.Text(**kwargs)
@@ -54,9 +54,9 @@ def test_text_good(value, kwargs):
 
 
 @pytest.mark.parametrize('value,kwargs,rule', [
-    ('', dict(max_length=1), rules.cell.NotNull),
-    ('xxx', dict(max_length=2), rules.cell.MaxChar),
-    ('x', dict(max_length=80, min_length=2), rules.cell.MinChar),
+    ('', {'max_length': 1}, rules.cell.NotNull),
+    ('xxx', {'max_length': 2}, rules.cell.MaxChar),
+    ('x', {'max_length': 80, 'min_length': 2}, rules.cell.MinChar),
 ])
 def test_text_bad(value, kwargs, rule):
     fld = field.Text(**kwargs)
@@ -67,11 +67,11 @@ def test_text_bad(value, kwargs, rule):
 
 @pytest.mark.parametrize('value,kwargs', [
     ('2020-01-01', {}),
-    ('', dict(nullable=True)),
-    ('2020-01-01', dict(max_date='2020-01-01')),
-    ('2020-01-01', dict(max_date='2020-01-02')),
-    ('2020-01-01', dict(min_date='2020-01-01', max_date='2020-01-02')),
-    ('2020-01-01 00:00:00', dict(truncate_time=True))
+    ('', {'nullable': True}),
+    ('2020-01-01', {'max_date': '2020-01-01'}),
+    ('2020-01-01', {'max_date': '2020-01-02'}),
+    ('2020-01-01', {'min_date': '2020-01-01', 'max_date': '2020-01-02'}),
+    ('2020-01-01 00:00:00', {'truncate_time': True})
 ])
 def test_date_good(value, kwargs):
     fld = field.Date(**kwargs)
@@ -83,11 +83,11 @@ def test_date_good(value, kwargs):
     ('', rules.cell.NotNull, {}),
     ('20200101', rules.cell.CanBeDateIso, {}),
     ('9999-99-99', rules.cell.CanBeDateIso, {}),
-    ('2020-01-01', rules.cell.DateGTE, dict(min_date='2020-01-02')),
-    ('2020-01-02', rules.cell.DateLTE, dict(max_date='2020-01-01')),
-    ('2020-01-01', rules.cell.DateGTE, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-05', rules.cell.DateLTE, dict(min_date='2020-01-02', max_date='2020-01-03')),
-    ('2020-01-01 00:00:01', rules.cell.CanBeDateIso, dict(truncate_time=False))
+    ('2020-01-01', rules.cell.DateGTE, {'min_date': '2020-01-02'}),
+    ('2020-01-02', rules.cell.DateLTE, {'max_date': '2020-01-01'}),
+    ('2020-01-01', rules.cell.DateGTE, {'min_date': '2020-01-02', 'max_date': '2020-01-03'}),
+    ('2020-01-05', rules.cell.DateLTE, {'min_date': '2020-01-02', 'max_date': '2020-01-03'}),
+    ('2020-01-01 00:00:01', rules.cell.CanBeDateIso, {'truncate_time': False})
 ])
 def test_date_bad(value, rule, kwargs):
     fld = field.Date(**kwargs)
@@ -101,15 +101,15 @@ def test_date_bad(value, rule, kwargs):
     ('123.00', 5, {}),
     ('123.0', 5, {}),
     ('123', 5, {}),
-    ('', 1, dict(nullable=True)),
-    ('-0.01', 3, dict(rules=[rules.cell.NumericLT(0)])),
-    ('0', 3, dict(rules=[rules.cell.NumericLTE(0)])),
-    ('0.00', 3, dict(rules=[rules.cell.NumericET(0)])),
-    ('0', 3, dict(rules=[rules.cell.NumericGTE(0)])),
-    ('0.01', 3, dict(rules=[rules.cell.NumericGT(0)])),
-    ('0.1', 4, dict(precision=4)),
-    ('0.001', 4, dict(precision=3)),
-    ('0.0001', 5, dict(precision=4)),
+    ('', 1, {'nullable': True}),
+    ('-0.01', 3, {'rules': [rules.cell.NumericLT(0)]}),
+    ('0', 3, {'rules': [rules.cell.NumericLTE(0)]}),
+    ('0.00', 3, {'rules': [rules.cell.NumericET(0)]}),
+    ('0', 3, {'rules': [rules.cell.NumericGTE(0)]}),
+    ('0.01', 3, {'rules': [rules.cell.NumericGT(0)]}),
+    ('0.1', 4, {'precision': 4}),
+    ('0.001', 4, {'precision': 3}),
+    ('0.0001', 5, {'precision': 4}),
 ])
 def test_currency_good(value, sig_dig, kwargs):
     fld = field.Currency(sig_dig, **kwargs)
@@ -139,8 +139,8 @@ def test_currency_bad(value, sig_dig, rules_list, err):
     ('1', 3, {}),
     ('12', 3, {}),
     ('123', 3, {}),
-    ('12', 2, dict(min_length=2)),
-    ('123', 3, dict(min_length=2))
+    ('12', 2, {'min_length': 2}),
+    ('123', 3, {'min_length': 2})
 ])
 def test_digit_good(value, max_length, kwargs):
     fld = field.Digit(max_length, **kwargs)
@@ -151,8 +151,8 @@ def test_digit_good(value, max_length, kwargs):
 @pytest.mark.parametrize('value,max_length,err,kwargs', [
     ('-123', 3, rules.cell.OnlyNumbers, {}),
     ('-123', 3, rules.cell.MaxChar, {}),
-    ('1', 2, rules.cell.MinChar, dict(min_length=2)),
-    ('123456', 3, rules.cell.MaxChar, dict(min_length=2))
+    ('1', 2, rules.cell.MinChar, {'min_length': 2}),
+    ('123456', 3, rules.cell.MaxChar, {'min_length': 2})
 ])
 def test_digit_bad(value, max_length, err, kwargs):
     fld = field.Digit(max_length, **kwargs)
@@ -166,15 +166,15 @@ def test_digit_bad(value, max_length, err, kwargs):
     ('0', 1, {}),
     ('1', 1, {}),
     ('1', 2, {}),
-    ('11', 2, dict(min_length=2)),
-    ('', 1, dict(nullable=True)),
-    ('-1', 1, dict(rules=[rules.cell.NumericLT(0)])),
-    ('-1', 1, dict(rules=[rules.cell.NumericLTE(0)])),
-    ('0', 1, dict(rules=[rules.cell.NumericLTE(0)])),
-    ('0', 1, dict(rules=[rules.cell.NumericET(0)])),
-    ('0', 1, dict(rules=[rules.cell.NumericGTE(0)])),
-    ('1', 1, dict(rules=[rules.cell.NumericGTE(0)])),
-    ('1', 1, dict(rules=[rules.cell.NumericGT(0)]))
+    ('11', 2, {'min_length': 2}),
+    ('', 1, {'nullable': True}),
+    ('-1', 1, {'rules': [rules.cell.NumericLT(0)]}),
+    ('-1', 1, {'rules': [rules.cell.NumericLTE(0)]}),
+    ('0', 1, {'rules': [rules.cell.NumericLTE(0)]}),
+    ('0', 1, {'rules': [rules.cell.NumericET(0)]}),
+    ('0', 1, {'rules': [rules.cell.NumericGTE(0)]}),
+    ('1', 1, {'rules': [rules.cell.NumericGTE(0)]}),
+    ('1', 1, {'rules': [rules.cell.NumericGT(0)]})
 ])
 def test_integer_good(value, max_length, kwargs):
     fld = field.Integer(max_length, **kwargs)
@@ -183,13 +183,13 @@ def test_integer_good(value, max_length, kwargs):
 
 
 @pytest.mark.parametrize('value,max_length,kwargs,err', [
-    ('0', 1, dict(rules=[rules.cell.NumericLT(0)]), rules.cell.NumericLT),
-    ('1', 1, dict(rules=[rules.cell.NumericLTE(0)]), rules.cell.NumericLTE),
-    ('1', 1, dict(rules=[rules.cell.NumericET(0)]), rules.cell.NumericET),
-    ('-1', 1, dict(rules=[rules.cell.NumericGTE(0)]), rules.cell.NumericGTE),
-    ('0', 1, dict(rules=[rules.cell.NumericGT(0)]), rules.cell.NumericGT),
+    ('0', 1, {'rules': [rules.cell.NumericLT(0)]}, rules.cell.NumericLT),
+    ('1', 1, {'rules': [rules.cell.NumericLTE(0)]}, rules.cell.NumericLTE),
+    ('1', 1, {'rules': [rules.cell.NumericET(0)]}, rules.cell.NumericET),
+    ('-1', 1, {'rules': [rules.cell.NumericGTE(0)]}, rules.cell.NumericGTE),
+    ('0', 1, {'rules': [rules.cell.NumericGT(0)]}, rules.cell.NumericGT),
     ('', 1, {}, rules.cell.NotNull),
-    ('1', 2, dict(min_length=2), rules.cell.MinDigit),
+    ('1', 2, {'min_length': 2}, rules.cell.MinDigit),
     ('111', 2, {}, rules.cell.MaxDigit),
     ('00', 2, {}, rules.cell.NoLeadingZero),
     ('01', 2, {}, rules.cell.NoLeadingZero)
@@ -205,9 +205,9 @@ def test_integer_bad(value, max_length, kwargs, err):
     ('x', ['x'], {}),
     ('x', ['x', 'y'], {}),
     ('y', ['x', 'y'], {}),
-    ('', ['x'], dict(nullable=True)),
-    ('X', ['x'], dict(case_insensitive=True)),
-    ('x', ['X'], dict(case_insensitive=True))
+    ('', ['x'], {'nullable': True}),
+    ('X', ['x'], {'case_insensitive': True}),
+    ('x', ['X'], {'case_insensitive': True})
 ])
 def test_choice_good(value, choices, kwargs):
     fld = field.Choice(choices, **kwargs)
@@ -278,19 +278,19 @@ def test_column_compare_rule_bad():
     x = field.Field(rules=[rules.cell.GreaterThanColumn('x')])
     assert x._has_error('1', compare={'x': '1'}, error=rules.cell.GreaterThanColumn.rule_exception())
     with pytest.raises(AssertionError):
-        file_row_harness(['1', '0'], dict(x=field.Integer(1), y=x))
+        file_row_harness(['1', '0'], {'x': field.Integer(1), 'y': x})
 
 
 def test_column_unique_good():
     x = field.Field(rules=[rules.column.Unique()])
     assert not x.check_column(['1', '2', '3'])
-    file_row_harness(['1', '2', '3'], dict(x=x, y=field.Ignore(), z=field.Ignore()))
+    file_row_harness(['1', '2', '3'], {'x': x, 'y': field.Ignore(), 'z': field.Ignore()})
 
 
 def test_column_unique_bad():
     x = field.Field(rules=[rules.column.Unique()])
     assert x._has_error(['2', '2'], rules.column.Unique.rule_exception(), rule_type=field.cr.Rule)
-    file_row_harness(['2', '2'], dict(x=x, y=x))
+    file_row_harness(['2', '2'], {'x': x, 'y': x})
 
 
 def test_empty_field():

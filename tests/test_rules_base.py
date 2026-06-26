@@ -7,8 +7,7 @@ from rumydata.exception import UrNotMyDataError
 def recurse_subclasses(class_to_recurse):
     def generator(x):
         for y in x.__subclasses__():
-            for z in generator(y):
-                yield z
+            yield from generator(y)
         yield x
 
     return list(generator(class_to_recurse))

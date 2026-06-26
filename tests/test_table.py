@@ -4,12 +4,12 @@ from uuid import uuid4
 import pytest
 from openpyxl import Workbook
 
-from rumydata.field import Integer, Field, Text
-from rumydata.rules.column import Unique
-from rumydata.table import Layout, CsvFile, ExcelFile, _BaseFile
 from rumydata import exception as ex
-from tests.utils import mock_no_module
 from rumydata import rules
+from rumydata.field import Field, Integer, Text
+from rumydata.rules.column import Unique
+from rumydata.table import CsvFile, ExcelFile, Layout, _BaseFile
+from tests.utils import mock_no_module
 
 
 @pytest.fixture
@@ -151,7 +151,7 @@ def test_no_header_true_bad_plus(tmpdir):
     p.write_text('\n'.join(['aa,b', 'cc,d']))
     layout = Layout({'c1': Text(1), 'c2': Text(1)}, no_header=True)
     errors = CsvFile(layout)._list_errors(p)
-    assert True if len([x for x in errors if type(x) == ex.RowError]) == 2 else False
+    assert True if len([x for x in errors if isinstance(x, ex.RowError)]) == 2 else False
 
 
 def test_no_header_true_good(tmpdir):
@@ -208,8 +208,8 @@ def test_no_header_with_skip_rows(tmpdir):
     p.write_text('\n'.join(['aa', 'aa', 'aa']))
     layout = Layout({'c1': Text(1, rules=[Unique()])}, no_header=True)
     errors = CsvFile(layout, skip_rows=1)._list_errors(p)
-    assert True if all([len([x for x in errors if type(x) == ex.ColumnError]) == 1,
-                        len([x for x in errors if type(x) == ex.RowError]) == 2]) else False
+    assert True if all([len([x for x in errors if isinstance(x, ex.ColumnError)]) == 1,
+                        len([x for x in errors if isinstance(x, ex.RowError)]) == 2]) else False
 
 
 def test_skip_rows_bad_header(tmpdir):

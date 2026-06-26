@@ -35,7 +35,7 @@ def debug():
 
 
 def convert_to_excel_col_labels(col_num_str):
-    if type(col_num_str) == str:
+    if isinstance(col_num_str, str):
         col_num_str = int(col_num_str)
         print(col_num_str)
     if col_num_str <= 0:
@@ -97,7 +97,7 @@ class UrNotMyDataError(Exception):
 
         txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self._message}'
         if self._errors:
-            txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+            txt = '\n'.join([txt] + list(self._flatten_md(self._errors, depth)))
         return txt
 
     @classmethod
@@ -136,7 +136,7 @@ class CustomError(UrNotMyDataError):
 
         txt = f'{"  " * depth} - {self._message}'
         if self._errors:
-            txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+            txt = '\n'.join([txt] + list(self._flatten_md(self._errors, depth)))
         return txt
 
 

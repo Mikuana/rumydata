@@ -7,8 +7,7 @@ from rumydata.rules.cell import Rule
 def recurse_subclasses(class_to_recurse):
     def generator(x):
         for y in x.__subclasses__():
-            for z in generator(y):
-                yield z
+            yield from generator(y)
         yield x
 
     return list(generator(class_to_recurse))
@@ -91,7 +90,7 @@ def test_ascii_char(value: str, expected: bool):
     (['x'], 'y', False, {}),
     (['x', 'y'], 'y', True, {}),
     (['x'], ('x', {}), True, {}),
-    (['X'], ('x', {}), True, dict(case_insensitive=True))
+    (['X'], ('x', {}), True, {'case_insensitive': True})
 ])
 def test_choice(data, expected: bool, choice: list, kwargs):
     r = Choice(choice, **kwargs)
@@ -310,10 +309,10 @@ def test_numeric_lt(comparison: float, value: str, expected: bool):
     ('19010101', False, {}),
     ('9999-99-99', False, {}),
     ('2020-13-01', False, {}),
-    ('2020-01-01', True, dict(truncate_time=True)),
-    ('2020-01-01 00:00:00', True, dict(truncate_time=True)),
-    (('2020-01-01 00:00:00', {}), True, dict(truncate_time=True)),
-    ('2020-01-01 00:00:01', False, dict(truncate_time=True))
+    ('2020-01-01', True, {'truncate_time': True}),
+    ('2020-01-01 00:00:00', True, {'truncate_time': True}),
+    (('2020-01-01 00:00:00', {}), True, {'truncate_time': True}),
+    ('2020-01-01 00:00:01', False, {'truncate_time': True})
 ])
 def test_can_be_date_iso(value: str, expected: bool, kwargs: dict):
     r = CanBeDateIso(**kwargs)

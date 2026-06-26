@@ -38,9 +38,9 @@ class NoExtra(Rule):
 
     def _evaluator(self):
         modes = {
-            'exact': lambda x: all([y in self.definition for y in x]),
-            'startswith': lambda x: all([any([y.startswith(z) for z in self.definition]) for y in x]),
-            'contains': lambda x: all([any([z in y for z in self.definition]) for y in x])
+            'exact': lambda x: all(y in self.definition for y in x),
+            'startswith': lambda x: all(any(y.startswith(z) for z in self.definition) for y in x),
+            'contains': lambda x: all(any(z in y for z in self.definition) for y in x)
         }
         return modes[self.header_mode]
 
@@ -53,9 +53,9 @@ class NoMissing(Rule):
 
     def _evaluator(self):
         modes = {
-            'exact': lambda x: all([y in x for y in self.definition]),
-            'startswith': lambda x: all([any([z.startswith(y) for z in x]) for y in self.definition]),
-            'contains': lambda x: all([any([y in z for z in x]) for y in self.definition])
+            'exact': lambda x: all(y in x for y in self.definition),
+            'startswith': lambda x: all(any(z.startswith(y) for z in x) for y in self.definition),
+            'contains': lambda x: all(any(y in z for z in x) for y in self.definition)
         }
         return modes[self.header_mode]
 

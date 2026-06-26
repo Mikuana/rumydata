@@ -14,11 +14,12 @@ arguments, including rules extension.
 See the rumydata.rules submodule to learn more about the use of rules to extend
 field class behavior.
 """
-from typing import Union, Tuple, Dict, List
+from typing import Dict, List, Tuple, Union
 
 from rumydata import exception as ex
 from rumydata._base import _BaseSubject
-from rumydata.rules import cell as clr, column as cr
+from rumydata.rules import cell as clr
+from rumydata.rules import column as cr
 
 __all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore',
            'Empty', 'Number']
@@ -79,10 +80,10 @@ class Field(_BaseSubject):
         assert not errors, str(errors)
 
     def _check_for_nullable_rules(self):
-        return any([x for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+        return any(x for x in self.rules if isinstance(x, clr.NotNullIfCompare))
 
     def _check_nullable_rule_results(self, data):
-        return all([x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+        return all(x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare))
 
     def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
         """
@@ -138,7 +139,7 @@ class Field(_BaseSubject):
         return compares
 
     def _has_rule_type(self, rule_type):
-        return any([issubclass(type(r), rule_type) for r in self.rules])
+        return any(issubclass(type(r), rule_type) for r in self.rules)
 
     def _digest(self):
         dig = super()._digest()

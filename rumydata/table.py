@@ -5,13 +5,17 @@ This submodule contains the File class, and it's closely related Layout class.
 """
 import csv
 from pathlib import Path
-from typing import Union, Dict, List, Iterable
+from typing import Dict, Iterable, List, Union
 from uuid import uuid4
 
 from rumydata import exception as ex
 from rumydata import field
 from rumydata._base import _BaseSubject
-from rumydata.rules import table, column as cr, header as hr, row as rr, cell as clr
+from rumydata.rules import cell as clr
+from rumydata.rules import column as cr
+from rumydata.rules import header as hr
+from rumydata.rules import row as rr
+from rumydata.rules import table
 
 __all__ = ['Layout', 'CsvFile', 'ExcelFile', 'ParquetFile']
 
@@ -156,16 +160,16 @@ class Layout(_BaseSubject):
                       for k, v in self.layout.items()}
 
             # if empty row is okay, and all fields are either empty, or Ignore class
-            if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
+            if self.empty_row_ok and all(('' if ignore[k] else v) == '' for k, v in row.items()):
                 return
 
             for cix, (name, val) in enumerate(row.items()):
                 t = self.layout[name]
                 comp = {k: row[k] for k in t._comparison_columns()}
-                check_args = dict(
-                    data=(val, comp), rule_type=clr.Rule,
-                    rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format
-                )
+                check_args = {
+                    'data': (val, comp), 'rule_type': clr.Rule,
+                    'rix': rix, 'cix': cix, 'name': name, 'use_excel_cell_format': self.use_excel_cell_format
+                }
                 ce = t._check(**check_args)
                 if ce:
                     e.append(ce)
@@ -400,11 +404,11 @@ class ExcelFile(_BaseFile):
     def __init__(self, layout: Union[Layout, Dict], skip_rows=0, max_errors=100, **kwargs):
         try:
             __import__('openpyxl')
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as e:
             raise ModuleNotFoundError(
                 "openpyxl not available for import. You must install this"
                 " package before you can use the ExcelFile class."
-            )
+            ) from e
 
         x = {x: kwargs.pop(x, None) for x in ['sheet']}
         self.excel_kwargs = {k: v for k, v in x.items() if v}
@@ -462,11 +466,11 @@ class ParquetFile(_BaseFile):
         try:
             for mod in ('pandas', 'pyarrow'):
                 __import__(mod)
-        except ModuleNotFoundError:
+        except ModuleNotFoundError as e:
             # noinspection PyUnboundLocalVariable
             raise ModuleNotFoundError(
                 f"{mod} not available for import. You must install it to use {self.__class__.__name__}"
-            )
+            ) from e
 
         x = {x: kwargs.pop(x, None) for x in ['sheet']}
         self.parquet_kwargs = {k: v for k, v in x.items() if v}
@@ -485,8 +489,7 @@ class ParquetFile(_BaseFile):
 
                 def gen():
                     yield df.columns.to_list()
-                    for x in df.itertuples(index=False):
-                        yield x
+                    yield from df.itertuples(index=False)
 
                 return gen()
 

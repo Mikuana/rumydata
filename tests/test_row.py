@@ -1,7 +1,8 @@
 import pytest
 
-from rumydata import table, Layout, field
-from rumydata.rules import row as rr, header as hr
+from rumydata import Layout, field, table
+from rumydata.rules import header as hr
+from rumydata.rules import row as rr
 from tests.utils import file_row_harness
 
 

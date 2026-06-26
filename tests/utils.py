@@ -1,13 +1,12 @@
 import csv
 import tempfile
 from pathlib import Path
-from typing import List, Union, Tuple
+from typing import List, Union
 from unittest.mock import DEFAULT
-
 
 import openpyxl
 
-from rumydata import Layout, CsvFile, ExcelFile
+from rumydata import CsvFile, ExcelFile, Layout
 from rumydata.field import Field
 
 

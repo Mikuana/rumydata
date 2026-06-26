@@ -7,8 +7,7 @@ from rumydata.rules.column import Rule
 def recurse_subclasses(class_to_recurse):
     def generator(x):
         for y in x.__subclasses__():
-            for z in generator(y):
-                yield z
+            yield from generator(y)
         yield x
 
     return list(generator(class_to_recurse))
@@ -21,7 +20,7 @@ def test_rule_prepare(rule):
     comparison values that may be required.
     """
     r = rule(*rule._default_args)
-    prep = r._prepare((['x', 'y']))
+    prep = r._prepare(['x', 'y'])
     assert isinstance(prep, tuple)
     assert isinstance(prep[0], list)
 

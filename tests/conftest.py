@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from rumydata.field import Text, Integer, Date, Choice
+from rumydata.field import Choice, Date, Integer, Text
 
 
 @pytest.fixture()

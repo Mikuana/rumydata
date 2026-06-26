@@ -27,7 +27,7 @@ def test_view_documentation(choice, ext, no_md, mocker):
     mocker.patch('builtins.print')
     mocker.patch('builtins.input', return_value=choice)
 
-    expected = dict(extension=ext, output='open')
+    expected = {'extension': ext, 'output': 'open'}
     ret = menu(Layout({'x': Integer(1)}))
     for k, v in expected.items():
         assert ret[k] == v
@@ -59,7 +59,7 @@ def test_view_validation(choice, ext, no_md, valid_file, tmpdir, mocker):
     mocker.patch('builtins.print')
     mocker.patch('builtins.input', side_effect=choice)
 
-    expected = dict(extension=ext, output='open')
+    expected = {'extension': ext, 'output': 'open'}
     ret = menu(Layout({'x': Integer(1)}))
     for k, v in expected.items():
         assert ret[k] == v
@@ -67,12 +67,12 @@ def test_view_validation(choice, ext, no_md, valid_file, tmpdir, mocker):
 
 @pytest.mark.parametrize('no_md', [False, True])
 @pytest.mark.parametrize('choice,expected', [
-    (['1', '0', '0'], dict(extension='md')),
-    (['Generate Documentation', 'markdown', 'print'], dict(extension='md')),
-    (['Generate Documentation', 'html', 'print'], dict(extension='html')),
-    (['3', '0', 'x', '0'], dict(extension='md')),
-    (['Generate Validation', 'markdown', 'x', 'print'], dict(extension='md')),
-    (['Generate Validation', 'html', 'x', 'print'], dict(extension='html')),
+    (['1', '0', '0'], {'extension': 'md'}),
+    (['Generate Documentation', 'markdown', 'print'], {'extension': 'md'}),
+    (['Generate Documentation', 'html', 'print'], {'extension': 'html'}),
+    (['3', '0', 'x', '0'], {'extension': 'md'}),
+    (['Generate Validation', 'markdown', 'x', 'print'], {'extension': 'md'}),
+    (['Generate Validation', 'html', 'x', 'print'], {'extension': 'html'}),
 ])
 def test_generate_print(choice, expected: dict, no_md, mocker):
     if no_md:
@@ -94,12 +94,12 @@ def test_generate_print(choice, expected: dict, no_md, mocker):
 
 @pytest.mark.parametrize('no_md', [False, True])
 @pytest.mark.parametrize('choice,expected', [
-    (['1', '0', '2'], dict(extension='md')),
-    (['Generate Documentation', 'markdown', 'save'], dict(extension='md')),
-    (['Generate Documentation', 'html', 'save'], dict(extension='html')),
-    (['3', '0', 'x', '2'], dict(extension='md')),
-    (['Generate Validation', 'markdown', 'x', 'save'], dict(extension='md')),
-    (['Generate Validation', 'html', 'x', 'save'], dict(extension='html')),
+    (['1', '0', '2'], {'extension': 'md'}),
+    (['Generate Documentation', 'markdown', 'save'], {'extension': 'md'}),
+    (['Generate Documentation', 'html', 'save'], {'extension': 'html'}),
+    (['3', '0', 'x', '2'], {'extension': 'md'}),
+    (['Generate Validation', 'markdown', 'x', 'save'], {'extension': 'md'}),
+    (['Generate Validation', 'html', 'x', 'save'], {'extension': 'html'}),
 ])
 def test_generate_save(choice, expected: dict, no_md, tmpdir, mocker):
     if no_md:
