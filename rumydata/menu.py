@@ -5,7 +5,8 @@ from time import sleep
 from typing import Tuple
 from warnings import warn
 
-from rumydata.table import CsvFile, Layout
+from rumydata.table import CsvFile
+from rumydata.table import Layout
 
 __all__ = ['menu']
 

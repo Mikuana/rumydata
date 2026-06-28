@@ -3,7 +3,8 @@ import re
 import urllib.request
 from pathlib import Path
 
-from packaging.version import Version, parse
+from packaging.version import Version
+from packaging.version import parse
 
 try:
     from importlib.util import find_spec

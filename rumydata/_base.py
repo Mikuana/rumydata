@@ -5,7 +5,8 @@ This submodule contains the base objects that are used by other modules in this
 package. This is not intended for use by end-users.
 """
 
-from typing import List, Union
+from typing import List
+from typing import Union
 
 import rumydata
 from rumydata.exception import UrNotMyDataError

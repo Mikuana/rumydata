@@ -59,6 +59,12 @@ select = [
 ]
 ignore = []
 
+[tool.ruff.lint.isort]
+known-first-party = ["rumydata"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+split-on-trailing-comma = true
+force-single-line = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=rumydata --cov-report=term-missing"

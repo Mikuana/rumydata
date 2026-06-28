@@ -12,7 +12,10 @@ the constructor of the classes in the field submodule.
 """
 import re
 from datetime import datetime
-from typing import Dict, List, Tuple, Union
+from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Union
 
 from rumydata._base import _BaseRule
 

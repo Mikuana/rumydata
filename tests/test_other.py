@@ -19,7 +19,9 @@ from rumydata import field
 from rumydata.rules import column as cr
 from rumydata.rules import header as hr
 from rumydata.rules import table as tr
-from rumydata.table import CsvFile, ExcelFile, Layout
+from rumydata.table import CsvFile
+from rumydata.table import ExcelFile
+from rumydata.table import Layout
 
 
 def write_row(directory, columns: rumydata.table.Layout, row, rows=False):

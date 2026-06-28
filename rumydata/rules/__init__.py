@@ -18,6 +18,10 @@ The rules are divided by the various types:
    matches a particular naming convention.
 """
 
-from rumydata.rules import cell, column, header, row, table
+from rumydata.rules import cell
+from rumydata.rules import column
+from rumydata.rules import header
+from rumydata.rules import row
+from rumydata.rules import table
 
 __all__ = ['cell', 'column', 'row', 'header', 'table']

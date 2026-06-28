@@ -14,7 +14,10 @@ arguments, including rules extension.
 See the rumydata.rules submodule to learn more about the use of rules to extend
 field class behavior.
 """
-from typing import Dict, List, Tuple, Union
+from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Union
 
 from rumydata import exception as ex
 from rumydata._base import _BaseSubject

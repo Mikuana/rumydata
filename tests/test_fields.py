@@ -3,8 +3,10 @@ from datetime import datetime as dt
 import pytest
 
 from rumydata import exception as ex
-from rumydata import field, rules
-from tests.utils import file_cell_harness, file_row_harness
+from rumydata import field
+from rumydata import rules
+from tests.utils import file_cell_harness
+from tests.utils import file_row_harness
 
 
 def recurse_subclasses(class_to_recurse):

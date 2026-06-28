@@ -5,7 +5,10 @@ This submodule contains the File class, and it's closely related Layout class.
 """
 import csv
 from pathlib import Path
-from typing import Dict, Iterable, List, Union
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Union
 from uuid import uuid4
 
 from rumydata import exception as ex
@@ -283,7 +286,10 @@ class _BaseFile(_BaseSubject):
                     self.layout.rules[ix].columns_length = self.layout.field_count()
         return re
 
-    def _process_row(self, row: List[str], rix: int, max_error_rule, e: list, column_cache: dict, column_cache_map: dict) -> bool:
+    def _process_row(
+            self, row: List[str], rix: int, max_error_rule, e: list,
+            column_cache: dict, column_cache_map: dict
+    ) -> bool:
         row = self._row_handler(row)
         if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header
             re = self._handle_header(row, rix)

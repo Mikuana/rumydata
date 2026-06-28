@@ -6,9 +6,14 @@ from openpyxl import Workbook
 
 from rumydata import exception as ex
 from rumydata import rules
-from rumydata.field import Field, Integer, Text
+from rumydata.field import Field
+from rumydata.field import Integer
+from rumydata.field import Text
 from rumydata.rules.column import Unique
-from rumydata.table import CsvFile, ExcelFile, Layout, _BaseFile
+from rumydata.table import CsvFile
+from rumydata.table import ExcelFile
+from rumydata.table import Layout
+from rumydata.table import _BaseFile
 from tests.utils import mock_no_module
 
 
