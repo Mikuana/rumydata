@@ -149,4 +149,5 @@ cython_debug/
 
 # Ignore JetBrains files
 .idea/
+.junie/
 AGENTS.md
