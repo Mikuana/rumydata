@@ -69,7 +69,7 @@ force-single-line = true
 testpaths = ["tests"]
 addopts = "--cov=rumydata --cov-report=term-missing"
 markers = [
-    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "slow: marks tests as slow (skip with '--skipslow')",
 ]
 
 [tool.coverage.run]
