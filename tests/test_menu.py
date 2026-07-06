@@ -16,7 +16,7 @@ from tests.utils import mock_no_module
 def test_view_documentation(choice, ext, no_md, mocker):
     """
     View Documentation option opens a browser with generated documentation. When
-    the markdown module is available, this is shown in HTML, otherwise displayed
+    the Markdown module is available, this is shown in HTML, otherwise displayed
     as a raw .md text file.
     """
     if no_md:
@@ -42,7 +42,7 @@ def test_view_documentation(choice, ext, no_md, mocker):
 def test_view_validation(choice, ext, no_md, valid_file, tmpdir, mocker):
     """
     View Validation option opens a browser with generated documentation. When
-    the markdown module is available, this is shown in HTML, otherwise displayed
+    the Markdown module is available, this is shown in HTML, otherwise displayed
     as a raw .md text file.
     """
     if no_md:
