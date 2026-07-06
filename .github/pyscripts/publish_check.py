@@ -3,32 +3,35 @@ import re
 import urllib.request
 from pathlib import Path
 
+from packaging.version import Version
 from packaging.version import parse
 
 try:
-    from importlib.metadata import version
+    from importlib.util import find_spec
+
+    if find_spec("importlib.metadata"):
+        from importlib.metadata import version as _version  # noqa: F401
 except ImportError:
     # noinspection PyUnresolvedReferences,PyUnresolvedReferences
-    from importlib_metadata import version
-
-from distutils.version import LooseVersion
+    pass
 
 
 def read_version():
     try:
-        v = [x for x in Path('rumydata/__init__.py').open() if x.startswith('__version__')][0]
+        v = [x for x in Path("rumydata/__init__.py").open() if x.startswith("__version__")][0]
         v = re.match(r"__version__ *= *'(.*?)'\n", v)[1]
         return v
     except Exception as e:
-        raise RuntimeError(f"Unable to read version string: {e}")
+        raise RuntimeError(f"Unable to read version string: {e}") from e
 
 
-pypi_url = f'https://pypi.org/pypi/rumydata/json'
+pypi_url = "https://pypi.org/pypi/rumydata/json"
 response = urllib.request.urlopen(pypi_url).read().decode()
-latest_version = max(LooseVersion(s) for s in json.loads(response)['releases'].keys())
+releases = json.loads(response)["releases"].keys()
+latest_version = max(Version(s) for s in releases)
 setup_version = read_version()
 
 if parse(setup_version) > parse(str(latest_version)):
-    print(f'PASS: version {setup_version} exceeds latest published, {latest_version}')
+    print(f"PASS: version {setup_version} exceeds latest published, {latest_version}")
 else:
-    raise Exception(f'FAIL: version {setup_version} does not exceed latest published {latest_version}')
+    raise Exception(f"FAIL: version {setup_version} does not exceed latest published {latest_version}")

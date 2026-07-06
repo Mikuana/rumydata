@@ -25,7 +25,7 @@ For most users, the recommended method to install is via pip::
 
     pip install rumydata
 
-This package requires python version 3.7 or higher. By default there are no
+This package requires python version 3.8 or higher. By default there are no
 third-party package dependencies. However, some extras are available.
 
 **Excel**::

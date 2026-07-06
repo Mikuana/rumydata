@@ -10,16 +10,18 @@ from typing import List
 
 from rumydata._base import _BaseRule
 
+__all__ = ["RowLengthLTE", "RowLengthGTE"]
+
 
 class Rule(_BaseRule):
-    """ Row Rule """
+    """Row Rule"""
 
     def _prepare(self, data: List[str]) -> tuple:
-        return data,
+        return (data,)
 
 
 class RowLengthLTE(Rule):
-    """ Row length less than or equal to Rule """
+    """Row length less than or equal to Rule"""
 
     _default_args = (1,)
 
@@ -31,11 +33,11 @@ class RowLengthLTE(Rule):
         return lambda x: len(x) <= self.columns_length
 
     def _explain(self) -> str:
-        return f'row length must be equal to {str(self.columns_length)}, not greater'
+        return f"row length must be equal to {str(self.columns_length)}, not greater"
 
 
 class RowLengthGTE(Rule):
-    """ Row greater than or equal to Rule """
+    """Row greater than or equal to Rule"""
 
     _default_args = (1,)
 
@@ -47,4 +49,4 @@ class RowLengthGTE(Rule):
         return lambda x: len(x) >= self.columns_length
 
     def _explain(self) -> str:
-        return f'row length must be equal to {str(self.columns_length)}, not less'
+        return f"row length must be equal to {str(self.columns_length)}, not less"

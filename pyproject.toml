@@ -1,0 +1,80 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rumydata"
+dynamic = ["version"]
+authors = [
+  { name="Christopher Boyd" },
+]
+description = "A python package for validating expectations of text data, and safely reporting exceptions"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/Mikuana/rumydata"
+
+[project.optional-dependencies]
+Excel = ["openpyxl"]
+Parquet = ["pandas", "pyarrow"]
+HTML = ["markdown"]
+Testing = [
+    "pytest",
+    "pytest-mock",
+    "pytest-cov",
+    "openpyxl",
+    "markdown",
+    "pandas",
+    "pyarrow",
+    "packaging",
+    "ruff",
+    "pre-commit",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "rumydata.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["rumydata*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "C",   # flake8-comprehensions
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+]
+ignore = []
+
+[tool.ruff.lint.isort]
+known-first-party = ["rumydata"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+split-on-trailing-comma = true
+force-single-line = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=rumydata --cov-report=term-missing"
+markers = [
+    "slow: marks tests as slow (skip with '--skipslow')",
+]
+
+[tool.coverage.run]
+source = ["rumydata"]
+
+[tool.coverage.report]
+show_missing = true

@@ -120,7 +120,7 @@ object and presents it in a straightforward user interface::
 
     menu(layout)
 
-Assuming that Bob already has python 3.7+ installed, once he receives the script
+Assuming that Bob already has python 3.8+ installed, once he receives the script
 `alice_validation.py`, all he needs to do is install this package via pip, then
 execute this script with the command::
 

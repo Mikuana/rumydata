@@ -10,35 +10,73 @@ row, in the case of the ColumnComparisonRule class.
 These rules are intended to be used by adding them directly to rules argument in
 the constructor of the classes in the field submodule.
 """
+
 import re
 from datetime import datetime
-from typing import Union, Tuple, Dict, List
+from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Union
 
 from rumydata._base import _BaseRule
 
 __all__ = [
-    'NotNull', 'ExactChar', 'MinChar', 'MaxChar', 'AsciiChar', 'NonTrim', 'Choice',
-    'MinDigit', 'MaxDigit', 'OnlyNumbers', 'NoLeadingZero', 'CanBeFloat',
-    'CanBeInteger', 'NumericDecimals', 'LengthComparison', 'LengthGT',
-    'LengthGTE', 'LengthET', 'LengthLTE', 'LengthLT', 'NumericComparison',
-    'NumericGT', 'NumericGTE', 'NumericET', 'NumericLTE', 'NumericLT',
-    'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
-    'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
-    'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
-    'NotNullIfOtherEquals', 'NoScientific', 'CanBeFloat',
-    'make_static_cell_rule'
+    "NotNull",
+    "ExactChar",
+    "MinChar",
+    "MaxChar",
+    "AsciiChar",
+    "NonTrim",
+    "Choice",
+    "MinDigit",
+    "MaxDigit",
+    "OnlyNumbers",
+    "NoLeadingZero",
+    "CanBeFloat",
+    "CanBeInteger",
+    "NumericDecimals",
+    "LengthComparison",
+    "LengthGT",
+    "LengthGTE",
+    "LengthET",
+    "LengthLTE",
+    "LengthLT",
+    "NumericComparison",
+    "NumericGT",
+    "NumericGTE",
+    "NumericET",
+    "NumericLTE",
+    "NumericLT",
+    "DateRule",
+    "CanBeDateIso",
+    "DateGT",
+    "DateGTE",
+    "DateET",
+    "DateLTE",
+    "DateLT",
+    "GreaterThanColumn",
+    "NotNullIfCompare",
+    "GreaterThanOrEqualColumn",
+    "OtherMustExist",
+    "OtherCantExist",
+    "LessThanColumn",
+    "LessThanOrEqualColumn",
+    "NotNullIfOtherEquals",
+    "NoScientific",
+    "CanBeFloat",
+    "make_static_cell_rule",
 ]
 
 
 class Rule(_BaseRule):
-    """ Cell Rule """
+    """Cell Rule"""
 
     @staticmethod
     def _pre_process(data: Union[str, Tuple[str, Dict]], **kwargs) -> Union[str, Tuple[str, Dict]]:
         d1 = data if isinstance(data, str) else data[0]
         d2 = data[1] if isinstance(data, tuple) else {}
 
-        if kwargs.get('strip'):
+        if kwargs.get("strip"):
             d1 = d1.strip()
             d2 = {k: v.strip() for k, v in d2.items()}
 
@@ -49,9 +87,9 @@ class Rule(_BaseRule):
 
     def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if isinstance(data, str):
-            return data,
+            return (data,)
         else:
-            return data[0],
+            return (data[0],)
 
 
 def make_static_cell_rule(func, assertion) -> Rule:
@@ -70,7 +108,6 @@ def make_static_cell_rule(func, assertion) -> Rule:
     """
 
     class FactoryRule(Rule):
-
         def _evaluator(self):
             return func
 
@@ -81,17 +118,17 @@ def make_static_cell_rule(func, assertion) -> Rule:
 
 
 class NotNull(Rule):
-    """ Cell not null Rule """
+    """Cell not null Rule"""
 
     def _evaluator(self):
-        return lambda x: x != ''
+        return lambda x: x != ""
 
     def _explain(self) -> str:
-        return 'cannot be empty/blank'
+        return "cannot be empty/blank"
 
 
 class ExactChar(Rule):
-    """ Cell exact character length Rule """
+    """Cell exact character length Rule"""
 
     _default_args = (1,)
 
@@ -103,11 +140,11 @@ class ExactChar(Rule):
         return lambda x: len(x) == self.exact_length
 
     def _explain(self) -> str:
-        return f'must be exactly {str(self.exact_length)} characters'
+        return f"must be exactly {str(self.exact_length)} characters"
 
 
 class MinChar(Rule):
-    """ Cell minimum character length Rule """
+    """Cell minimum character length Rule"""
 
     _default_args = (1,)
 
@@ -119,11 +156,11 @@ class MinChar(Rule):
         return lambda x: len(x) >= self.min_length
 
     def _explain(self) -> str:
-        return f'must be at least {str(self.min_length)} characters'
+        return f"must be at least {str(self.min_length)} characters"
 
 
 class MaxChar(Rule):
-    """ Cell maximum character length Rule """
+    """Cell maximum character length Rule"""
 
     _default_args = (1,)
 
@@ -135,33 +172,33 @@ class MaxChar(Rule):
         return lambda x: len(x) <= self.max_length
 
     def _explain(self) -> str:
-        return f'must be no more than {str(self.max_length)} characters'
+        return f"must be no more than {str(self.max_length)} characters"
 
 
 class AsciiChar(Rule):
-    """ Cell contains only ASCII character Rule """
+    """Cell contains only ASCII character Rule"""
 
     def _evaluator(self):
         return lambda x: all(ord(c) < 128 for c in x)
 
     def _explain(self) -> str:
-        return 'must have only ASCII characters'
+        return "must have only ASCII characters"
 
 
 class NonTrim(Rule):
-    """ Cell does not have whitespace characters at beginning or end """
+    """Cell does not have whitespace characters at beginning or end"""
 
     def _evaluator(self):
         return lambda x: x == str(x).strip()
 
     def _explain(self) -> str:
-        return 'Value has trailing or leading whitespace'
+        return "Value has trailing or leading whitespace"
 
 
 class Choice(Rule):
-    """ Cell choice Rule """
+    """Cell choice Rule"""
 
-    _default_args = (['x'],)
+    _default_args = (["x"],)
 
     def __init__(self, choices: List[str], case_insensitive=False):
         super().__init__()
@@ -172,7 +209,7 @@ class Choice(Rule):
     def _prepare(self, data: Union[List[str], Tuple[str, Dict]]) -> tuple:
         if self.case_insensitive:
             if isinstance(data, str):
-                data = data.lower(),
+                data = (data.lower(),)
             else:
                 data = data[0].lower(), data[1]
 
@@ -182,10 +219,7 @@ class Choice(Rule):
         return lambda x: x in self.eval_choices
 
     def _explain(self) -> str:
-        return (
-            f'must be one of {self.choices}'
-            f'{" (case insensitive)" if self.case_insensitive else " (case sensitive)"}'
-        )
+        return f"must be one of {self.choices}{' (case insensitive)' if self.case_insensitive else ' (case sensitive)'}"
 
 
 class MinDigit(Rule):
@@ -196,6 +230,7 @@ class MinDigit(Rule):
     exceeds the specified minimum. Used to evaluate length of significant digits
     in numeric strings that might contain formatting.
     """
+
     _default_args = (1,)
 
     def __init__(self, min_length):
@@ -203,10 +238,10 @@ class MinDigit(Rule):
         self.min_length = min_length
 
     def _evaluator(self):
-        return lambda x: len(re.sub(r'[^\d]', '', x)) >= self.min_length
+        return lambda x: len(re.sub(r"[^\d]", "", x)) >= self.min_length
 
     def _explain(self) -> str:
-        return f'must have at least {str(self.min_length)} digit characters'
+        return f"must have at least {str(self.min_length)} digit characters"
 
 
 class MaxDigit(Rule):
@@ -217,6 +252,7 @@ class MaxDigit(Rule):
     or equal to the specified minimum. Used to evaluate length of significant
     digits in numeric strings that might contain formatting.
     """
+
     _default_args = (1,)
 
     def __init__(self, max_length):
@@ -224,20 +260,20 @@ class MaxDigit(Rule):
         self.max_length = max_length
 
     def _evaluator(self):
-        return lambda x: len(re.sub(r'[^\d]', '', x)) <= self.max_length
+        return lambda x: len(re.sub(r"[^\d]", "", x)) <= self.max_length
 
     def _explain(self) -> str:
-        return f'must have no more than {self.max_length} digit characters'
+        return f"must have no more than {self.max_length} digit characters"
 
 
 class OnlyNumbers(Rule):
-    """ Cell only digit characters Rule """
+    """Cell only digit characters Rule"""
 
     def _evaluator(self):
-        return lambda x: bool(re.fullmatch(r'\d+', x))
+        return lambda x: bool(re.fullmatch(r"\d+", x))
 
     def _explain(self) -> str:
-        return 'must only contain characters 0-9'
+        return "must only contain characters 0-9"
 
 
 class NoLeadingZero(Rule):
@@ -249,10 +285,10 @@ class NoLeadingZero(Rule):
     """
 
     def _evaluator(self):
-        return lambda x: bool(re.fullmatch(r'(0|([1-9]\d*))', re.sub(r'[^\d]', '', x)))
+        return lambda x: bool(re.fullmatch(r"(0|([1-9]\d*))", re.sub(r"[^\d]", "", x)))
 
     def _explain(self) -> str:
-        return 'cannot have a leading zero digit'
+        return "cannot have a leading zero digit"
 
 
 class NoScientific(Rule):
@@ -263,14 +299,14 @@ class NoScientific(Rule):
     """
 
     def _evaluator(self):
-        return lambda x: bool(re.fullmatch(r'^([+\-\d])[0-9.]*[eE+\-]{1,2}.*$', x)) is False
+        return lambda x: bool(re.fullmatch(r"^([+\-\d])[0-9.]*[eE+\-]{1,2}.*$", x)) is False
 
     def _explain(self) -> str:
-        return 'cannot have scientific notation'
+        return "cannot have scientific notation"
 
 
 class CanBeFloat(Rule):
-    """ Cell can be float Rule """
+    """Cell can be float Rule"""
 
     def _evaluator(self):
         def fun(x):
@@ -282,11 +318,11 @@ class CanBeFloat(Rule):
         return fun
 
     def _explain(self) -> str:
-        return 'can be coerced into a float value'
+        return "can be coerced into a float value"
 
 
 class CanBeInteger(Rule):
-    """ Cell can be integer Rule """
+    """Cell can be integer Rule"""
 
     def _evaluator(self):
         def fun(x):
@@ -298,78 +334,78 @@ class CanBeInteger(Rule):
         return fun
 
     def _explain(self) -> str:
-        return 'can be coerced into an integer value'
+        return "can be coerced into an integer value"
 
 
 class NumericDecimals(Rule):
-    """ Cell has maximum decimals Rule """
+    """Cell has maximum decimals Rule"""
 
     def __init__(self, max_decimals=2):
         super().__init__()
         self.decimals = max_decimals
 
     def _evaluator(self):
-        pat = re.compile(r'-?\d+(\.\d{1,' + str(self.decimals) + '})?')
+        pat = re.compile(r"-?\d+(\.\d{1," + str(self.decimals) + "})?")
         return lambda x: bool(pat.fullmatch(x))
 
     def _explain(self) -> str:
-        return f'cannot have more than {self.decimals} digits after the decimal point'
+        return f"cannot have more than {self.decimals} digits after the decimal point"
 
 
 class LengthComparison(Rule):
-    """ Base length comparison Rule """
+    """Base length comparison Rule"""
 
-    comparison_language = 'N/A'
-    _default_args = ('x',)
+    comparison_language = "N/A"
+    _default_args = ("x",)
 
     def __init__(self, comparison_value):
         super().__init__()
         self.comparison_value = comparison_value
 
     def _explain(self) -> str:
-        return f'{self.comparison_language} {str(self.comparison_value)}'
+        return f"{self.comparison_language} {str(self.comparison_value)}"
 
 
 class LengthGT(LengthComparison):
-    """ Length greater than comparison Rule """
+    """Length greater than comparison Rule"""
 
-    comparison_language = 'greater than'
+    comparison_language = "greater than"
 
     def _evaluator(self):
         return lambda x: len(x) > self.comparison_value
 
 
 class LengthGTE(LengthComparison):
-    """ Length greater than or equal to comparison Rule """
+    """Length greater than or equal to comparison Rule"""
 
-    comparison_language = 'greater than or equal to'
+    comparison_language = "greater than or equal to"
 
     def _evaluator(self):
         return lambda x: len(x) >= self.comparison_value
 
 
 class LengthET(LengthComparison):
-    """ Length equal to comparison Rule """
+    """Length equal to comparison Rule"""
 
-    comparison_language = 'equal to'
+    comparison_language = "equal to"
 
     def _evaluator(self):
         return lambda x: len(x) == self.comparison_value
 
 
 class LengthLTE(LengthComparison):
-    """ Length less than or equal to comparison Rule """
+    """Length less than or equal to comparison Rule"""
 
-    comparison_language = 'less than or equal to'
+    comparison_language = "less than or equal to"
 
     def _evaluator(self):
         return lambda x: len(x) <= self.comparison_value
 
 
 class LengthLT(LengthComparison):
-    """ Length less than comparison Rule """
+    """Length less than comparison Rule"""
 
-    comparison_language = 'less than'
+    comparison_language = "less than"
 
     def _evaluator(self):
         return lambda x: len(x) < self.comparison_value
@@ -383,93 +419,94 @@ class NumericComparison(Rule):
     to a float value.
     """
 
-    comparison_language = 'N/A'
-    _default_args = ('x',)
+    comparison_language = "N/A"
+    _default_args = ("x",)
 
     def __init__(self, comparison_value):
         super().__init__()
         self.comparison_value = comparison_value
 
     def _explain(self) -> str:
-        return f'{self.comparison_language} {str(self.comparison_value)}'
+        return f"{self.comparison_language} {str(self.comparison_value)}"
 
 
 class NumericGT(NumericComparison):
-    """ Numeric greater than comparison Rule """
+    """Numeric greater than comparison Rule"""
 
-    comparison_language = 'greater than'
+    comparison_language = "greater than"
 
     def _evaluator(self):
         return lambda x: float(x) > self.comparison_value
 
 
 class NumericGTE(NumericComparison):
-    """ Numeric greater than or equal to comparison Rule """
+    """Numeric greater than or equal to comparison Rule"""
 
-    comparison_language = 'greater than or equal to'
+    comparison_language = "greater than or equal to"
 
     def _evaluator(self):
         return lambda x: float(x) >= self.comparison_value
 
 
 class NumericET(NumericComparison):
-    """ Numeric equal to comparison Rule """
+    """Numeric equal to comparison Rule"""
 
-    comparison_language = 'equal to'
+    comparison_language = "equal to"
 
     def _evaluator(self):
         return lambda x: float(x) == self.comparison_value
 
 
 class NumericLTE(NumericComparison):
-    """ Numeric less than or equal to comparison Rule """
+    """Numeric less than or equal to comparison Rule"""
 
-    comparison_language = 'less than or equal to'
+    comparison_language = "less than or equal to"
 
     def _evaluator(self):
         return lambda x: float(x) <= self.comparison_value
 
 
 class NumericLT(NumericComparison):
-    """ Numeric less than comparison Rule """
-    comparison_language = 'less than'
+    """Numeric less than comparison Rule"""
+
+    comparison_language = "less than"
 
     def _evaluator(self):
         return lambda x: float(x) < self.comparison_value
 
 
 class DateRule(Rule):
-    """ Base date Rule """
+    """Base date Rule"""
 
     def __init__(self, **kwargs):
-        self.truncate_time = kwargs.pop('truncate_time', False)
+        self.truncate_time = kwargs.pop("truncate_time", False)
         super().__init__()
 
     def _prepare(self, data: Union[str, Tuple[str, Dict]]) -> tuple:
         if self.truncate_time:
-            no_time = ' 00:00:00'
+            no_time = " 00:00:00"
             if isinstance(data, str) and data.endswith(no_time):
-                data = data[:-len(no_time)]
+                data = data[: -len(no_time)]
             elif data[0].endswith(no_time):
-                data = data[0][:-len(no_time)], data[1]
+                data = data[0][: -len(no_time)], data[1]
 
         return super()._prepare(data)
 
 
 class CanBeDateIso(DateRule):
-    """ Can be ISO-8601 date Rule """
+    """Can be ISO-8601 date Rule"""
 
     def _evaluator(self):
         def func(x):
             try:
-                return isinstance(datetime.strptime(x, '%Y-%m-%d'), datetime)
+                return isinstance(datetime.strptime(x, "%Y-%m-%d"), datetime)
             except ValueError:
                 return False
 
         return func
 
     def _explain(self) -> str:
-        return 'can be coerced into a ISO-8601 date'
+        return "can be coerced into a ISO-8601 date"
 
 
 class DateComparisonRule(DateRule):
@@ -480,22 +517,22 @@ class DateComparisonRule(DateRule):
     to a date using the specified format for the field.
     """
 
-    comparison_language = 'N/A'
-    _default_args = ('2020-01-01',)
+    comparison_language = "N/A"
+    _default_args = ("2020-01-01",)
 
-    def __init__(self, comparison_value, date_format='%Y-%m-%d', **kwargs):
+    def __init__(self, comparison_value, date_format="%Y-%m-%d", **kwargs):
         self.date_format = date_format
         self.comparison_value = datetime.strptime(comparison_value, date_format)
         super().__init__(**kwargs)
 
     def _explain(self) -> str:
-        return f'{self.comparison_language} {str(self.comparison_value)}'
+        return f"{self.comparison_language} {str(self.comparison_value)}"
 
 
 class DateGT(DateComparisonRule):
-    """ Date greater than comparison Rule """
+    """Date greater than comparison Rule"""
 
-    comparison_language = 'greater than'
+    comparison_language = "greater than"
 
     def _evaluator(self):
         def func(x):
@@ -508,9 +545,9 @@ class DateGT(DateComparisonRule):
 
 
 class DateGTE(DateComparisonRule):
-    """ Date greater than or equal to comparison """
+    """Date greater than or equal to comparison"""
 
-    comparison_language = 'greater than or equal to'
+    comparison_language = "greater than or equal to"
 
     def _evaluator(self):
         def func(x):
@@ -523,9 +560,9 @@ class DateGTE(DateComparisonRule):
 
 
 class DateET(DateComparisonRule):
-    """ Date equal to comparison Rule """
+    """Date equal to comparison Rule"""
 
-    comparison_language = 'equal to'
+    comparison_language = "equal to"
 
     def _evaluator(self):
         def func(x):
@@ -538,9 +575,9 @@ class DateET(DateComparisonRule):
 
 
 class DateLTE(DateComparisonRule):
-    """ Date less than or equal to comparison Rule """
+    """Date less than or equal to comparison Rule"""
 
-    comparison_language = 'less than or equal to'
+    comparison_language = "less than or equal to"
 
     def _evaluator(self):
         def func(x):
@@ -553,9 +590,9 @@ class DateLTE(DateComparisonRule):
 
 
 class DateLT(DateComparisonRule):
-    """ Date less than comparison Rule """
+    """Date less than comparison Rule"""
 
-    comparison_language = 'less than'
+    comparison_language = "less than"
 
     def _evaluator(self):
         def func(x):
@@ -568,9 +605,9 @@ class DateLT(DateComparisonRule):
 
 
 class ColumnComparisonRule(Rule):
-    """ Base column comparison Rule """
+    """Base column comparison Rule"""
 
-    _default_args = ('x',)
+    _default_args = ("x",)
 
     def __init__(self, compare_to: Union[str, List[str]]):
         super().__init__()
@@ -583,8 +620,8 @@ class ColumnComparisonRule(Rule):
 class OtherCantExist(ColumnComparisonRule):
     @staticmethod
     def _helper(val, other):
-        if other not in ['', False]:
-            if val not in ['', False]:
+        if other not in ["", False]:
+            if val not in ["", False]:
                 return False
             else:
                 return True
@@ -601,8 +638,8 @@ class OtherCantExist(ColumnComparisonRule):
 class OtherMustExist(ColumnComparisonRule):
     @staticmethod
     def _helper(val, other):
-        if other in ['', False]:
-            if val not in ['', False]:
+        if other in ["", False]:
+            if val not in ["", False]:
                 return False
             else:
                 return True
@@ -617,7 +654,7 @@ class OtherMustExist(ColumnComparisonRule):
 
 
 class GreaterThanColumn(ColumnComparisonRule):
-    """ Greater than compared column Rule """
+    """Greater than compared column Rule"""
 
     def _evaluator(self):
         return lambda x, y: x > y
@@ -627,7 +664,7 @@ class GreaterThanColumn(ColumnComparisonRule):
 
 
 class GreaterThanOrEqualColumn(ColumnComparisonRule):
-    """ Greater than compared column Rule """
+    """Greater than compared column Rule"""
 
     def _evaluator(self):
         return lambda x, y: x >= y
@@ -637,7 +674,7 @@ class GreaterThanOrEqualColumn(ColumnComparisonRule):
 
 
 class LessThanColumn(ColumnComparisonRule):
-    """ Less than compared column Rule """
+    """Less than compared column Rule"""
 
     def _evaluator(self):
         return lambda x, y: x < y
@@ -647,7 +684,7 @@ class LessThanColumn(ColumnComparisonRule):
 
 
 class LessThanOrEqualColumn(ColumnComparisonRule):
-    """ Less than compared column Rule """
+    """Less than compared column Rule"""
 
     def _evaluator(self):
         return lambda x, y: x <= y
@@ -657,7 +694,6 @@ class LessThanOrEqualColumn(ColumnComparisonRule):
 
 
 class NotNullIfCompare(ColumnComparisonRule):
-
     def __init__(self, compare_to: [str, List]):
         super().__init__(compare_to=compare_to)
 
@@ -665,12 +701,12 @@ class NotNullIfCompare(ColumnComparisonRule):
         return data
 
     def _null_ok(self, data):
-        empty_val = data[0] in ['', False]
+        empty_val = data[0] in ["", False]
         empty_compare = True
         if isinstance(self.compare_to, str):
-            empty_compare = data[1][self.compare_to] in ['', False]
+            empty_compare = data[1][self.compare_to] in ["", False]
         elif isinstance(self.compare_to, list):
-            empty_compare = any([v for k, v in data[1].items() if k in self.compare_to]) in ['', False]
+            empty_compare = any(v for k, v in data[1].items() if k in self.compare_to) in ["", False]
         if not empty_compare and empty_val:
             return False
         else:
@@ -680,7 +716,7 @@ class NotNullIfCompare(ColumnComparisonRule):
         return lambda x, y: self._null_ok((x, y))
 
     def _explain(self) -> str:
-        compare_msg = ''
+        compare_msg = ""
         if isinstance(self.compare_to, str):
             compare_msg = self.compare_to
         elif isinstance(self.compare_to, list):
@@ -689,15 +725,16 @@ class NotNullIfCompare(ColumnComparisonRule):
 
 
 class NotNullIfOtherEquals(NotNullIfCompare):
-    """ Cell cannot be null if other has specified value(s) """
-    _default_args = ('x', 'x')
+    """Cell cannot be null if other has specified value(s)"""
+
+    _default_args = ("x", "x")
 
     def __init__(self, compare_to: str, values: Union[str, List[str]]):
         self.values = [values] if isinstance(values, str) else values
         super().__init__(compare_to=compare_to)
 
     def _null_ok(self, data):
-        empty_val = data[0] in ['', False]
+        empty_val = data[0] in ["", False]
         if empty_val and data[1][self.compare_to] in self.values:
             return False
         else:

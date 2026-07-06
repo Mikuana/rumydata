@@ -13,26 +13,16 @@ from tests.utils import mock_no_module
 
 @pytest.fixture()
 def basic_good(tmpdir):
-    p = Path(tmpdir, 'good.parquet')
-    df = pd.DataFrame({
-        'col1': ['A'],
-        'col2': [1],
-        'col3': [date(2020, 1, 1)],
-        'col4': ['Z']
-    })
+    p = Path(tmpdir, "good.parquet")
+    df = pd.DataFrame({"col1": ["A"], "col2": [1], "col3": [date(2020, 1, 1)], "col4": ["Z"]})
     df.to_parquet(p)
     yield p.as_posix()
 
 
 @pytest.fixture()
 def basic_bad(tmpdir):
-    p = Path(tmpdir, 'good.parquet')
-    df = pd.DataFrame({
-        'col1': ['A'],
-        'col2': [1],
-        'col3': [date(2020, 1, 1)],
-        'col4': ['z']
-    })
+    p = Path(tmpdir, "good.parquet")
+    df = pd.DataFrame({"col1": ["A"], "col2": [1], "col3": [date(2020, 1, 1)], "col4": ["z"]})
     df.to_parquet(p)
     yield p.as_posix()
 
@@ -46,12 +36,12 @@ def test_file_bad(basic_bad, basic):
 
 
 def test_no_pandas(mocker):
-    mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_module('pandas'))
+    mocker.patch("builtins.__import__", wraps=__import__, side_effect=mock_no_module("pandas"))
     with pytest.raises(ModuleNotFoundError):
-        ParquetFile(rumydata.table.Layout({'x': field.Integer(1)}))
+        ParquetFile(rumydata.table.Layout({"x": field.Integer(1)}))
 
 
 def test_no_pyarrow(mocker):
-    mocker.patch('builtins.__import__', wraps=__import__, side_effect=mock_no_module('pyarrow'))
+    mocker.patch("builtins.__import__", wraps=__import__, side_effect=mock_no_module("pyarrow"))
     with pytest.raises(ModuleNotFoundError):
-        ParquetFile(rumydata.table.Layout({'x': field.Integer(1)}))
+        ParquetFile(rumydata.table.Layout({"x": field.Integer(1)}))

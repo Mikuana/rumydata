@@ -14,14 +14,18 @@ arguments, including rules extension.
 See the rumydata.rules submodule to learn more about the use of rules to extend
 field class behavior.
 """
-from typing import Union, Tuple, Dict, List
+
+from typing import Dict
+from typing import List
+from typing import Tuple
+from typing import Union
 
 from rumydata import exception as ex
 from rumydata._base import _BaseSubject
-from rumydata.rules import cell as clr, column as cr
+from rumydata.rules import cell as clr
+from rumydata.rules import column as cr
 
-__all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore',
-           'Empty', 'Number']
+__all__ = ["Text", "Date", "Currency", "Digit", "Integer", "Choice", "Ignore", "Empty", "Number"]
 
 
 class Field(_BaseSubject):
@@ -41,7 +45,7 @@ class Field(_BaseSubject):
     """
 
     def __init__(self, nullable=False, rules: list = None, **kwargs):
-        self.strip = kwargs.pop('strip', None)
+        self.strip = kwargs.pop("strip", None)
         self._ignore_if = None
         super().__init__(rules, **kwargs)
         self.nullable = nullable
@@ -79,10 +83,10 @@ class Field(_BaseSubject):
         assert not errors, str(errors)
 
     def _check_for_nullable_rules(self):
-        return any([x for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+        return any(x for x in self.rules if isinstance(x, clr.NotNullIfCompare))
 
     def _check_nullable_rule_results(self, data):
-        return all([x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+        return all(x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare))
 
     def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
         """
@@ -101,7 +105,7 @@ class Field(_BaseSubject):
         """
 
         # if data is nullable and value is empty, skip all checks
-        empty = data[0] == '' if isinstance(data, tuple) else data == ''
+        empty = data[0] == "" if isinstance(data, tuple) else data == ""
         if self.nullable and rule_type == clr.Rule and empty:
             pass
         elif empty and (self._check_nullable_rule_results(data) if self._check_for_nullable_rules() else False):
@@ -138,12 +142,12 @@ class Field(_BaseSubject):
         return compares
 
     def _has_rule_type(self, rule_type):
-        return any([issubclass(type(r), rule_type) for r in self.rules])
+        return any(issubclass(type(r), rule_type) for r in self.rules)
 
     def _digest(self):
         dig = super()._digest()
         if self.nullable:
-            dig.append('Nullable')
+            dig.append("Nullable")
         return dig
 
 
@@ -194,13 +198,13 @@ class Text(Field):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.descriptors['Type'] = 'String'
-        self.descriptors['Max Length'] = f'{str(max_length)} characters'
+        self.descriptors["Type"] = "String"
+        self.descriptors["Max Length"] = f"{str(max_length)} characters"
 
         self.rules.append(clr.MaxChar(max_length))
 
         if min_length:
-            self.descriptors['Min Length'] = f'{str(min_length)} characters'
+            self.descriptors["Min Length"] = f"{str(min_length)} characters"
             self.rules.append(clr.MinChar(min_length))
 
 
@@ -219,21 +223,19 @@ class Date(Field):
     """
 
     def __init__(self, min_date: str = None, max_date: str = None, **kwargs):
-        rule_kwargs = {
-            'truncate_time': kwargs.pop('truncate_time', False)
-        }
+        rule_kwargs = {"truncate_time": kwargs.pop("truncate_time", False)}
         super().__init__(**kwargs)
 
-        self.descriptors['Type'] = 'Date'
-        self.descriptors['Format'] = 'YYYY-MM-DD'
+        self.descriptors["Type"] = "Date"
+        self.descriptors["Format"] = "YYYY-MM-DD"
 
         self.rules.append(clr.CanBeDateIso(**rule_kwargs))
         if max_date:
-            self.descriptors['Max Date'] = f'{max_date}'
+            self.descriptors["Max Date"] = f"{max_date}"
             self.rules.append(clr.DateLTE(max_date, **rule_kwargs))
 
         if min_date:
-            self.descriptors['Min Date'] = f'{min_date}'
+            self.descriptors["Min Date"] = f"{min_date}"
             self.rules.append(clr.DateGTE(min_date, **rule_kwargs))
 
 
@@ -253,10 +255,9 @@ class Currency(Field):
     def __init__(self, significant_digits: int, precision: int = 2, **kwargs):
         super().__init__(**kwargs)
 
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = \
-            f'{"9" * (significant_digits - precision)}.{"9" * precision}'
-        self.descriptors['Max Length'] = f'{str(significant_digits)} digits'
+        self.descriptors["Type"] = "Numeric"
+        self.descriptors["Format"] = f"{'9' * (significant_digits - precision)}.{'9' * precision}"
+        self.descriptors["Max Length"] = f"{str(significant_digits)} digits"
         self.rules.append(clr.MaxDigit(significant_digits))
         self.rules.append(clr.NumericDecimals(precision))
 
@@ -278,15 +279,15 @@ class Digit(Field):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"0" * max_length}'
-        self.descriptors['Max Length'] = f'{str(max_length)} digits'
+        self.descriptors["Type"] = "Numeric"
+        self.descriptors["Format"] = f"{'0' * max_length}"
+        self.descriptors["Max Length"] = f"{str(max_length)} digits"
 
         self.rules.append(clr.OnlyNumbers())
         self.rules.append(clr.MaxChar(max_length))
 
         if min_length:
-            self.descriptors['Min Length'] = f'{str(min_length)} digits'
+            self.descriptors["Min Length"] = f"{str(min_length)} digits"
             self.rules.append(clr.MinChar(min_length))
 
 
@@ -305,16 +306,16 @@ class Integer(Field):
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"9" * max_length}'
-        self.descriptors['Max Length'] = f'{str(max_length)} digits'
+        self.descriptors["Type"] = "Numeric"
+        self.descriptors["Format"] = f"{'9' * max_length}"
+        self.descriptors["Max Length"] = f"{str(max_length)} digits"
 
         self.rules.append(clr.CanBeInteger())
         self.rules.append(clr.NoLeadingZero())
         self.rules.append(clr.MaxDigit(max_length))
 
         if min_length:
-            self.descriptors['Min Length'] = f'{str(max_length)} digits'
+            self.descriptors["Min Length"] = f"{str(max_length)} digits"
             self.rules.append(clr.MinDigit(min_length))
 
 
@@ -328,14 +329,15 @@ class Number(Field):
     :param min_length: (optional) the minimum number of digits
     :param allow_scientific: (optional) whether to allow scientific notation. Defaults to False.
     """
+
     _default_args = (1,)
 
     def __init__(self, max_length, min_length=None, allow_scientific=False, **kwargs):
         super().__init__(**kwargs)
 
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"9" * max_length}.{"0"}'
-        self.descriptors['Max Length'] = f'{str(max_length)} digits'
+        self.descriptors["Type"] = "Numeric"
+        self.descriptors["Format"] = f"{'9' * max_length}.{'0'}"
+        self.descriptors["Max Length"] = f"{str(max_length)} digits"
 
         self.rules.append(clr.CanBeFloat())
         if allow_scientific is False:
@@ -343,7 +345,7 @@ class Number(Field):
         self.rules.append(clr.MaxDigit(max_length))
 
         if min_length:
-            self.descriptors['Min Length'] = f'{str(max_length)} digits'
+            self.descriptors["Min Length"] = f"{str(max_length)} digits"
             self.rules.append(clr.MinDigit(min_length))
 
 
@@ -358,12 +360,10 @@ class Choice(Field):
         the check of valid values case sensitive.
     """
 
-    _default_args = (['x'],)
+    _default_args = (["x"],)
 
     def __init__(self, valid_values: list, case_insensitive=False, **kwargs):
         super().__init__(**kwargs)
-        self.descriptors['Type'] = 'Choice'
-        self.descriptors['Choices'] = ','.join(valid_values)
-        self.rules.append(
-            clr.Choice(valid_values, case_insensitive=case_insensitive)
-        )
+        self.descriptors["Type"] = "Choice"
+        self.descriptors["Choices"] = ",".join(valid_values)
+        self.rules.append(clr.Choice(valid_values, case_insensitive=case_insensitive))

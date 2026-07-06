@@ -5,7 +5,8 @@ This submodule contains the base objects that are used by other modules in this
 package. This is not intended for use by end-users.
 """
 
-from typing import List, Union
+from typing import List
+from typing import Union
 
 import rumydata
 from rumydata.exception import UrNotMyDataError
@@ -18,7 +19,8 @@ class _BaseRule:
     This class contains the default methods that can be used to stub out all of
     the rule types contained in the rules submodule.
     """
-    _default_args = tuple()  # a default set of positional args for testing
+
+    _default_args = ()  # a default set of positional args for testing
 
     def __init__(self):
         pass
@@ -40,7 +42,7 @@ class _BaseRule:
 
     @classmethod
     def rule_exception(cls):
-        return type(f'{cls.__name__}Error', (UrNotMyDataError,), {})
+        return type(f"{cls.__name__}Error", (UrNotMyDataError,), {})
 
     def _prepare(self, data) -> tuple:
         """
@@ -62,7 +64,7 @@ class _BaseRule:
         :return: a tuple, which contains some version of the provided data after
           processing
         """
-        return data,
+        return (data,)
 
     def _evaluator(self):
         """
@@ -115,7 +117,7 @@ class _BaseSubject:
     and reporting errors in a way that can be easily collected.
     """
 
-    _default_args = tuple()  # a default set of positional args for testing
+    _default_args = ()  # a default set of positional args for testing
 
     def __init__(self, rules: List[_BaseRule] = None, all_errors=True, custom_error_msg=None):
         """
@@ -155,23 +157,23 @@ class _BaseSubject:
             try:
                 data = rule_type._pre_process(data, **kwargs)
             except Exception as e:
-                msg = f'raised {e.__class__.__name__} while preprocessing data'
+                msg = f"raised {e.__class__.__name__} while preprocessing data"
                 if rumydata.exception.debug():
-                    msg += f' [DEBUG]: {str(e)}'
+                    msg += f" [DEBUG]: {str(e)}"
                 return [rumydata.exception.PreProcessingError(msg)]
 
         for r in self.rules:
             # noinspection PyBroadException
             try:
-                if issubclass(type(r), rule_type):
+                if isinstance(r, rule_type):
                     x = r._prepare(data)
                     e = r._evaluator()(*x)
                     if not e:
                         errors.append(r._exception_msg())
             except Exception as e:  # get type, and rewrite safe message
-                msg = f'raised {e.__class__.__name__} while checking if value {r._explain()}'
+                msg = f"raised {e.__class__.__name__} while checking if value {r._explain()}"
                 if rumydata.exception.debug():
-                    msg += f' [DEBUG]: {str(e)}'
+                    msg += f" [DEBUG]: {str(e)}"
                 errors.append(r.rule_exception()(msg))
         return errors
 
@@ -215,7 +217,7 @@ class _BaseSubject:
         :return: a list of strings which are used to build a comprehensive
             description of the definition of this subject.
         """
-        x = [f'{k}: {v}' if v else k for k, v in self.descriptors.items()]
+        x = [f"{k}: {v}" if v else k for k, v in self.descriptors.items()]
         y = [x._explain() for x in self.rules]
         return x + y
 
@@ -241,5 +243,4 @@ class _BaseSubject:
         yield error
         if error is not None:
             for el in error._errors:
-                for x in cls._flatten_exceptions(el):
-                    yield x
+                yield from cls._flatten_exceptions(el)

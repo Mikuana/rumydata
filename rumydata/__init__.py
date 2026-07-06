@@ -24,15 +24,18 @@ championed in python.
  2. the code that defines the data, validates the data
 
 This package attempts to avoid as many dependencies as possible, and can be used
-with vanilla python 3.7+. This package is intended to be used on data in text
+with vanilla python 3.8+. This package is intended to be used on data in text
 format (e.g. csv), but can be used to validate Excel spreadsheets by installing
 the `openpyxl` package.
 """
 
-from rumydata import exception
-from rumydata import field
-from rumydata import rules
-from rumydata.menu import menu
-from rumydata.table import *
+from rumydata import exception as exception
+from rumydata import field as field
+from rumydata import rules as rules
+from rumydata.menu import menu as menu
+from rumydata.table import CsvFile as CsvFile
+from rumydata.table import ExcelFile as ExcelFile
+from rumydata.table import Layout as Layout
+from rumydata.table import ParquetFile as ParquetFile
 
-__version__ = '1.5.0'
+__version__ = "1.6.0"
