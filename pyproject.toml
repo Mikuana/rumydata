@@ -68,6 +68,9 @@ force-single-line = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "--cov=rumydata --cov-report=term-missing"
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+]
 
 [tool.coverage.run]
 source = ["rumydata"]
