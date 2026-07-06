@@ -10,9 +10,7 @@ from rumydata.field import Text
 
 
 def pytest_addoption(parser):
-    parser.addoption(
-        "--skipslow", action="store_true", default=False, help="skip slow tests"
-    )
+    parser.addoption("--skipslow", action="store_true", default=False, help="skip slow tests")
 
 
 def pytest_collection_modifyitems(config, items):
@@ -32,11 +30,7 @@ def tmpdir():
     except PermissionError:
         pass
 
+
 @pytest.fixture()
 def basic() -> dict:
-    return {
-        'col1': Text(1),
-        'col2': Integer(1),
-        'col3': Date(),
-        'col4': Choice(['X', 'Y', 'Z'])
-    }
+    return {"col1": Text(1), "col2": Integer(1), "col3": Date(), "col4": Choice(["X", "Y", "Z"])}

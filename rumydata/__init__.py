@@ -38,4 +38,4 @@ from rumydata.table import ExcelFile as ExcelFile
 from rumydata.table import Layout as Layout
 from rumydata.table import ParquetFile as ParquetFile
 
-__version__ = '1.6.0'
+__version__ = "1.6.0"

@@ -22,27 +22,27 @@ from typing import List
 
 from rumydata._base import _BaseRule
 
-__all__ = ['Unique']
+__all__ = ["Unique"]
 
 
 class Rule(_BaseRule):
-    """ Column Rule """
+    """Column Rule"""
 
     @staticmethod
     def _pre_process(data: List[str], **kwargs) -> List[str]:
-        if kwargs.get('strip'):
+        if kwargs.get("strip"):
             data = [d.strip() for d in data]
         return data
 
     def _prepare(self, data: List[str]) -> tuple:
-        return data,
+        return (data,)
 
 
 class Unique(Rule):
-    """ Column values unique Rule """
+    """Column values unique Rule"""
 
     def _prepare(self, data: List[str]) -> tuple:
-        return [x for x in data if not x == ''],
+        return ([x for x in data if not x == ""],)
 
     def _evaluator(self):
         return lambda x: len(x) == len(set(x))
@@ -51,4 +51,4 @@ class Unique(Rule):
         return self.rule_exception()(self._explain())
 
     def _explain(self):
-        return 'values must be unique'
+        return "values must be unique"

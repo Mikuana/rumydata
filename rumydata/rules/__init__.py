@@ -24,4 +24,4 @@ from rumydata.rules import header
 from rumydata.rules import row
 from rumydata.rules import table
 
-__all__ = ['cell', 'column', 'row', 'header', 'table']
+__all__ = ["cell", "column", "row", "header", "table"]

@@ -39,9 +39,9 @@ def convert_to_excel_col_labels(col_num_str):
         col_num_str = int(col_num_str)
         print(col_num_str)
     if col_num_str <= 0:
-        return ''
+        return ""
     else:
-        return convert_to_excel_col_labels((col_num_str - 1) // 26) + chr((col_num_str - 1) % 26 + ord('A'))
+        return convert_to_excel_col_labels((col_num_str - 1) // 26) + chr((col_num_str - 1) % 26 + ord("A"))
 
 
 class UrNotMyDataError(Exception):
@@ -78,7 +78,7 @@ class UrNotMyDataError(Exception):
         exceptions that exist in those objects, and so on.
         """
 
-        return '\n' + self._md()
+        return "\n" + self._md()
 
     def _md(self, depth=0) -> str:
         """
@@ -95,9 +95,9 @@ class UrNotMyDataError(Exception):
             indentation providing visual indicator of nested structure.
         """
 
-        txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self._message}'
+        txt = f"{'  ' * depth} - {self.__class__.__name__[:-5]}: {self._message}"
         if self._errors:
-            txt = '\n'.join([txt] + list(self._flatten_md(self._errors, depth)))
+            txt = "\n".join([txt] + list(self._flatten_md(self._errors, depth)))
         return txt
 
     @classmethod
@@ -134,9 +134,9 @@ class CustomError(UrNotMyDataError):
             indentation providing visual indicator of nested structure.
         """
 
-        txt = f'{"  " * depth} - {self._message}'
+        txt = f"{'  ' * depth} - {self._message}"
         if self._errors:
-            txt = '\n'.join([txt] + list(self._flatten_md(self._errors, depth)))
+            txt = "\n".join([txt] + list(self._flatten_md(self._errors, depth)))
         return txt
 
 
@@ -151,7 +151,7 @@ class FileError(UrNotMyDataError):
 
     def __init__(self, file, msg=None, errors: list = None):
         message = file
-        message += f'; {msg}' if msg else ''
+        message += f"; {msg}" if msg else ""
         super().__init__(message, errors)
 
 
@@ -164,13 +164,13 @@ class ColumnError(UrNotMyDataError):
     """
 
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
-        message = ''
+        message = ""
         offset = 0 if kwargs.get("zero_index") else 1
 
-        message += f'{str(index + offset)}'
+        message += f"{str(index + offset)}"
         if kwargs.get("name"):
-            message += f' ({kwargs.get("name")})'
-        message += f'; {msg}' if msg else ''
+            message += f" ({kwargs.get('name')})"
+        message += f"; {msg}" if msg else ""
         super().__init__(message, errors)
 
 
@@ -188,8 +188,8 @@ class RowError(UrNotMyDataError):
     """
 
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
-        message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
-        message += f'; {msg}' if msg else ''
+        message = f"{str(index + (0 if kwargs.get('zero_index') else 1))}"
+        message += f"; {msg}" if msg else ""
         super().__init__(message, errors)
 
 
@@ -207,20 +207,20 @@ class CellError(UrNotMyDataError):
     """
 
     def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
-        message = ''
+        message = ""
         offset = 0 if kwargs.get("zero_index") else 1
         if use_excel_cell_format:
-            message = f'{str(convert_to_excel_col_labels(index + offset))}'
-            if kwargs.get('rix') is not None:
-                message += str(kwargs.get('rix') + offset)
+            message = f"{str(convert_to_excel_col_labels(index + offset))}"
+            if kwargs.get("rix") is not None:
+                message += str(kwargs.get("rix") + offset)
         else:
-            if kwargs.get('rix') is not None:
-                message = str(kwargs.get('rix') + offset) + ','
-            message += f'{str(index + offset)}'
+            if kwargs.get("rix") is not None:
+                message = str(kwargs.get("rix") + offset) + ","
+            message += f"{str(index + offset)}"
 
         if kwargs.get("name"):
-            message += f' ({kwargs.get("name")})'
-        message += f'; {msg}' if msg else ''
+            message += f" ({kwargs.get('name')})"
+        message += f"; {msg}" if msg else ""
         super().__init__(message, errors)
 
 

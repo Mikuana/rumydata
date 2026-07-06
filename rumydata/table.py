@@ -3,6 +3,7 @@ table submodule
 
 This submodule contains the File class, and it's closely related Layout class.
 """
+
 import csv
 from pathlib import Path
 from typing import Dict
@@ -20,7 +21,7 @@ from rumydata.rules import header as hr
 from rumydata.rules import row as rr
 from rumydata.rules import table
 
-__all__ = ['Layout', 'CsvFile', 'ExcelFile', 'ParquetFile']
+__all__ = ["Layout", "CsvFile", "ExcelFile", "ParquetFile"]
 
 
 class Layout(_BaseSubject):
@@ -55,34 +56,36 @@ class Layout(_BaseSubject):
     """
 
     def __init__(self, _definition: Dict[str, field.Field], **kwargs):
-        self.skip_header = kwargs.pop('skip_header', False)
-        self.empty_row_ok = kwargs.pop('empty_row_ok', False)
-        self.header_mode = kwargs.pop('header_mode', 'exact')
-        self.empty_cols_ok = kwargs.pop('empty_cols_ok', False)
-        self.use_excel_cell_format = kwargs.pop('use_excel_cell_format', False)
-        self.no_header = kwargs.pop('no_header', False)
-        header_modes = ('exact', 'startswith', 'contains')
+        self.skip_header = kwargs.pop("skip_header", False)
+        self.empty_row_ok = kwargs.pop("empty_row_ok", False)
+        self.header_mode = kwargs.pop("header_mode", "exact")
+        self.empty_cols_ok = kwargs.pop("empty_cols_ok", False)
+        self.use_excel_cell_format = kwargs.pop("use_excel_cell_format", False)
+        self.no_header = kwargs.pop("no_header", False)
+        header_modes = ("exact", "startswith", "contains")
         if self.header_mode not in header_modes:
             raise ValueError(f"header_mode argument invalid. Must be one of: {header_modes}")
 
         super().__init__(**kwargs)
 
         self.layout = _definition
-        self._title = kwargs.get('title')
+        self._title = kwargs.get("title")
 
-        self.rules.extend([
-            hr.ColumnOrder(self),
-            hr.NoExtra(self),
-            hr.NoDuplicate(self),
-            hr.NoMissing(self),
-            rr.RowLengthLTE(self.field_count()),
-            rr.RowLengthGTE(self.field_count())
-        ])
+        self.rules.extend(
+            [
+                hr.ColumnOrder(self),
+                hr.NoExtra(self),
+                hr.NoDuplicate(self),
+                hr.NoMissing(self),
+                rr.RowLengthLTE(self.field_count()),
+                rr.RowLengthGTE(self.field_count()),
+            ]
+        )
 
     def field_count(self):
         return len(self.layout)
 
-    def documentation(self, doc_type='md'):
+    def documentation(self, doc_type="md"):
         """
         Technical documentation
 
@@ -92,10 +95,11 @@ class Layout(_BaseSubject):
 
         :return: a Markdown formatted string describing the layout
         """
-        if doc_type == 'md':
+        if doc_type == "md":
             return self._markdown_digest()
-        elif doc_type == 'html':
+        elif doc_type == "html":
             import markdown
+
             return markdown.markdown(self._markdown_digest(), tab_length=2)
         else:
             raise TypeError(f"Invalid format type: {doc_type}")
@@ -138,11 +142,10 @@ class Layout(_BaseSubject):
 
         :return: a Markdown formatted string describing the layout
         """
-        fields = f'# {self._title}' + '\n\n' if self._title else ''
-        fields += '\n'.join([
-            f' - **{k}**' + ''.join(['\n   - ' + x for x in v._digest()])
-            for k, v in self.layout.items()
-        ])
+        fields = f"# {self._title}" + "\n\n" if self._title else ""
+        fields += "\n".join(
+            [f" - **{k}**" + "".join(["\n   - " + x for x in v._digest()]) for k, v in self.layout.items()]
+        )
         return fields
 
     def _check(self, row, rule_type, rix=None) -> Union[ex.UrNotMyDataError, None]:
@@ -158,20 +161,31 @@ class Layout(_BaseSubject):
             row = dict(zip(self.layout.keys(), row))
             # if any of the fields are Ignore, or if the field uses the _ignore_if parameter and the value matches the
             # specified value we ignore them. Handles cases where a string or list is specified
-            ignore = {k: (isinstance(v, field.Ignore) if isinstance(v, field.Ignore) else row[k] in self.layout[
-                k]._ignore_if if isinstance(self.layout[k]._ignore_if, List) else row[k] == self.layout[k]._ignore_if)
-                      for k, v in self.layout.items()}
+            ignore = {
+                k: (
+                    isinstance(v, field.Ignore)
+                    if isinstance(v, field.Ignore)
+                    else row[k] in self.layout[k]._ignore_if
+                    if isinstance(self.layout[k]._ignore_if, List)
+                    else row[k] == self.layout[k]._ignore_if
+                )
+                for k, v in self.layout.items()
+            }
 
             # if empty row is okay, and all fields are either empty, or Ignore class
-            if self.empty_row_ok and all(('' if ignore[k] else v) == '' for k, v in row.items()):
+            if self.empty_row_ok and all(("" if ignore[k] else v) == "" for k, v in row.items()):
                 return
 
             for cix, (name, val) in enumerate(row.items()):
                 t = self.layout[name]
                 comp = {k: row[k] for k in t._comparison_columns()}
                 check_args = {
-                    'data': (val, comp), 'rule_type': clr.Rule,
-                    'rix': rix, 'cix': cix, 'name': name, 'use_excel_cell_format': self.use_excel_cell_format
+                    "data": (val, comp),
+                    "rule_type": clr.Rule,
+                    "rix": rix,
+                    "cix": cix,
+                    "name": name,
+                    "use_excel_cell_format": self.use_excel_cell_format,
                 }
                 ce = t._check(**check_args)
                 if ce:
@@ -205,7 +219,7 @@ class _BaseFile(_BaseSubject):
     def __init__(self, layout: Layout, skip_rows=0, max_errors=100, file_name_pattern=False, **kwargs):
         self.skip_rows = skip_rows
         self.max_errors = max_errors
-        self.ignore_exceptions = kwargs.pop('ignore_exceptions', None)
+        self.ignore_exceptions = kwargs.pop("ignore_exceptions", None)
 
         super().__init__(**kwargs)
         self.layout = Layout(layout) if isinstance(layout, Dict) else layout
@@ -214,9 +228,7 @@ class _BaseFile(_BaseSubject):
             for k, v in self.ignore_exceptions.items():
                 self.layout.layout[k]._ignore_if = v
 
-        self.rules.extend([
-            table.FileExists()
-        ])
+        self.rules.extend([table.FileExists()])
         if file_name_pattern:
             self.rules.append(table.FileNameMatch(file_name_pattern))
 
@@ -243,10 +255,11 @@ class _BaseFile(_BaseSubject):
 
         if not doc_type:
             return
-        elif doc_type == 'md':
+        elif doc_type == "md":
             return msg
-        elif doc_type == 'html':
+        elif doc_type == "html":
             import markdown
+
             return markdown.markdown(msg, tab_length=2)
         else:
             raise TypeError(f"Invalid doc type: {doc_type}")
@@ -262,7 +275,7 @@ class _BaseFile(_BaseSubject):
         re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
         if self.layout.empty_cols_ok:
             # remap layout positions with Empty columns wherever header is empty
-            empties = [ix for ix, i in enumerate(row) if i == '']
+            empties = [ix for ix, i in enumerate(row) if i == ""]
             bumps = {k: ix for ix, k in enumerate(self.layout.layout.keys())}
 
             for i in empties:
@@ -277,7 +290,7 @@ class _BaseFile(_BaseSubject):
             # worksheet is configured, which would result in a mismatch between the number of columns
             # rumydata sees in the row data and the number of columns which get inferred by reading the
             # worksheet
-            while bumps[-1].startswith('empty_'):
+            while bumps[-1].startswith("empty_"):
                 bumps.pop()
             self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
 
@@ -287,8 +300,7 @@ class _BaseFile(_BaseSubject):
         return re
 
     def _process_row(
-            self, row: List[str], rix: int, max_error_rule, e: list,
-            column_cache: dict, column_cache_map: dict
+        self, row: List[str], rix: int, max_error_rule, e: list, column_cache: dict, column_cache_map: dict
     ) -> bool:
         row = self._row_handler(row)
         if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header
@@ -320,14 +332,8 @@ class _BaseFile(_BaseSubject):
         if e:
             return ex.FileError(file=p.name, errors=e)
 
-        column_cache = {
-            k: [] for k, v in self.layout.layout.items()
-            if v._has_rule_type(cr.Rule)
-        }
-        column_cache_map = {
-            k: list(self.layout.layout.keys()).index(k)
-            for k in column_cache.keys()
-        }
+        column_cache = {k: [] for k, v in self.layout.layout.items() if v._has_rule_type(cr.Rule)}
+        column_cache_map = {k: list(self.layout.layout.keys()).index(k) for k in column_cache.keys()}
 
         max_error_rule = table.MaxError(self.max_errors)
         with self._rows(p) as generator:
@@ -338,9 +344,7 @@ class _BaseFile(_BaseSubject):
                     break
 
         for k, v in column_cache.items():
-            ce = self.layout.layout[k]._check(
-                v, cix=column_cache_map[k], rule_type=cr.Rule, name=k
-            )
+            ce = self.layout.layout[k]._check(v, cix=column_cache_map[k], rule_type=cr.Rule, name=k)
             if ce:
                 e.append(ce)
         if e:
@@ -370,10 +374,10 @@ class CsvFile(_BaseFile):
     """
 
     def __init__(self, layout: Union[Layout, dict], skip_rows=0, max_errors=100, **kwargs):
-        x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
+        x = {x: kwargs.pop(x, None) for x in ["dialect", "delimiter", "quotechar"]}
         self.csv_kwargs = {k: v for k, v in x.items() if v}
 
-        y = {y: kwargs.pop(y, None) for y in ['newline', 'encoding', 'errors']}
+        y = {y: kwargs.pop(y, None) for y in ["newline", "encoding", "errors"]}
         self.file_kwargs = {k: v for k, v in y.items() if v}
 
         super().__init__(layout, skip_rows, max_errors, **kwargs)
@@ -384,7 +388,7 @@ class CsvFile(_BaseFile):
                 self.file_path = file_path
                 self.csv_kwargs = csv_kwargs
                 self.file_kwargs = file_kwargs
-                self.file_kwargs['newline'] = self.file_kwargs.get('newline', '')
+                self.file_kwargs["newline"] = self.file_kwargs.get("newline", "")
 
             def __enter__(self) -> Iterable:
                 self.file_object = self.file_path.open(**self.file_kwargs)
@@ -418,14 +422,14 @@ class ExcelFile(_BaseFile):
 
     def __init__(self, layout: Union[Layout, Dict], skip_rows=0, max_errors=100, **kwargs):
         try:
-            __import__('openpyxl')
+            __import__("openpyxl")
         except ModuleNotFoundError as e:
             raise ModuleNotFoundError(
                 "openpyxl not available for import. You must install this"
                 " package before you can use the ExcelFile class."
             ) from e
 
-        x = {x: kwargs.pop(x, None) for x in ['sheet']}
+        x = {x: kwargs.pop(x, None) for x in ["sheet"]}
         self.excel_kwargs = {k: v for k, v in x.items() if v}
         # add ignore_ifs to the layout's fields when this gets constructed
         super().__init__(layout, skip_rows, max_errors, **kwargs)
@@ -439,8 +443,9 @@ class ExcelFile(_BaseFile):
 
             def __enter__(self) -> Iterable:
                 from openpyxl import load_workbook
+
                 wb = load_workbook(file, read_only=False, data_only=True)
-                sheet_name = self.excel_kwargs.get('sheet')
+                sheet_name = self.excel_kwargs.get("sheet")
                 ws = wb[sheet_name] if sheet_name else wb.active
                 return ws.values
 
@@ -451,7 +456,7 @@ class ExcelFile(_BaseFile):
 
     @staticmethod
     def _row_handler(row: list) -> List[str]:
-        return ['' if x is None else str(x) for x in row]
+        return ["" if x is None else str(x) for x in row]
 
 
 class ParquetFile(_BaseFile):
@@ -479,7 +484,7 @@ class ParquetFile(_BaseFile):
 
     def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
         try:
-            for mod in ('pandas', 'pyarrow'):
+            for mod in ("pandas", "pyarrow"):
                 __import__(mod)
         except ModuleNotFoundError as e:
             # noinspection PyUnboundLocalVariable
@@ -487,7 +492,7 @@ class ParquetFile(_BaseFile):
                 f"{mod} not available for import. You must install it to use {self.__class__.__name__}"
             ) from e
 
-        x = {x: kwargs.pop(x, None) for x in ['sheet']}
+        x = {x: kwargs.pop(x, None) for x in ["sheet"]}
         self.parquet_kwargs = {k: v for k, v in x.items() if v}
 
         super().__init__(layout, max_errors=max_errors, **kwargs)
@@ -500,6 +505,7 @@ class ParquetFile(_BaseFile):
 
             def __enter__(self) -> Iterable:
                 import pandas as pd
+
                 df = pd.read_parquet(file)
 
                 def gen():
@@ -516,4 +522,5 @@ class ParquetFile(_BaseFile):
     @staticmethod
     def _row_handler(row: list) -> List[str]:
         import pandas as pd
-        return ['' if pd.isna(x) else str(x) for x in row]
+
+        return ["" if pd.isna(x) else str(x) for x in row]

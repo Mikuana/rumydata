@@ -12,7 +12,7 @@ problems:
  2. communicating that definition to others (so they can send you data)
  3. validating the data that you receive
  4. not disclosing the data on accident
- 
+
 These problems are solved with the following feature sets in this package:
 
  1. an expressive, extensible set of classes to define a data set
@@ -44,4 +44,4 @@ Please see the full documentation at [readthedocs](https://rumydata.readthedocs.
 This project follows the specifications of [Semantic Versioning 2.0](https://semver.org/).
 Users of this package should avoid calling any private or semi-private members
 (i.e. starting with one or more underscores `_` in the name). As long as this rule
-is followed, upgrading to a higher minor or patch release should always be safe. 
+is followed, upgrading to a higher minor or patch release should always be safe.
