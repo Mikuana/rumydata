@@ -16,6 +16,39 @@ from rumydata.rules import table, column as cr, header as hr, row as rr, cell as
 __all__ = ['Layout', 'CsvFile', 'ExcelFile', 'ParquetFile']
 
 
+def _pick(kwargs, names):
+    """Pop each of `names` from `kwargs`, returning a dict of those with truthy values."""
+    picked = {}
+    for name in names:
+        value = kwargs.pop(name, None)
+        if value:
+            picked[name] = value
+    return picked
+
+
+def _import_check(module: str, message: str) -> None:
+    """Raise a ModuleNotFoundError with `message` if `module` cannot be imported."""
+    try:
+        __import__(module)
+    except ModuleNotFoundError:
+        raise ModuleNotFoundError(message)
+
+
+class _RowHandler:
+    """Lazy row source: `open_fn` runs on entry, `close_fn` (if any) on exit."""
+
+    def __init__(self, open_fn, close_fn=None):
+        self._open = open_fn
+        self._close = close_fn
+
+    def __enter__(self) -> Iterable:
+        return self._open()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self._close:
+            self._close()
+
+
 class Layout(_BaseSubject):
     """
     Table Layout Class
@@ -149,28 +182,34 @@ class Layout(_BaseSubject):
 
         if rule_type == rr.Rule:
             row = dict(zip(self.layout.keys(), row))
-            # if any of the fields are Ignore, or if the field uses the _ignore_if parameter and the value matches the
-            # specified value we ignore them. Handles cases where a string or list is specified
-            ignore = {k: (isinstance(v, field.Ignore) if isinstance(v, field.Ignore) else row[k] in self.layout[
-                k]._ignore_if if isinstance(self.layout[k]._ignore_if, List) else row[k] == self.layout[k]._ignore_if)
-                      for k, v in self.layout.items()}
 
             # if empty row is okay, and all fields are either empty, or Ignore class
-            if self.empty_row_ok and all([('' if ignore[k] else v) == '' for k, v in row.items()]):
+            if self.empty_row_ok and self._is_empty_row(row):
                 return
 
-            for cix, (name, val) in enumerate(row.items()):
-                t = self.layout[name]
-                comp = {k: row[k] for k in t._comparison_columns()}
-                check_args = dict(
-                    data=(val, comp), rule_type=clr.Rule,
-                    rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format
-                )
-                ce = t._check(**check_args)
-                if ce:
-                    e.append(ce)
+            self._check_cells(row, rix, e)
             if e:
                 return ex.RowError(rix, errors=e)
+
+    def _is_empty_row(self, row: Dict[str, str]) -> bool:
+        # if any of the fields are Ignore, or if the field uses the _ignore_if parameter and the value matches the
+        # specified value we ignore them. Handles cases where a string or list is specified
+        ignore = {k: (isinstance(v, field.Ignore) if isinstance(v, field.Ignore) else row[k] in self.layout[
+            k]._ignore_if if isinstance(self.layout[k]._ignore_if, List) else row[k] == self.layout[k]._ignore_if)
+                  for k, v in self.layout.items()}
+        return all([('' if ignore[k] else v) == '' for k, v in row.items()])
+
+    def _check_cells(self, row: Dict[str, str], rix, e: List) -> None:
+        for cix, (name, val) in enumerate(row.items()):
+            t = self.layout[name]
+            comp = {k: row[k] for k in t._comparison_columns()}
+            check_args = dict(
+                data=(val, comp), rule_type=clr.Rule,
+                rix=rix, cix=cix, name=name, use_excel_cell_format=self.use_excel_cell_format
+            )
+            ce = t._check(**check_args)
+            if ce:
+                e.append(ce)
 
 
 class _BaseFile(_BaseSubject):
@@ -251,6 +290,9 @@ class _BaseFile(_BaseSubject):
     def _row_handler(row: list) -> List[str]:
         return row
 
+    def _is_header_row(self, rix: int) -> bool:
+        return self.layout.no_header is False and rix == self.skip_rows
+
     def _check(self, filepath: Union[str, Path], **kwargs) -> Union[ex.FileError, None]:
         p = Path(filepath) if isinstance(filepath, str) else filepath
         e = super()._check(p, rule_type=table.Rule)  # check files-based rules first
@@ -272,33 +314,10 @@ class _BaseFile(_BaseSubject):
                 if rix < self.skip_rows:
                     continue
                 row = self._row_handler(row)
-                if rix == (0 + self.skip_rows) and self.layout.no_header is False:  # if header
+                if self._is_header_row(rix):  # if header
                     re = self.layout._check(row, rule_type=hr.Rule, rix=rix)
                     if self.layout.empty_cols_ok:
-                        # remap layout positions with Empty columns wherever header is empty
-                        empties = [ix for ix, i in enumerate(row) if i == '']
-                        bumps = {k: ix for ix, k in enumerate(self.layout.layout.keys())}
-
-                        for i in empties:
-                            for k, v in bumps.items():
-                                if v >= i:
-                                    bumps[k] += 1
-
-                        bumps = {v: k for k, v in bumps.items()}
-                        bumps = [bumps.get(i, f"empty_{uuid4().hex[:5]}") for i in range(len(row))]
-                        # strip out the "trailing" empty columns before updating the field_count for the row length
-                        # rules. These might get picked up when processing excel file layouts based on how the
-                        # worksheet is configured, which would result in a mismatch between the number of columns
-                        # rumydata sees in the row data and the number of columns which get inferred by reading the
-                        # worksheet
-                        while bumps[-1].startswith('empty_'):
-                            bumps.pop()
-                        self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
-
-                        for ix, rule in enumerate(self.layout.rules):  # update row length rules
-                            if isinstance(rule, (rr.RowLengthLTE, rr.RowLengthGTE)):
-                                self.layout.rules[ix].columns_length = self.layout.field_count()
-
+                        self._remap_empty_columns(row)
                 elif self.layout.empty_cols_ok:
                     cleaned_col_count = self.layout.field_count()
                     row = row[:cleaned_col_count]
@@ -308,13 +327,12 @@ class _BaseFile(_BaseSubject):
 
                 if re:
                     e.append(re)
-                    if rix == (
-                            0 + self.skip_rows) and self.layout.no_header is False:  # if header error present, stop checking rows
+                    if self._is_header_row(rix):  # if header error present, stop checking rows
                         break
                     if len(e) > self.max_errors:
                         e.append(max_error_rule._exception_msg())
                         break
-                if rix > (0 + self.skip_rows) or self.layout.no_header is True:
+                if rix > self.skip_rows or self.layout.no_header is True:
                     for k, ix in column_cache_map.items():
                         column_cache[k].append(row[ix])
 
@@ -327,54 +345,60 @@ class _BaseFile(_BaseSubject):
             if e:
                 return ex.FileError(file=p.name, errors=e)
 
+    def _remap_empty_columns(self, row: List[str]) -> None:
+        # remap layout positions with Empty columns wherever header is empty
+        empties = [ix for ix, i in enumerate(row) if i == '']
+        bumps = {k: ix for ix, k in enumerate(self.layout.layout.keys())}
+
+        for i in empties:
+            for k, v in bumps.items():
+                if v >= i:
+                    bumps[k] += 1
+
+        bumps = {v: k for k, v in bumps.items()}
+        bumps = [bumps.get(i, f"empty_{uuid4().hex[:5]}") for i in range(len(row))]
+        # strip out the "trailing" empty columns before updating the field_count for the row length
+        # rules. These might get picked up when processing excel file layouts based on how the
+        # worksheet is configured, which would result in a mismatch between the number of columns
+        # rumydata sees in the row data and the number of columns which get inferred by reading the
+        # worksheet
+        while bumps[-1].startswith('empty_'):
+            bumps.pop()
+        self.layout.layout = {k: self.layout.layout.get(k, field.Empty()) for k in bumps}
+
+        for ix, rule in enumerate(self.layout.rules):  # update row length rules
+            if isinstance(rule, (rr.RowLengthLTE, rr.RowLengthGTE)):
+                self.layout.rules[ix].columns_length = self.layout.field_count()
+
 
 class CsvFile(_BaseFile):
     """
     CSV File class
 
-    This class provides a way to validate the contents of a file against a
+    This class provides a way to validate the contents of a CSV file against a
     Layout, and report any rule violations that exist. This is the primary
     means of using this package.
 
-    :param layout: a Layout object which defines the fields that make up the
-        data set, along with the various rules that should be applied to
-        each one.
-    :param skip_rows: the number of rows to skip before starting evaluation.
-    :param max_errors: (optional) the maximum number of row errors to be
-        collected before halting validation of rows and raising a FileError.
-        This is used to prevent overly verbose (and mostly useless)
-        validation reports from being generated. Defaults to 100. The error
-        limit can overwritten (set to unlimited) by providing a value of -1.
     :param dialect: (optional) Controls csv dialect parsing.
     :param delimiter: (optional) Controls csv delimiter parsing.
     :param quotechar: (optional) Controls csv quote character parsing.
     """
 
     def __init__(self, layout: Union[Layout, dict], skip_rows=0, max_errors=100, **kwargs):
-        x = {x: kwargs.pop(x, None) for x in ['dialect', 'delimiter', 'quotechar']}
-        self.csv_kwargs = {k: v for k, v in x.items() if v}
-
-        y = {y: kwargs.pop(y, None) for y in ['newline', 'encoding', 'errors']}
-        self.file_kwargs = {k: v for k, v in y.items() if v}
-
+        self.csv_kwargs = _pick(kwargs, ['dialect', 'delimiter', 'quotechar'])
+        self.file_kwargs = _pick(kwargs, ['newline', 'encoding', 'errors'])
         super().__init__(layout, skip_rows, max_errors, **kwargs)
 
     def _rows(self, file: Path):
-        class Handler:
-            def __init__(self, file_path: Path, csv_kwargs, file_kwargs):
-                self.file_path = file_path
-                self.csv_kwargs = csv_kwargs
-                self.file_kwargs = file_kwargs
-                self.file_kwargs['newline'] = self.file_kwargs.get('newline', '')
+        self.file_kwargs['newline'] = self.file_kwargs.get('newline', '')
+        file_object = None
 
-            def __enter__(self) -> Iterable:
-                self.file_object = self.file_path.open(**self.file_kwargs)
-                return csv.reader(self.file_object, **self.csv_kwargs)
+        def open_rows():
+            nonlocal file_object
+            file_object = file.open(**self.file_kwargs)
+            return csv.reader(file_object, **self.csv_kwargs)
 
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                self.file_object.close()
-
-        return Handler(file, self.csv_kwargs, self.file_kwargs)
+        return _RowHandler(open_rows, lambda: file_object.close())
 
 
 class ExcelFile(_BaseFile):
@@ -385,50 +409,28 @@ class ExcelFile(_BaseFile):
     Layout, and report any rule violations that exist. This is the primary
     means of using this package.
 
-    :param layout: a Layout object which defines the fields that make up the
-        data set, along with the various rules that should be applied to
-        each one.
-    :param skip_rows: the number of rows to skip before starting evaluation.
-    :param max_errors: the maximum number of row errors to be
-        collected before halting validation of rows and raising a FileError.
-        This is used to prevent overly verbose (and mostly useless)
-        validation reports from being generated. The error
-        limit can be set to unlimited by providing a value of -1.
-
+    :param sheet: (optional) the name of the worksheet to read. Defaults to
+        the active worksheet.
     """
 
     def __init__(self, layout: Union[Layout, Dict], skip_rows=0, max_errors=100, **kwargs):
-        try:
-            __import__('openpyxl')
-        except ModuleNotFoundError:
-            raise ModuleNotFoundError(
-                "openpyxl not available for import. You must install this"
-                " package before you can use the ExcelFile class."
-            )
-
-        x = {x: kwargs.pop(x, None) for x in ['sheet']}
-        self.excel_kwargs = {k: v for k, v in x.items() if v}
+        _import_check('openpyxl', 'openpyxl not available for import. You must install this'
+                                ' package before you can use the ExcelFile class.')
+        self.excel_kwargs = _pick(kwargs, ['sheet'])
         # add ignore_ifs to the layout's fields when this gets constructed
         super().__init__(layout, skip_rows, max_errors, **kwargs)
 
     def _rows(self, file: Path):
+        excel_kwargs = dict(self.excel_kwargs)
 
-        class Handler:
-            def __init__(self, file_path, **kwargs):
-                self.file_path = file_path
-                self.excel_kwargs = kwargs
+        def open_rows():
+            from openpyxl import load_workbook
+            wb = load_workbook(file, read_only=False, data_only=True)
+            sheet_name = excel_kwargs.get('sheet')
+            ws = wb[sheet_name] if sheet_name else wb.active
+            return ws.values
 
-            def __enter__(self) -> Iterable:
-                from openpyxl import load_workbook
-                wb = load_workbook(file, read_only=False, data_only=True)
-                sheet_name = self.excel_kwargs.get('sheet')
-                ws = wb[sheet_name] if sheet_name else wb.active
-                return ws.values
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                pass
-
-        return Handler(file, **self.excel_kwargs)
+        return _RowHandler(open_rows)
 
     @staticmethod
     def _row_handler(row: list) -> List[str]:
@@ -447,53 +449,28 @@ class ParquetFile(_BaseFile):
 
     Accuracy and consistency is preferred over efficiency in this case.
 
-    :param layout: a Layout object which defines the fields that make up the
-        data set, along with the various rules that should be applied to
-        each one.
-    :param max_errors: the maximum number of row errors to be
-        collected before halting validation of rows and raising a FileError.
-        This is used to prevent overly verbose (and mostly useless)
-        validation reports from being generated. The error
-        limit can be set to unlimited by providing a value of -1.
-
     """
 
     def __init__(self, layout: Union[Layout, Dict], max_errors=100, **kwargs):
-        try:
-            for mod in ('pandas', 'pyarrow'):
-                __import__(mod)
-        except ModuleNotFoundError:
-            # noinspection PyUnboundLocalVariable
-            raise ModuleNotFoundError(
-                f"{mod} not available for import. You must install it to use {self.__class__.__name__}"
-            )
-
-        x = {x: kwargs.pop(x, None) for x in ['sheet']}
-        self.parquet_kwargs = {k: v for k, v in x.items() if v}
-
+        for mod in ('pandas', 'pyarrow'):
+            _import_check(mod, f"{mod} not available for import. You must install it to use"
+                               f" {self.__class__.__name__}")
+        self.parquet_kwargs = _pick(kwargs, ['sheet'])
         super().__init__(layout, max_errors=max_errors, **kwargs)
 
     def _rows(self, file: Path, sheet=None):
-        class Handler:
-            def __init__(self, file_path, **kwargs):
-                self.file_path = file_path
-                self.parquet_kwargs = kwargs
+        def open_rows():
+            import pandas as pd
+            df = pd.read_parquet(file)
 
-            def __enter__(self) -> Iterable:
-                import pandas as pd
-                df = pd.read_parquet(file)
+            def gen():
+                yield df.columns.to_list()
+                for x in df.itertuples(index=False):
+                    yield x
 
-                def gen():
-                    yield df.columns.to_list()
-                    for x in df.itertuples(index=False):
-                        yield x
+            return gen()
 
-                return gen()
-
-            def __exit__(self, exc_type, exc_val, exc_tb):
-                pass
-
-        return Handler(file, **self.parquet_kwargs)
+        return _RowHandler(open_rows)
 
     @staticmethod
     def _row_handler(row: list) -> List[str]:
