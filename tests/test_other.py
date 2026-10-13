@@ -21,6 +21,12 @@ from rumydata.table import CsvFile, ExcelFile, Layout
 
 
 def write_row(directory, columns: rumydata.table.Layout, row, rows=False):
+    """
+    Write a header row (from the layout) plus one or more data rows to a csv in
+    the given directory and return the file path. Note: not interchangeable with
+    tests.utils.file_row_harness, which builds a no_header layout and itself
+    writes, checks and asserts a row against both csv and xlsx files.
+    """
     p = Path(directory, str(uuid.uuid4()))
     with p.open('w', newline='') as o:
         writer = csv.writer(o)

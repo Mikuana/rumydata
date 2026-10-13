@@ -3,17 +3,7 @@ from datetime import datetime as dt
 import pytest
 
 from rumydata import field, rules, exception as ex
-from tests.utils import file_cell_harness, file_row_harness
-
-
-def recurse_subclasses(class_to_recurse):
-    def generator(x):
-        for y in x.__subclasses__():
-            for z in generator(y):
-                yield z
-        yield x
-
-    return list(generator(class_to_recurse))
+from tests.utils import file_cell_harness, file_row_harness, recurse_subclasses
 
 
 @pytest.mark.parametrize('fo,rule', [
@@ -199,6 +189,40 @@ def test_integer_bad(value, max_length, kwargs, err):
     assert fld._has_error(value, err.rule_exception())
     with pytest.raises(AssertionError):
         file_cell_harness(value, fld)
+
+
+@pytest.mark.parametrize('value,max_length,kwargs', [
+    ('12.5', 5, {}),
+    ('1.5', 5, dict(min_length=2)),
+    ('12.34', 5, dict(min_length=3)),
+    ('1.5E2', 5, dict(allow_scientific=True))
+])
+def test_number_good(value, max_length, kwargs):
+    fld = field.Number(max_length, **kwargs)
+    assert not fld.check_cell(value)
+    file_cell_harness(value, fld)
+
+
+@pytest.mark.parametrize('value,max_length,kwargs,err', [
+    ('1.5', 5, dict(min_length=3), rules.cell.MinDigit),
+    ('123.456', 5, dict(min_length=3), rules.cell.MaxDigit),
+    ('1.5E2', 5, {}, rules.cell.NoScientific)
+])
+def test_number_bad(value, max_length, kwargs, err):
+    fld = field.Number(max_length, **kwargs)
+    assert fld._has_error(value, err.rule_exception())
+    with pytest.raises(AssertionError):
+        file_cell_harness(value, fld)
+
+
+def test_number_min_length_descriptor():
+    """ Min Length descriptor reuses max_length (preserved quirk) and is only
+    registered when min_length is given """
+    fld = field.Number(5, min_length=2)
+    assert fld.descriptors['Min Length'] == '5 digits'
+    assert fld._has_rule_type(rules.cell.MinDigit)
+    assert not field.Number(5)._has_rule_type(rules.cell.MinDigit)
+    assert 'Min Length' not in field.Number(5).descriptors
 
 
 @pytest.mark.parametrize('value,choices,kwargs', [

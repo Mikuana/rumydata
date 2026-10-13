@@ -2,16 +2,7 @@ import pytest
 
 from rumydata.rules.column import *
 from rumydata.rules.column import Rule
-
-
-def recurse_subclasses(class_to_recurse):
-    def generator(x):
-        for y in x.__subclasses__():
-            for z in generator(y):
-                yield z
-        yield x
-
-    return list(generator(class_to_recurse))
+from tests.utils import recurse_subclasses
 
 
 @pytest.mark.parametrize('rule', recurse_subclasses(Rule))

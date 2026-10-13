@@ -60,3 +60,15 @@ def file_row_harness(row: List[Union[str, int]], layout: dict):
 def file_cell_harness(value: str, field: Field):
     """ Wrapper to convert cell to row for harness check """
     file_row_harness(row=[value], layout={'c1': field})
+
+
+def recurse_subclasses(class_to_recurse):
+    """ Collect a class and all of its (transitive) subclasses """
+
+    def generator(x):
+        for y in x.__subclasses__():
+            for z in generator(y):
+                yield z
+        yield x
+
+    return list(generator(class_to_recurse))
