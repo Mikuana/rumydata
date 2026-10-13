@@ -7,6 +7,8 @@ collect multiple exceptions at varying levels within a validation process, and
 display them in a meaningful way.
 """
 
+from typing import Optional
+
 
 def debug():
     """
@@ -44,6 +46,18 @@ def convert_to_excel_col_labels(col_num_str):
         return convert_to_excel_col_labels((col_num_str - 1) // 26) + chr((col_num_str - 1) % 26 + ord('A'))
 
 
+def _offset(kwargs):
+    return 0 if kwargs.get("zero_index") else 1
+
+
+def _index_str(value, kwargs):
+    return str(value + _offset(kwargs))
+
+
+def _append(message, msg):
+    return message + (f'; {msg}' if msg else '')
+
+
 class UrNotMyDataError(Exception):
     """
     Base exception class for rumydata package
@@ -61,7 +75,7 @@ class UrNotMyDataError(Exception):
         within this object.
     """
 
-    _message: str = None
+    _message: Optional[str] = None
 
     def __init__(self, msg: str = None, errors: list = None):
         super().__init__(msg)
@@ -80,6 +94,9 @@ class UrNotMyDataError(Exception):
 
         return '\n' + self._md()
 
+    def _label(self) -> str:
+        return f'{self.__class__.__name__[:-5]}: '
+
     def _md(self, depth=0) -> str:
         """
         Nested exception Markdown digest
@@ -95,49 +112,18 @@ class UrNotMyDataError(Exception):
             indentation providing visual indicator of nested structure.
         """
 
-        txt = f'{"  " * depth} - {self.__class__.__name__[:-5]}: {self._message}'
+        txt = f'{"  " * depth} - {self._label()}{self._message}'
         if self._errors:
-            txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
+            txt = '\n'.join([txt] + [el._md(depth + 1) for el in self._errors])
         return txt
-
-    @classmethod
-    def _flatten_md(cls, errors, depth=0):
-        """
-        Nested exception Markdown generator
-
-        Recurse through nested exceptions and continue to yield exceptions until
-        exhausted.
-        """
-
-        depth += 1
-        for el in errors:
-            yield el._md(depth)
 
 
 class CustomError(UrNotMyDataError):
     def __init__(self, msg: str = None):
         super().__init__(msg)
-        self._message = msg or self._message
 
-    def _md(self, depth=0) -> str:
-        """
-        Nested exception Markdown digest
-
-        This method returns the complete tree of nested exceptions that exist in
-        the errors property of this class in Markdown format, with indentation
-        provided to indicate the relationship of nested exceptions.
-
-        :param depth: an integer which indicates the level of indentation that
-            an exception needs to represent its relationship in the nested
-            structure. Do not call directly.
-        :return: a string of nested exceptions in Markdown format, with
-            indentation providing visual indicator of nested structure.
-        """
-
-        txt = f'{"  " * depth} - {self._message}'
-        if self._errors:
-            txt = '\n'.join([txt] + [x for x in self._flatten_md(self._errors, depth)])
-        return txt
+    def _label(self) -> str:
+        return ''
 
 
 class FileError(UrNotMyDataError):
@@ -151,8 +137,7 @@ class FileError(UrNotMyDataError):
 
     def __init__(self, file, msg=None, errors: list = None):
         message = file
-        message += f'; {msg}' if msg else ''
-        super().__init__(message, errors)
+        super().__init__(_append(message, msg), errors)
 
 
 class ColumnError(UrNotMyDataError):
@@ -164,14 +149,10 @@ class ColumnError(UrNotMyDataError):
     """
 
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
-        message = ''
-        offset = 0 if kwargs.get("zero_index") else 1
-
-        message += f'{str(index + offset)}'
+        message = _index_str(index, kwargs)
         if kwargs.get("name"):
             message += f' ({kwargs.get("name")})'
-        message += f'; {msg}' if msg else ''
-        super().__init__(message, errors)
+        super().__init__(_append(message, msg), errors)
 
 
 class RowError(UrNotMyDataError):
@@ -188,9 +169,8 @@ class RowError(UrNotMyDataError):
     """
 
     def __init__(self, index: int, msg=None, errors: list = None, **kwargs):
-        message = f'{str(index + (0 if kwargs.get("zero_index") else 1))}'
-        message += f'; {msg}' if msg else ''
-        super().__init__(message, errors)
+        message = _index_str(index, kwargs)
+        super().__init__(_append(message, msg), errors)
 
 
 class CellError(UrNotMyDataError):
@@ -208,20 +188,19 @@ class CellError(UrNotMyDataError):
 
     def __init__(self, index: int, msg=None, errors: list = None, use_excel_cell_format=False, **kwargs):
         message = ''
-        offset = 0 if kwargs.get("zero_index") else 1
+        offset = _offset(kwargs)
         if use_excel_cell_format:
-            message = f'{str(convert_to_excel_col_labels(index + offset))}'
+            message = str(convert_to_excel_col_labels(index + offset))
             if kwargs.get('rix') is not None:
                 message += str(kwargs.get('rix') + offset)
         else:
             if kwargs.get('rix') is not None:
                 message = str(kwargs.get('rix') + offset) + ','
-            message += f'{str(index + offset)}'
+            message += _index_str(index, kwargs)
 
         if kwargs.get("name"):
             message += f' ({kwargs.get("name")})'
-        message += f'; {msg}' if msg else ''
-        super().__init__(message, errors)
+        super().__init__(_append(message, msg), errors)
 
 
 class PreProcessingError(UrNotMyDataError):
