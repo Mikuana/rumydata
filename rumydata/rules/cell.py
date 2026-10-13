@@ -12,6 +12,7 @@ the constructor of the classes in the field submodule.
 """
 import re
 from datetime import datetime
+from operator import eq, ge, gt, le, lt
 from typing import Union, Tuple, Dict, List
 
 from rumydata._base import _BaseRule
@@ -25,7 +26,7 @@ __all__ = [
     'DateRule', 'CanBeDateIso', 'DateGT', 'DateGTE', 'DateET', 'DateLTE',
     'DateLT', 'GreaterThanColumn', 'NotNullIfCompare', 'GreaterThanOrEqualColumn',
     'OtherMustExist', 'OtherCantExist', 'LessThanColumn', 'LessThanOrEqualColumn',
-    'NotNullIfOtherEquals', 'NoScientific', 'CanBeFloat',
+    'NotNullIfOtherEquals', 'NoScientific',
     'make_static_cell_rule'
 ]
 
@@ -316,66 +317,79 @@ class NumericDecimals(Rule):
         return f'cannot have more than {self.decimals} digits after the decimal point'
 
 
-class LengthComparison(Rule):
-    """ Base length comparison Rule """
+class Comparison:
+    """ Shared comparison mechanism for the Length, Numeric and Date families
+
+    Not a Rule subclass itself: the family bases combine it with Rule (or
+    DateRule), so it adds no node to the Rule subclass tree that the generic
+    rule tests walk.
+    """
 
     comparison_language = 'N/A'
+    comparison_op = None
     _default_args = ('x',)
 
     def __init__(self, comparison_value):
         super().__init__()
         self.comparison_value = comparison_value
 
+    def _measure(self, x):
+        return x
+
+    def _evaluator(self):
+        # the base is abstract; concrete comparison rules set comparison_op
+        if self.comparison_op is None:
+            return lambda x: False
+        op = self.comparison_op
+        return lambda x: op(self._measure(x), self.comparison_value)
+
     def _explain(self) -> str:
         return f'{self.comparison_language} {str(self.comparison_value)}'
+
+
+class LengthComparison(Comparison, Rule):
+    """ Base length comparison Rule """
+
+    def _measure(self, x):
+        return len(x)
 
 
 class LengthGT(LengthComparison):
     """ Length greater than comparison Rule """
 
     comparison_language = 'greater than'
-
-    def _evaluator(self):
-        return lambda x: len(x) > self.comparison_value
+    comparison_op = gt
 
 
 class LengthGTE(LengthComparison):
     """ Length greater than or equal to comparison Rule """
 
     comparison_language = 'greater than or equal to'
-
-    def _evaluator(self):
-        return lambda x: len(x) >= self.comparison_value
+    comparison_op = ge
 
 
 class LengthET(LengthComparison):
     """ Length equal to comparison Rule """
 
     comparison_language = 'equal to'
-
-    def _evaluator(self):
-        return lambda x: len(x) == self.comparison_value
+    comparison_op = eq
 
 
 class LengthLTE(LengthComparison):
     """ Length less than or equal to comparison Rule """
 
     comparison_language = 'less than or equal to'
-
-    def _evaluator(self):
-        return lambda x: len(x) <= self.comparison_value
+    comparison_op = le
 
 
 class LengthLT(LengthComparison):
     """ Length less than comparison Rule """
 
     comparison_language = 'less than'
-
-    def _evaluator(self):
-        return lambda x: len(x) < self.comparison_value
+    comparison_op = lt
 
 
-class NumericComparison(Rule):
+class NumericComparison(Comparison, Rule):
     """
     Numeric length comparison base Rule
 
@@ -383,59 +397,43 @@ class NumericComparison(Rule):
     to a float value.
     """
 
-    comparison_language = 'N/A'
-    _default_args = ('x',)
-
-    def __init__(self, comparison_value):
-        super().__init__()
-        self.comparison_value = comparison_value
-
-    def _explain(self) -> str:
-        return f'{self.comparison_language} {str(self.comparison_value)}'
+    def _measure(self, x):
+        return float(x)
 
 
 class NumericGT(NumericComparison):
     """ Numeric greater than comparison Rule """
 
     comparison_language = 'greater than'
-
-    def _evaluator(self):
-        return lambda x: float(x) > self.comparison_value
+    comparison_op = gt
 
 
 class NumericGTE(NumericComparison):
     """ Numeric greater than or equal to comparison Rule """
 
     comparison_language = 'greater than or equal to'
-
-    def _evaluator(self):
-        return lambda x: float(x) >= self.comparison_value
+    comparison_op = ge
 
 
 class NumericET(NumericComparison):
     """ Numeric equal to comparison Rule """
 
     comparison_language = 'equal to'
-
-    def _evaluator(self):
-        return lambda x: float(x) == self.comparison_value
+    comparison_op = eq
 
 
 class NumericLTE(NumericComparison):
     """ Numeric less than or equal to comparison Rule """
 
     comparison_language = 'less than or equal to'
-
-    def _evaluator(self):
-        return lambda x: float(x) <= self.comparison_value
+    comparison_op = le
 
 
 class NumericLT(NumericComparison):
     """ Numeric less than comparison Rule """
-    comparison_language = 'less than'
 
-    def _evaluator(self):
-        return lambda x: float(x) < self.comparison_value
+    comparison_language = 'less than'
+    comparison_op = lt
 
 
 class DateRule(Rule):
@@ -472,7 +470,7 @@ class CanBeDateIso(DateRule):
         return 'can be coerced into a ISO-8601 date'
 
 
-class DateComparisonRule(DateRule):
+class DateComparisonRule(Comparison, DateRule):
     """
     Base date comparison Rule
 
@@ -486,85 +484,55 @@ class DateComparisonRule(DateRule):
     def __init__(self, comparison_value, date_format='%Y-%m-%d', **kwargs):
         self.date_format = date_format
         self.comparison_value = datetime.strptime(comparison_value, date_format)
-        super().__init__(**kwargs)
+        DateRule.__init__(self, **kwargs)
 
-    def _explain(self) -> str:
-        return f'{self.comparison_language} {str(self.comparison_value)}'
+    def _evaluator(self):
+        # the base is abstract; concrete comparison rules set comparison_op
+        if self.comparison_op is None:
+            return lambda x: False
+        op = self.comparison_op
+        def func(x):
+            try:
+                return op(datetime.strptime(x, self.date_format), self.comparison_value)
+            except ValueError:
+                return False
+
+        return func
 
 
 class DateGT(DateComparisonRule):
     """ Date greater than comparison Rule """
 
     comparison_language = 'greater than'
-
-    def _evaluator(self):
-        def func(x):
-            try:
-                return datetime.strptime(x, self.date_format) > self.comparison_value
-            except ValueError:
-                return False
-
-        return func
+    comparison_op = gt
 
 
 class DateGTE(DateComparisonRule):
     """ Date greater than or equal to comparison """
 
     comparison_language = 'greater than or equal to'
-
-    def _evaluator(self):
-        def func(x):
-            try:
-                return datetime.strptime(x, self.date_format) >= self.comparison_value
-            except ValueError:
-                return False
-
-        return func
+    comparison_op = ge
 
 
 class DateET(DateComparisonRule):
     """ Date equal to comparison Rule """
 
     comparison_language = 'equal to'
-
-    def _evaluator(self):
-        def func(x):
-            try:
-                return datetime.strptime(x, self.date_format) == self.comparison_value
-            except ValueError:
-                return False
-
-        return func
+    comparison_op = eq
 
 
 class DateLTE(DateComparisonRule):
     """ Date less than or equal to comparison Rule """
 
     comparison_language = 'less than or equal to'
-
-    def _evaluator(self):
-        def func(x):
-            try:
-                return datetime.strptime(x, self.date_format) <= self.comparison_value
-            except ValueError:
-                return False
-
-        return func
+    comparison_op = le
 
 
 class DateLT(DateComparisonRule):
     """ Date less than comparison Rule """
 
     comparison_language = 'less than'
-
-    def _evaluator(self):
-        def func(x):
-            try:
-                return datetime.strptime(x, self.date_format) < self.comparison_value
-            except ValueError:
-                return False
-
-        return func
+    comparison_op = lt
 
 
 class ColumnComparisonRule(Rule):
@@ -627,7 +595,7 @@ class GreaterThanColumn(ColumnComparisonRule):
 
 
 class GreaterThanOrEqualColumn(ColumnComparisonRule):
-    """ Greater than compared column Rule """
+    """ Greater than or equal to compared column Rule """
 
     def _evaluator(self):
         return lambda x, y: x >= y
@@ -647,7 +615,7 @@ class LessThanColumn(ColumnComparisonRule):
 
 
 class LessThanOrEqualColumn(ColumnComparisonRule):
-    """ Less than compared column Rule """
+    """ Less than or equal to compared column Rule """
 
     def _evaluator(self):
         return lambda x, y: x <= y
