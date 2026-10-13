@@ -1,10 +1,11 @@
 """
-rumydata file rules
+file validation rules
 
 These rules are applied to entire files and are generally not meant to be used
-directly. These accomplish things like confirming a file exists, that it matches
+directly. They accomplish things like confirming a file exists, that it matches
 a particular regex pattern, etc.
 """
+import re
 from pathlib import Path
 from typing import Union
 
@@ -29,7 +30,7 @@ class FileExists(Rule):
 
 
 class FileNameMatch(Rule):
-    """ File name matches regex pattern """
+    """ File name matches a regex pattern Rule """
 
     _default_args = ('test',)
 
@@ -38,7 +39,6 @@ class FileNameMatch(Rule):
         self.pattern = pattern
 
     def _evaluator(self):
-        import re
         return lambda x: re.fullmatch(self.pattern, x.name, re.IGNORECASE)
 
     def _explain(self) -> str:
@@ -47,7 +47,7 @@ class FileNameMatch(Rule):
 
 
 class MaxError(Rule):
-    """ Row errors returned while checking file do not exceed a limit """
+    """ Row errors returned while checking a file do not exceed a limit """
 
     _default_args = (1,)
 
