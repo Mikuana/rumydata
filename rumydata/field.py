@@ -24,6 +24,22 @@ __all__ = ['Text', 'Date', 'Currency', 'Digit', 'Integer', 'Choice', 'Ignore',
            'Empty', 'Number']
 
 
+def _register_numeric(self, format_, max_length, min_length, rules, min_label, min_rule):
+    """
+    Set the shared descriptors and rules for the numeric field types (used by
+    Digit, Integer and Number). `min_label` is the value used in the 'Min Length'
+    descriptor text (Integer and Number intentionally reuse max_length here, a
+    preserved quirk); `min_rule` is the rule registered for the minimum length.
+    """
+    self.descriptors['Type'] = 'Numeric'
+    self.descriptors['Format'] = format_
+    self.descriptors['Max Length'] = f'{str(max_length)} digits'
+    self.rules.extend(rules)
+    if min_length:
+        self.descriptors['Min Length'] = f'{str(min_label)} digits'
+        self.rules.append(min_rule)
+
+
 class Field(_BaseSubject):
     """
     Base Field class
@@ -61,8 +77,7 @@ class Field(_BaseSubject):
             and a dictionary, to be checked.
         """
 
-        errors = self._check(value, rule_type=clr.Rule, **kwargs)
-        assert not errors, str(errors)
+        self._assert(value, rule_type=clr.Rule, **kwargs)
 
     def check_column(self, values: List[str], **kwargs):
         """
@@ -75,14 +90,15 @@ class Field(_BaseSubject):
         :param values: a list of values contained in the column.
         """
 
-        errors = self._check(values, rule_type=cr.Rule, **kwargs)
+        self._assert(values, rule_type=cr.Rule, **kwargs)
+
+    def _assert(self, data, rule_type, **kwargs):
+        """Run `_check` on the provided data and assert that no errors were raised."""
+        errors = self._check(data, rule_type=rule_type, **kwargs)
         assert not errors, str(errors)
 
-    def _check_for_nullable_rules(self):
-        return any([x for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
-
-    def _check_nullable_rule_results(self, data):
-        return all([x._null_ok(data) for x in self.rules if isinstance(x, clr.NotNullIfCompare)])
+    def _nullable_compare_rules(self):
+        return [x for x in self.rules if isinstance(x, clr.NotNullIfCompare)]
 
     def _check(self, data, cix=-1, rule_type=None, **kwargs) -> Union[ex.CellError, ex.ColumnError, None]:
         """
@@ -100,27 +116,28 @@ class Field(_BaseSubject):
         :return: a list of any errors that were raised while checking the data.
         """
 
-        # if data is nullable and value is empty, skip all checks
+        # skip all checks if the value is empty and the field is nullable, or the
+        # nullable-comparison rules pass
         empty = data[0] == '' if isinstance(data, tuple) else data == ''
+        nullable_rules = self._nullable_compare_rules()
         if self.nullable and rule_type == clr.Rule and empty:
-            pass
-        elif empty and (self._check_nullable_rule_results(data) if self._check_for_nullable_rules() else False):
-            pass
-        else:
-            e = super()._check(data, rule_type=rule_type, strip=self.strip)
-            if e:
-                if rule_type == cr.Rule:
-                    return ex.ColumnError(cix, errors=e, **kwargs)
-                else:
-                    if self.include_all_errors:
-                        if self.custom_error_msg:
-                            e.insert(0, ex.CustomError(self.custom_error_msg))
-                        return ex.CellError(cix, errors=e, **kwargs)
-                    else:
-                        if self.custom_error_msg:
-                            return ex.CellError(cix, errors=[ex.CustomError(self.custom_error_msg)], **kwargs)
-                        else:
-                            return ex.CellError(cix, **kwargs)
+            return
+        if empty and nullable_rules and all([x._null_ok(data) for x in nullable_rules]):
+            return
+
+        e = super()._check(data, rule_type=rule_type, strip=self.strip)
+        if not e:
+            return
+
+        if rule_type == cr.Rule:
+            return ex.ColumnError(cix, errors=e, **kwargs)
+        if self.include_all_errors:
+            if self.custom_error_msg:
+                e.insert(0, ex.CustomError(self.custom_error_msg))
+            return ex.CellError(cix, errors=e, **kwargs)
+        if self.custom_error_msg:
+            return ex.CellError(cix, errors=[ex.CustomError(self.custom_error_msg)], **kwargs)
+        return ex.CellError(cix, **kwargs)
 
     def _comparison_columns(self) -> set:
         """
@@ -134,7 +151,10 @@ class Field(_BaseSubject):
         compares = set()
         for r in self.rules:
             if issubclass(type(r), clr.ColumnComparisonRule):
-                compares.add(r.compare_to) if isinstance(r.compare_to, str) else [compares.add(x) for x in r.compare_to]
+                if isinstance(r.compare_to, str):
+                    compares.add(r.compare_to)
+                else:
+                    compares.update(r.compare_to)
         return compares
 
     def _has_rule_type(self, rule_type):
@@ -277,17 +297,10 @@ class Digit(Field):
 
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
-
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"0" * max_length}'
-        self.descriptors['Max Length'] = f'{str(max_length)} digits'
-
-        self.rules.append(clr.OnlyNumbers())
-        self.rules.append(clr.MaxChar(max_length))
-
-        if min_length:
-            self.descriptors['Min Length'] = f'{str(min_length)} digits'
-            self.rules.append(clr.MinChar(min_length))
+        _register_numeric(
+            self, '0' * max_length, max_length, min_length,
+            [clr.OnlyNumbers(), clr.MaxChar(max_length)],
+            min_label=min_length, min_rule=clr.MinChar(min_length))
 
 
 class Integer(Field):
@@ -304,25 +317,18 @@ class Integer(Field):
 
     def __init__(self, max_length, min_length=None, **kwargs):
         super().__init__(**kwargs)
-
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"9" * max_length}'
-        self.descriptors['Max Length'] = f'{str(max_length)} digits'
-
-        self.rules.append(clr.CanBeInteger())
-        self.rules.append(clr.NoLeadingZero())
-        self.rules.append(clr.MaxDigit(max_length))
-
-        if min_length:
-            self.descriptors['Min Length'] = f'{str(max_length)} digits'
-            self.rules.append(clr.MinDigit(min_length))
+        _register_numeric(
+            self, '9' * max_length, max_length, min_length,
+            [clr.CanBeInteger(), clr.NoLeadingZero(), clr.MaxDigit(max_length)],
+            min_label=max_length, min_rule=clr.MinDigit(min_length))
 
 
 class Number(Field):
     """
     Number field
 
-    A value made up entirely of digits (numbers). A whole number.
+    A value made up entirely of digits (numbers). Unlike an Integer, a Number
+    allows a fractional part (decimals) and, optionally, scientific notation.
 
     :param max_length: the maximum number of digits
     :param min_length: (optional) the minimum number of digits
@@ -332,19 +338,14 @@ class Number(Field):
 
     def __init__(self, max_length, min_length=None, allow_scientific=False, **kwargs):
         super().__init__(**kwargs)
-
-        self.descriptors['Type'] = 'Numeric'
-        self.descriptors['Format'] = f'{"9" * max_length}.{"0"}'
-        self.descriptors['Max Length'] = f'{str(max_length)} digits'
-
-        self.rules.append(clr.CanBeFloat())
+        rules = [clr.CanBeFloat()]
         if allow_scientific is False:
-            self.rules.append(clr.NoScientific())
-        self.rules.append(clr.MaxDigit(max_length))
-
-        if min_length:
-            self.descriptors['Min Length'] = f'{str(max_length)} digits'
-            self.rules.append(clr.MinDigit(min_length))
+            rules.append(clr.NoScientific())
+        rules.append(clr.MaxDigit(max_length))
+        _register_numeric(
+            self, '9' * max_length + '.0', max_length, min_length,
+            rules,
+            min_label=max_length, min_rule=clr.MinDigit(min_length))
 
 
 class Choice(Field):
@@ -364,6 +365,4 @@ class Choice(Field):
         super().__init__(**kwargs)
         self.descriptors['Type'] = 'Choice'
         self.descriptors['Choices'] = ','.join(valid_values)
-        self.rules.append(
-            clr.Choice(valid_values, case_insensitive=case_insensitive)
-        )
+        self.rules.append(clr.Choice(valid_values, case_insensitive=case_insensitive))
