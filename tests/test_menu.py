@@ -51,7 +51,6 @@ def test_view_validation(choice, ext, no_md, valid_file, tmpdir, mocker):
         p = Path(tmpdir, 'file.csv')
         p.write_text('x\n1\n')
         choice = (choice, p.as_posix())
-        print(choice)
     else:
         choice = (choice, 'file.csv')
 
