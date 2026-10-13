@@ -1,17 +1,16 @@
 """
-rumydata row rules
+rumydata header rules
 
 These rules are applied to header rows and are generally not intended to be
-used directly. These rules ensure that the headers are named as expected, is
-not missing any names, or containing any extras.
+used directly. They ensure that the headers are named as expected, with no
+missing names and no extras.
 """
 from collections import namedtuple
 from typing import List
 
 from rumydata._base import _BaseRule
 
-# this named tuple is here to allow for setting the default argument without
-# needing to import the Layout class, which results in a circular import
+# a stand-in for a Layout (importing it here would be a circular import)
 _default_thing = namedtuple('DefaultDict', ['layout', 'header_mode', 'empty_cols_ok'])
 
 
@@ -31,6 +30,22 @@ class Rule(_BaseRule):
             return [x for x in data if x != ''],
         else:
             return data,
+
+
+def _starts_with_ixs(x, keys):
+    return [[y.startswith(z) for z in keys].index(True) for y in x]
+
+
+def _contains_ixs(x, keys):
+    return [[z in y for z in keys].index(True) for y in x]
+
+
+def _is_unique(ixs):
+    return len(ixs) == len(set(ixs))
+
+
+def _is_sorted(ixs):
+    return ixs == sorted(ixs)
 
 
 class NoExtra(Rule):
@@ -67,18 +82,10 @@ class NoDuplicate(Rule):
     """ No duplicate header elements Rule """
 
     def _evaluator(self):
-        def starts_with(x):
-            ixs = [[y.startswith(z) for z in list(self.definition.keys())].index(True) for y in x]
-            return len(ixs) == len(set(ixs))
-
-        def contains(x):
-            ixs = [[z in y for z in list(self.definition.keys())].index(True) for y in x]
-            return len(ixs) == len(set(ixs))
-
         modes = {
             'exact': lambda x: len(x) == len(set(x)),
-            'startswith': starts_with,
-            'contains': contains
+            'startswith': lambda x: _is_unique(_starts_with_ixs(x, self.definition.keys())),
+            'contains': lambda x: _is_unique(_contains_ixs(x, self.definition.keys()))
         }
         return modes[self.header_mode]
 
@@ -90,18 +97,10 @@ class ColumnOrder(Rule):
     """ Fixed header element order Rule """
 
     def _evaluator(self):
-        def starts_with(x):
-            ixs = [[y.startswith(z) for z in list(self.definition.keys())].index(True) for y in x]
-            return ixs == sorted(ixs)
-
-        def contains(x):
-            ixs = [[z in y for z in list(self.definition.keys())].index(True) for y in x]
-            return ixs == sorted(ixs)
-
         modes = {
             'exact': lambda x: x == list(self.definition),
-            'startswith': starts_with,
-            'contains': contains
+            'startswith': lambda x: _is_sorted(_starts_with_ixs(x, self.definition.keys())),
+            'contains': lambda x: _is_sorted(_contains_ixs(x, self.definition.keys()))
         }
         return modes[self.header_mode]
 
