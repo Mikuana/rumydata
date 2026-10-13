@@ -52,39 +52,34 @@ def _validation(layout: Layout, ext: str = None, output: str = None) -> dict:
     return _doc_out(*_file_check(layout, ext), output)
 
 
-def _file_check(layout: Layout, ext) -> Tuple[str, str]:
-    """ Perform a check of a csv file with (mostly) default params """
+def _select_format(ext: str = None) -> str:
+    """ Select the output format, falling back to md if markdown is unavailable """
     if not ext:
         print("How to format the documentation?")
         ext = _select_option(_format_options)[0]
-
     if ext == 'html':
         try:  # check if markdown to html conversion is available
             __import__('markdown')
         except ModuleNotFoundError:
             warn('markdown module not available; falling back to raw md')
             ext = 'md'
+    return ext
+
+
+def _file_check(layout: Layout, ext) -> Tuple[str, str]:
+    """ Perform a check of a csv file with (mostly) default params """
+    ext = _select_format(ext)
 
     p = input('What is the file path to validate?\n > ')
     errors = CsvFile(layout).check(p, doc_type=ext)
     if errors:
         return errors, ext
+    return None
 
 
 def _doc_gen(layout: Layout, extension: str = None) -> Tuple[str, str]:
     """ Generate documentation from a layout """
-
-    if not extension:
-        print("How to format the documentation?")
-        extension = _select_option(_format_options)[0]
-
-    if extension == 'html':
-        try:  # check if markdown to html conversion is available
-            __import__('markdown')
-        except ModuleNotFoundError:
-            warn('markdown module not available; falling back to raw md')
-            extension = 'md'
-
+    extension = _select_format(extension)
     return layout.documentation(doc_type=extension), extension
 
 
@@ -119,25 +114,19 @@ def _open_doc(doc: str, ext: str):
     with TemporaryDirectory() as td:
         p = Path(td, f'documentation.{ext}')
         p.write_text(doc)
-        if p.suffix == '.html':
-            url = f'file:///{p.as_posix()}'
-        else:
-            url = p.as_posix()
+        url = f'file:///{p.as_posix()}' if p.suffix == '.html' else p.as_posix()
         webbrowser.open(url)
         sleep(2)
 
 
 def _select_option(options: dict):
     """ Present a dictionary of options to the user for selection """
-    for ix, (k, v) in enumerate(options.items()):
+    for ix, k in enumerate(options):
         print(f'[{str(ix)}] {k}')
     choice = input("Choose an option by number or name: ")
     print('')
-
     try:
-        choice = int(choice)  # treat the input as if it was an integer
-        choice = list(options.keys())[choice]
+        choice = list(options.keys())[int(choice)]  # treat the input as if it was an integer
     except ValueError:  # otherwise assume it was a key value
         pass
-
     return options[choice], choice
